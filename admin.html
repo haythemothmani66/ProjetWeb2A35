@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eduleb Back Office | Admin Dashboard</title>
+    <!-- Google Fonts + Font Awesome (same as frontend) -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f5f7fc;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+
+        /* admin layout */
+        .admin-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 280px;
+            background: #0b104a;
+            color: #fff;
+            transition: 0.3s;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h3 {
+            color: white;
+            font-weight: 700;
+            font-size: 24px;
+        }
+
+        .sidebar-header h3 span {
+            color: #f26b65;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-menu .menu-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #e2e8f0;
+            transition: 0.2s;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .sidebar-menu .menu-item i {
+            width: 24px;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-menu .menu-item:hover,
+        .sidebar-menu .menu-item.active {
+            background: #525fe1;
+            color: white;
+            border-left: 4px solid #f26b65;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 25px 35px;
+        }
+
+        /* top bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+        }
+
+        .page-title h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0b104a;
+        }
+
+        .admin-badge {
+            background: #525fe1;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+            border: 1px solid #eef2ff;
+            transition: 0.2s;
+        }
+
+        .stat-card h3 {
+            font-size: 32px;
+            font-weight: 800;
+            color: #525fe1;
+            margin-bottom: 8px;
+        }
+
+        .stat-card p {
+            color: #475569;
+            font-weight: 500;
+        }
+
+        /* tables */
+        .card-panel {
+            background: white;
+            border-radius: 24px;
+            padding: 25px;
+            margin-bottom: 40px;
+            border: 1px solid #eef2ff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .panel-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0b104a;
+        }
+
+        .btn-primary {
+            background: #525fe1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary:hover {
+            background: #f26b65;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #525fe1;
+            color: #525fe1;
+            padding: 6px 14px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .btn-outline:hover {
+            background: #525fe1;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 14px 8px;
+            border-bottom: 1px solid #eef2ff;
+        }
+
+        th {
+            color: #525fe1;
+            font-weight: 700;
+        }
+
+        .badge-pass {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .badge-fail {
+            background: #fee2e2;
+            color: #b91c1c;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+        }
+
+        .action-icons i {
+            margin: 0 6px;
+            cursor: pointer;
+            color: #525fe1;
+            transition: 0.2s;
+        }
+
+        .action-icons i:hover {
+            color: #f26b65;
+        }
+
+        /* modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 28px;
+            padding: 30px;
+            animation: fadeIn 0.2s;
+        }
+
+        .modal-content h3 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .modal-content input, .modal-content textarea, .modal-content select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            font-family: inherit;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        /* responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .admin-wrapper.mobile-open .sidebar {
+                transform: translateX(0);
+            }
+        }
+
+        /* question manager */
+        .question-item {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 5px solid #525fe1;
+        }
+        .question-text-q {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .question-options {
+            font-size: 14px;
+            color: #334155;
+        }
+
+        .inline-actions {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="admin-wrapper" id="adminWrapper">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3>EduMatch</h3>
+            <p style="font-size: 13px; margin-top: 8px;">Admin Dashboard</p>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item active" data-tab="dashboard">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </div>
+            <a class="menu-item" href="index.php?route=backoffice/courses/index" style="text-decoration:none;">
+                <i class="fas fa-book"></i> Courses & Quizzes
+            </a>
+            <div class="menu-item" data-tab="results">
+                <i class="fas fa-certificate"></i> Quiz Results
+            </div>
+            <div class="menu-item" data-tab="questions">
+                <i class="fas fa-question-circle"></i> Manage Questions
+            </div>
+            <div class="menu-item" data-tab="certificates">
+                <i class="fas fa-id-card"></i> Certificates
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="page-title">
+                <h1 id="mainTitle">Dashboard</h1>
+            </div>
+            <div class="admin-badge">
+                <i class="fas fa-user-shield"></i> Admin
+            </div>
+        </div>
+
+        <!-- DASHBOARD TAB -->
+        <div id="dashboardTab" class="tab-content">
+            <div class="stats-grid" id="statsGrid">
+                <!-- dynamic stats via JS -->
+            </div>
+            <div class="card-panel">
+                <h2 style="margin-bottom: 15px;">Recent quiz attempts</h2>
+                <div style="overflow-x: auto;">
+                    <table id="recentResultsTable">
+                        <thead>
+                            <tr><th>Student</th><th>Score</th><th>Date</th><th>Certificate ID</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS TAB -->
+        <div id="resultsTab" class="tab-content" style="display: none;">
+            <div class="card-panel">
+                <div class="panel-header">
+                    <h2>All quiz submissions</h2>
+                    <button class="btn-outline" id="exportResultsBtn"><i class="fas fa-download"></i> Export CSV</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="allResultsTable" width="100%">
+                        <thead>
+                            <tr><th>Name</th><th>Score</th><th>Percentage</th><th>Passed</th><th>Certificate ID</th><th>Date</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUESTIONS TAB -->
+        <div id="questionsTab" class="tab-content" style="display: none;">
+            <div class="card-panel">
+                <div class="panel-header">
+                    <h2>Quiz questions bank</h2>
+                    <button class="btn-primary" id="addQuestionBtn"><i class="fas fa-plus"></i> New question</button>
+                </div>
+                <div id="questionsList"></div>
+            </div>
+        </div>
+
+        <!-- CERTIFICATES TAB -->
+        <div id="certificatesTab" class="tab-content" style="display: none;">
+            <div class="card-panel">
+                <div class="panel-header">
+                    <h2>Issued certificates</h2>
+                    <input type="text" id="certSearch" placeholder="Search by ID or name..." style="padding: 8px 16px; border-radius: 40px; border: 1px solid #cbd5e1;">
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="certificatesTable">
+                        <thead><tr><th>Student</th><th>Certificate ID</th><th>Score</th><th>Date</th><th>View</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL for add/edit question -->
+<div id="questionModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Add Question</h3>
+        <input type="hidden" id="editQuestionId">
+        <input type="text" id="questionText" placeholder="Question text" required>
+        <input type="text" id="opt1" placeholder="Option 1">
+        <input type="text" id="opt2" placeholder="Option 2">
+        <input type="text" id="opt3" placeholder="Option 3">
+        <input type="text" id="opt4" placeholder="Option 4">
+        <select id="correctIndex">
+            <option value="0">Correct: Option 1</option>
+            <option value="1">Correct: Option 2</option>
+            <option value="2">Correct: Option 3</option>
+            <option value="3">Correct: Option 4</option>
+        </select>
+        <div class="modal-buttons">
+            <button class="btn-outline" id="closeModalBtn">Cancel</button>
+            <button class="btn-primary" id="saveQuestionBtn">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for certificate preview -->
+<div id="certPreviewModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <h3>Certificate details</h3>
+        <div id="certPreviewContent"></div>
+        <div class="modal-buttons">
+            <button class="btn-outline" id="closeCertModal">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // MOCK DATA for back-office demonstration (ready to replace with API calls)
+    let quizResults = [
+        { id: "cert_001", student: "Emma Johnson", score: 3, total: 3, percent: 100, passed: true, date: "2025-04-05" },
+        { id: "cert_002", student: "Lucas Martin", score: 2, total: 3, percent: 66.7, passed: true, date: "2025-04-06" },
+        { id: "cert_003", student: "Sophia Lee", score: 1, total: 3, percent: 33.3, passed: false, date: "2025-04-07" },
+        { id: "cert_004", student: "Mohamed Ali", score: 3, total: 3, percent: 100, passed: true, date: "2025-04-08" }
+    ];
+
+    let questionsBank = [
+        { id: 1, text: "What does HTML stand for?", options: ["Hyper Text Markup Language", "Home Tool Markup Language", "Hyperlinks and Text Markup", "Hyper Text Making Language"], correct: 0 },
+        { id: 2, text: "Which CSS property changes background color?", options: ["bgcolor", "background-color", "color", "background"], correct: 1 },
+        { id: 3, text: "Inside which element do we put JavaScript?", options: ["<javascript>", "<js>", "<script>", "<code>"], correct: 2 }
+    ];
+
+    // Helper render
+    function renderDashboard() {
+        const totalQuizzes = quizResults.length;
+        const passedCount = quizResults.filter(r => r.passed).length;
+        const avgPercent = (quizResults.reduce((acc, r) => acc + r.percent, 0) / totalQuizzes).toFixed(1);
+        const statsHtml = `
+            <div class="stat-card"><h3>${totalQuizzes}</h3><p>Total quiz attempts</p></div>
+            <div class="stat-card"><h3>${passedCount}</h3><p>Certificates issued</p></div>
+            <div class="stat-card"><h3>${avgPercent}%</h3><p>Average score</p></div>
+            <div class="stat-card"><h3>${questionsBank.length}</h3><p>Active questions</p></div>
+        `;
+        document.getElementById('statsGrid').innerHTML = statsHtml;
+
+        const recent = [...quizResults].slice(-3).reverse();
+        const tbody = document.querySelector('#recentResultsTable tbody');
+        tbody.innerHTML = recent.map(r => `
+            <tr>
+                <td>${r.student}</td><td>${r.score}/${r.total}</td><td>${r.date}</td>
+                <td><span class="badge-pass">${r.id}</span></td>
+            </tr>
+        `).join('');
+    }
+
+    function renderAllResults() {
+        const tbody = document.querySelector('#allResultsTable tbody');
+        tbody.innerHTML = quizResults.map(r => `
+            <tr>
+                <td>${r.student}</td>
+                <td>${r.score}/${r.total}</td>
+                <td>${r.percent}%</td>
+                <td>${r.passed ? '<span class="badge-pass">✔ Passed</span>' : '<span class="badge-fail">✘ Failed</span>'}</td>
+                <td><code>${r.id}</code></td>
+                <td>${r.date}</td>
+                <td class="action-icons"><i class="fas fa-eye view-cert" data-id="${r.id}"></i> <i class="fas fa-trash-alt delete-result" data-id="${r.id}"></i></td>
+            </tr>
+        `).join('');
+        attachResultActions();
+    }
+
+    function attachResultActions() {
+        document.querySelectorAll('.view-cert').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const id = el.getAttribute('data-id');
+                const cert = quizResults.find(r => r.id === id);
+                if (cert) showCertificatePreview(cert);
+            });
+        });
+        document.querySelectorAll('.delete-result').forEach(el => {
+            el.addEventListener('click', (e) => {
+                if(confirm('Delete this quiz result?')) {
+                    const id = el.getAttribute('data-id');
+                    quizResults = quizResults.filter(r => r.id !== id);
+                    renderAllResults();
+                    renderDashboard();
+                    renderCertificates();
+                }
+            });
+        });
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('questionsList');
+        container.innerHTML = questionsBank.map(q => `
+            <div class="question-item" data-id="${q.id}">
+                <div class="question-text-q">${q.text}</div>
+                <div class="question-options">${q.options.join(' | ')} <strong>(correct: ${q.options[q.correct]})</strong></div>
+                <div class="inline-actions">
+                    <button class="btn-outline edit-q" data-id="${q.id}" style="padding:4px 12px; font-size:12px;"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="btn-outline delete-q" data-id="${q.id}" style="padding:4px 12px; background:#fee2e2; border-color:#f26b65;"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </div>
+        `).join('');
+        document.querySelectorAll('.edit-q').forEach(btn => {
+            btn.addEventListener('click', () => openEditQuestion(parseInt(btn.dataset.id)));
+        });
+        document.querySelectorAll('.delete-q').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if(confirm('Delete question?')) {
+                    const id = parseInt(btn.dataset.id);
+                    questionsBank = questionsBank.filter(q => q.id !== id);
+                    renderQuestions();
+                    renderDashboard();
+                }
+            });
+        });
+    }
+
+    function openEditQuestion(id) {
+        const q = questionsBank.find(q => q.id === id);
+        if(q) {
+            document.getElementById('modalTitle').innerText = 'Edit Question';
+            document.getElementById('editQuestionId').value = q.id;
+            document.getElementById('questionText').value = q.text;
+            document.getElementById('opt1').value = q.options[0];
+            document.getElementById('opt2').value = q.options[1];
+            document.getElementById('opt3').value = q.options[2];
+            document.getElementById('opt4').value = q.options[3];
+            document.getElementById('correctIndex').value = q.correct;
+            document.getElementById('questionModal').style.display = 'flex';
+        }
+    }
+
+    function saveQuestionFromModal() {
+        const id = document.getElementById('editQuestionId').value;
+        const text = document.getElementById('questionText').value;
+        const opts = [
+            document.getElementById('opt1').value,
+            document.getElementById('opt2').value,
+            document.getElementById('opt3').value,
+            document.getElementById('opt4').value
+        ];
+        const correct = parseInt(document.getElementById('correctIndex').value);
+        if(!text || opts.some(o => !o)) return alert('Please fill all fields');
+        if(id) { // edit
+            const index = questionsBank.findIndex(q => q.id == id);
+            if(index !== -1) {
+                questionsBank[index] = { ...questionsBank[index], text, options: opts, correct };
+            }
+        } else {
+            const newId = Date.now();
+            questionsBank.push({ id: newId, text, options: opts, correct });
+        }
+        renderQuestions();
+        renderDashboard();
+        closeModal();
+    }
+
+    function closeModal() {
+        document.getElementById('questionModal').style.display = 'none';
+        document.getElementById('editQuestionId').value = '';
+        document.getElementById('questionText').value = '';
+        document.getElementById('opt1').value = '';
+        document.getElementById('opt2').value = '';
+        document.getElementById('opt3').value = '';
+        document.getElementById('opt4').value = '';
+        document.getElementById('modalTitle').innerText = 'Add Question';
+    }
+
+    function renderCertificates() {
+        const searchTerm = document.getElementById('certSearch')?.value.toLowerCase() || '';
+        const filtered = quizResults.filter(r => r.passed && (r.student.toLowerCase().includes(searchTerm) || r.id.toLowerCase().includes(searchTerm)));
+        const tbody = document.querySelector('#certificatesTable tbody');
+        tbody.innerHTML = filtered.map(c => `
+            <tr>
+                <td>${c.student}</td><td><code>${c.id}</code></td><td>${c.score}/${c.total} (${c.percent}%)</td><td>${c.date}</td>
+                <td><button class="btn-outline view-single-cert" data-id="${c.id}" style="padding:4px 12px;">View</button></td>
+            </tr>
+        `).join('');
+        document.querySelectorAll('.view-single-cert').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cert = quizResults.find(r => r.id === btn.dataset.id);
+                if(cert) showCertificatePreview(cert);
+            });
+        });
+    }
+
+    function showCertificatePreview(cert) {
+        const previewDiv = document.getElementById('certPreviewContent');
+        previewDiv.innerHTML = `
+            <div style="background:#fef9e3; border:2px solid #d4af37; padding:20px; text-align:center; border-radius:20px;">
+                <h2>🎓 Certificate of Achievement</h2>
+                <p>This certifies that</p>
+                <h3>${cert.student}</h3>
+                <p>completed the quiz with score <strong>${cert.score}/${cert.total}</strong> (${cert.percent}%)</p>
+                <p>Certificate ID: <strong>${cert.id}</strong></p>
+                <p>Date: ${cert.date}</p>
+                ${cert.passed ? '<span style="background:#dcfce7; padding:4px 12px; border-radius:20px;">✔ Verified</span>' : '<span>Not passed</span>'}
+            </div>
+        `;
+        document.getElementById('certPreviewModal').style.display = 'flex';
+    }
+
+    function exportResultsCSV() {
+        let csv = "Student,Score,Total,Percentage,Passed,Certificate ID,Date\n";
+        quizResults.forEach(r => {
+            csv += `"${r.student}",${r.score},${r.total},${r.percent},${r.passed},${r.id},${r.date}\n`;
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'quiz_results.csv';
+        a.click();
+    }
+
+    // TABS
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+        document.getElementById(`${tabId}Tab`).style.display = 'block';
+        document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+        document.querySelector(`.menu-item[data-tab="${tabId}"]`).classList.add('active');
+        let title = '';
+        if(tabId === 'dashboard') title = 'Dashboard';
+        else if(tabId === 'results') title = 'Quiz Results';
+        else if(tabId === 'questions') title = 'Manage Questions';
+        else if(tabId === 'certificates') title = 'Certificates';
+        document.getElementById('mainTitle').innerText = title;
+
+        if(tabId === 'dashboard') renderDashboard();
+        if(tabId === 'results') renderAllResults();
+        if(tabId === 'questions') renderQuestions();
+        if(tabId === 'certificates') renderCertificates();
+    }
+
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tab = item.getAttribute('data-tab');
+            switchTab(tab);
+        });
+    });
+
+    document.getElementById('addQuestionBtn')?.addEventListener('click', () => {
+        document.getElementById('modalTitle').innerText = 'Add Question';
+        document.getElementById('editQuestionId').value = '';
+        document.getElementById('questionText').value = '';
+        document.getElementById('opt1').value = '';
+        document.getElementById('opt2').value = '';
+        document.getElementById('opt3').value = '';
+        document.getElementById('opt4').value = '';
+        document.getElementById('questionModal').style.display = 'flex';
+    });
+    document.getElementById('saveQuestionBtn').addEventListener('click', saveQuestionFromModal);
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('closeCertModal').addEventListener('click', () => document.getElementById('certPreviewModal').style.display = 'none');
+    document.getElementById('exportResultsBtn')?.addEventListener('click', exportResultsCSV);
+    document.getElementById('certSearch')?.addEventListener('input', () => renderCertificates());
+
+    // initial load
+    renderDashboard();
+    renderAllResults();
+    renderQuestions();
+    renderCertificates();
+    window.onclick = (e) => { if(e.target.classList.contains('modal')) e.target.style.display = 'none'; };
+</script>
+</body>
+</html>
