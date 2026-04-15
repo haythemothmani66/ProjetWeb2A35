@@ -67,6 +67,16 @@
 
     <section class="home_course section-padding">
         <div class="container">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div>
+                            <strong>Candidature active.</strong> Une offre ouverte peut maintenant recevoir une candidature directement depuis cette page.
+                        </div>
+                        <a href="index.php?espace=front&module=candidature&action=liste" class="btn btn-sm btn-primary">Acceder au formulaire</a>
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <?php if (empty($offres)): ?>
                     <div class="col-12">
@@ -94,6 +104,9 @@
                                 <p><span class="ti-calendar"></span> Date limite: <?= htmlspecialchars((string) $offre['datelimite']) ?></p>
                                 <div class="d-grid gap-2">
                                     <a href="index.php?espace=front&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>" class="btn_one">Voir details</a>
+                                    <?php if (($offre['statut'] ?? '') === 'ouverte'): ?>
+                                        <a href="index.php?espace=front&module=candidature&action=ajouter&offreid=<?= (int) $offre['id'] ?>" class="btn btn-outline-primary">Candidater</a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

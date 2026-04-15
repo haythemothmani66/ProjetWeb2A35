@@ -78,6 +78,11 @@
                         <p><span class="ti-calendar"></span> <strong>Date limite:</strong> <?= htmlspecialchars((string) $offre['datelimite']) ?></p>
                         <p><span class="ti-check-box"></span> <strong>Statut:</strong> <?= htmlspecialchars((string) $offre['statut']) ?></p>
 
+                        <?php if (($offre['statut'] ?? '') === 'ouverte'): ?>
+                            <a href="index.php?espace=front&module=candidature&action=ajouter&offreid=<?= (int) $offre['id'] ?>" class="btn_one retour-liste-btn">Candidater maintenant</a>
+                        <?php else: ?>
+                            <div class="alert alert-warning mt-3">Cette offre n'est pas ouverte aux candidatures pour le moment.</div>
+                        <?php endif; ?>
                         <a href="index.php?espace=front&module=offreemploi&action=liste" class="btn_one retour-liste-btn">Retour a la liste</a>
                     </div>
                 </div>
