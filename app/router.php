@@ -73,13 +73,14 @@ class Router
     public function dispatch(): void
     {
         // 1️⃣ Try controller (optional future feature)
-        $controllerFile = __DIR__ . "/controller/{$this->resource}.php";
+        $controllerFile = __DIR__ . "/../controller/{$this->resource}.php";
 
         if (file_exists($controllerFile)) {
             require_once $controllerFile;
 
-            if (class_exists($this->resource)) {
-                $controller = new $this->resource();
+            $className = ucfirst($this->resource);
+            if (class_exists($className)) {
+                $controller = new $className();
 
                 if (method_exists($controller, $this->action)) {
                     $controller->{$this->action}($this->params);

@@ -464,7 +464,7 @@
 							<h3 class="form-title"><i class="fas fa-file-upload"></i> Soumettre un Devoir</h3>
 							<p class="form-subtitle">Remplissez les informations pour soumettre votre devoir</p>
 							
-							<form action="/eduleb/index.php?route=devoirs/submit" method="POST" class="needs-validation" enctype="multipart/form-data" novalidate>
+							<form action="/eduleb/controller/devoirs.php?action=submit" method="POST" class="needs-validation" enctype="multipart/form-data" novalidate>
 								
 								<div class="form-group">
 									<label for="titre"><i class="fas fa-heading"></i> Titre du devoir</label>
@@ -555,7 +555,7 @@
 							<h3 class="form-title"><i class="fas fa-check-circle"></i> Soumettre une Correction</h3>
 							<p class="form-subtitle">Remplissez les détails pour corriger un devoir</p>
 							
-							<form action="/eduleb/index.php?route=devoirs/correct" method="POST" class="needs-validation" enctype="multipart/form-data" novalidate>
+							<form action="/eduleb/controller/devoirs.php?action=correct" method="POST" class="needs-validation" enctype="multipart/form-data" novalidate>
 								
 								<div class="form-group">
 									<label for="commentaire"><i class="fas fa-comment-dots"></i> Commentaire</label>
