@@ -12,12 +12,32 @@ unset($_SESSION['success_message']);
 unset($_SESSION['form_errors']);
 unset($_SESSION['form_data']);
 
+
+
 // Pour pré-remplir les champs (optionnel)
 $oldDevoir = $oldData;
 $oldCorrection = $oldData;
 
 require_once __DIR__ . '/../../config/database.php';
 $conn = getDBConnection();
+
+// Récupérer l'ID à modifier depuis l'URL
+$editType = $_GET['edit'] ?? '';
+$editId = (int)($_GET['id'] ?? 0);
+$editDevoir = null;
+$editCorrection = null;
+
+if ($editType && $editId) {
+    if ($editType === 'devoir') {
+        $stmt = $conn->prepare("SELECT * FROM devoirs WHERE id_devoir = ?");
+        $stmt->execute([$editId]);
+        $editDevoir = $stmt->fetch(PDO::FETCH_ASSOC);
+    } elseif ($editType === 'correction') {
+        $stmt = $conn->prepare("SELECT * FROM correction WHERE id_correction = ?");
+        $stmt->execute([$editId]);
+        $editCorrection = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
 
 $devoirs = $conn->query("SELECT * FROM devoirs ORDER BY id_devoir DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
 $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
@@ -509,6 +529,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: Algorithme de tri à bulles"
                                        minlength="3"
                                        maxlength="150"
+                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['titre']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-titre"></span>
                                 <small class="hint">Donnez un titre descriptif (3 à 150 caractères)</small>
@@ -526,6 +547,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           placeholder="Décrivez le contexte et les défis du devoir..."
                                           minlength="10"
                                           maxlength="1000"
+                                          value="<?= $editDevoir ? htmlspecialchars($editDevoir['description']) : '' ?>"
                                           required></textarea>
                                 <span class="char-counter" id="counter-description">0 / 1000</span>
                                 <span class="field-feedback" id="fb-description"></span>
@@ -542,13 +564,16 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="file1"
                                        class="form-control"
                                        accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
+                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['fichier']) : '' ?>"
                                        required>
                                 <div class="file-preview" id="preview-file1">
                                     <i class="fas fa-check-circle"></i>
                                     <span id="preview-file1-name"></span>
                                 </div>
                                 <span class="field-feedback" id="fb-file1"></span>
-                                <small class="hint">Formats : .py .js .java .cpp .c .png .jpg .jpeg</small>
+                                <small class="hint">Formats : .py .js .java .cpp .c .png .jpg .jpeg
+                                    
+                                </small>
                             </div>
 
                             <!-- DATE SOUMISSION -->
@@ -561,6 +586,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="date_soumission"
                                        id="date_soumission"
                                        class="form-control"
+                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['date_soumission']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-date_soumission"></span>
                             </div>
@@ -571,7 +597,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                     <i class="fas fa-graduation-cap"></i> Niveau de difficulté
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="niveau_difficulte" id="niveau_difficulte" class="form-control" required>
+                                <select name="niveau_difficulte" id="niveau_difficulte" class="form-control" 
+
+                                required>
                                     <option value="">-- Sélectionnez un niveau --</option>
                                     <option value="facile">🟢 Facile</option>
                                     <option value="moyen">🟡 Moyen</option>
@@ -608,6 +636,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: 45"
                                        min="1"
                                        max="480"
+                                        value="<?= $editDevoir ? htmlspecialchars($editDevoir['temps_estime_resolution']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-temps_estime_resolution"></span>
                                 <small class="hint">Entre 1 et 480 minutes</small>
@@ -626,6 +655,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: 75"
                                        min="0"
                                        max="100"
+                                        value="<?= $editDevoir ? htmlspecialchars($editDevoir['progression_eleve']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-progression_eleve"></span>
                                 <small class="hint">Pourcentage entre 0 et 100</small>
@@ -642,6 +672,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="mots_cles"
                                        class="form-control"
                                        placeholder="Ex: SQL, jointures, récursion, pointeurs"
+                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['mots_cles']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-mots_cles"></span>
                                 <small class="hint">Séparez les mots clés par des virgules</small>
@@ -721,6 +752,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           placeholder="Donnez votre feedback détaillé..."
                                           minlength="10"
                                           maxlength="1000"
+                                          value="<?= $editCorrection ? htmlspecialchars($editCorrection['commentaire']) : '' ?>"
                                           required></textarea>
                                 <span class="char-counter" id="counter-commentaire">0 / 1000</span>
                                 <span class="field-feedback" id="fb-commentaire"></span>
@@ -736,7 +768,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="file2"
                                        id="file2"
                                        class="form-control"
-                                       accept=".py,.js,.java,.cpp,.c"
+                                       accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['fichier_corrige']) : '' ?>"
                                        required>
                                 <div class="file-preview" id="preview-file2">
                                     <i class="fas fa-check-circle"></i>
@@ -756,6 +789,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="date_correction"
                                        id="date_correction"
                                        class="form-control"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['date_correction']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-date_correction"></span>
                             </div>
@@ -766,7 +800,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                     <i class="fas fa-comment"></i> Type de feedback
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="type_feedback" id="type_feedback" class="form-control" required>
+                                <select name="type_feedback" id="type_feedback" class="form-control" 
+
+                                required>
                                     <option value="">-- Sélectionnez un type --</option>
                                     <option value="explicatif">📖 Explicatif</option>
                                     <option value="direct">⚡ Direct</option>
@@ -789,6 +825,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        min="0"
                                        max="20"
                                        step="0.5"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['note_estimee']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-note_estimee"></span>
                                 <small class="hint">Valeur entre 0 et 20 (pas de 0.5)</small>
@@ -805,6 +842,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="competences_evaluees"
                                        class="form-control"
                                        placeholder="Ex: Algorithmique, Français, Physique"
+                                        value="<?= $editCorrection? htmlspecialchars($editCorrection['competences_evaluees']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-competences_evaluees"></span>
                                 <small class="hint">Séparez les compétences par des virgules</small>
@@ -823,6 +861,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: 2"
                                        min="1"
                                        max="10"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['nombre_iterations']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-nombre_iterations"></span>
                                 <small class="hint">Entre 1 et 10 itérations</small>
@@ -837,7 +876,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           id="suggestions_personnalisees"
                                           class="form-control"
                                           placeholder="Suggérez des améliorations et ressources..."
-                                          maxlength="800"></textarea>
+                                          maxlength="800"><?= $editCorrection ? htmlspecialchars($editCorrection['suggestions_personnalisees']) : '' ?></textarea>
                                 <span class="char-counter" id="counter-suggestions">0 / 800</span>
                             </div>
 
@@ -850,7 +889,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="ressources_recommandees"
                                        id="ressources_recommandees"
                                        class="form-control"
-                                       placeholder="Ex: https://exemple.com, https://tutoriel.com">
+                                       placeholder="Ex: https://exemple.com, https://tutoriel.com"
+                                       value="<?= $editCorrection ? htmlspecialchars($editCorrection['ressources_recommandees']) : '' ?>">
                                 <small class="hint">Liens séparés par des virgules</small>
                             </div>
 
@@ -867,6 +907,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: 30"
                                        min="1"
                                        max="480"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['rapidite_correction']) : '' ?>"
                                        required>
                                 <span class="field-feedback" id="fb-rapidite_correction"></span>
                                 <small class="hint">Entre 1 et 480 minutes</small>

@@ -49,6 +49,78 @@ $successType = $_GET['success'] ?? '';
     <link rel="stylesheet" href="../../assets/css/style.css">
 
     <style>
+        .btn-edit {
+    background: #F59E0B;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    text-decoration: none;
+}
+
+.btn-edit:hover {
+    background: #D97706;
+    transform: scale(1.05);
+    color: white;
+    text-decoration: none;
+}
+        .btn-delete {
+    background: #EF4444;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.btn-delete:hover {
+    background: #DC2626;
+    transform: scale(1.05);
+}
+
+/* Popup confirmation */
+.confirm-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    z-index: 10000;
+    text-align: center;
+    min-width: 300px;
+}
+
+.confirm-popup button {
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+}
+
+.confirm-popup .btn-confirm {
+    background: #EF4444;
+    color: white;
+}
+
+.confirm-popup .btn-cancel {
+    background: #94A3B8;
+    color: white;
+}
         :root {
             --primary: #6C63FF;
             --secondary: #00D4FF;
@@ -451,6 +523,7 @@ $successType = $_GET['success'] ?? '';
             </div>
 
             <!-- ==================== TAB DEVOIRS ==================== -->
+             
             <div class="tab-panel active" id="panel-devoirs">
 
                 <?php if (empty($devoirs)): ?>
@@ -467,28 +540,38 @@ $successType = $_GET['success'] ?? '';
                     <div class="feed-card" style="animation-delay: <?= $i * 0.07 ?>s">
 
                         <!-- Header -->
-                        <div class="card-header-bar devoir-header">
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <span class="card-type-badge badge-devoir">
-                                    <i class="fas fa-book-open"></i> Devoir
-                                </span>
-                                <span class="card-id"># <?= htmlspecialchars($d['id_devoir']) ?></span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <?php
-                                    $urg = $d['urgence'] ?? 'faible';
-                                    $urgClass = 'urgence-' . strtolower($urg);
-                                    $urgIcon  = ($urg === 'urgente') ? '🔴' : (($urg === 'moyenne') ? '🟡' : '🟢');
-                                ?>
-                                <span class="urgence-pill <?= $urgClass ?>">
-                                    <?= $urgIcon ?> <?= htmlspecialchars(ucfirst($urg)) ?>
-                                </span>
-                                <span class="card-date">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <?= htmlspecialchars($d['date_soumission']) ?>
-                                </span>
-                            </div>
-                        </div>
+                         <!-- Dans l'en-tête de la carte devoir, ajoutez ce bouton -->
+<div class="card-header-bar devoir-header">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="card-type-badge badge-devoir">
+            <i class="fas fa-book-open"></i> Devoir
+        </span>
+        <span class="card-id"># <?= htmlspecialchars($d['id_devoir']) ?></span>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- AJOUTEZ CE BOUTON SUPPRIMER -->
+        <button class="btn-delete btn-sm" data-id="<?= $d['id_devoir'] ?>" data-type="devoir">
+            <i class="fas fa-trash-alt"></i> Supprimer
+        </button>
+        <a href="/eduleb/view/template/submit.php?edit=devoir&id=<?= $d['id_devoir'] ?>" class="btn-edit btn-sm">
+            <i class="fas fa-edit"></i> Modifier
+        </a>
+        <!-- Fin du bouton -->
+        <?php
+            $urg = $d['urgence'] ?? 'faible';
+            $urgClass = 'urgence-' . strtolower($urg);
+            $urgIcon  = ($urg === 'urgente') ? '🔴' : (($urg === 'moyenne') ? '🟡' : '🟢');
+        ?>
+        <span class="urgence-pill <?= $urgClass ?>">
+            <?= $urgIcon ?> <?= htmlspecialchars(ucfirst($urg)) ?>
+        </span>
+        <span class="card-date">
+            <i class="fas fa-calendar-alt"></i>
+            <?= htmlspecialchars($d['date_soumission']) ?>
+        </span>
+    </div>
+</div>
+                        
 
                         <!-- Body -->
                         <div class="card-body-content">
@@ -562,6 +645,7 @@ $successType = $_GET['success'] ?? '';
             </div><!-- /panel-devoirs -->
 
             <!-- ==================== TAB correction ==================== -->
+            
             <div class="tab-panel" id="panel-correction">
 
                 <?php if (empty($correction)): ?>
@@ -575,24 +659,34 @@ $successType = $_GET['success'] ?? '';
                     <div class="feed-card" style="animation-delay: <?= $i * 0.07 ?>s">
 
                         <!-- Header -->
-                        <div class="card-header-bar correction-header">
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <span class="card-type-badge badge-correction">
-                                    <i class="fas fa-check-circle"></i> Correction
-                                </span>
-                                <span class="card-id"># <?= htmlspecialchars($c['id_correction']) ?></span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <span class="note-badge">
-                                    <i class="fas fa-star"></i>
-                                    <?= htmlspecialchars($c['note_estimee']) ?>/20
-                                </span>
-                                <span class="card-date">
-                                    <i class="fas fa-calendar-check"></i>
-                                    <?= htmlspecialchars($c['date_correction']) ?>
-                                </span>
-                            </div>
-                        </div>
+                          <!-- Dans l'en-tête de la carte correction -->
+<div class="card-header-bar correction-header">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span class="card-type-badge badge-correction">
+            <i class="fas fa-check-circle"></i> Correction
+        </span>
+        <span class="card-id"># <?= htmlspecialchars($c['id_correction']) ?></span>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- AJOUTEZ CE BOUTON SUPPRIMER -->
+        <button class="btn-delete btn-sm" data-id="<?= $c['id_correction'] ?>" data-type="correction">
+            <i class="fas fa-trash-alt"></i> Supprimer
+        </button>
+        <a href="/eduleb/view/template/submit.php?edit=correction&id=<?= $c['id_correction'] ?>" class="btn-edit btn-sm">
+            <i class="fas fa-edit"></i> Modifier
+        </a>
+        <!-- Fin du bouton -->
+        <span class="note-badge">
+            <i class="fas fa-star"></i>
+            <?= htmlspecialchars($c['note_estimee']) ?>/20
+        </span>
+        <span class="card-date">
+            <i class="fas fa-calendar-check"></i>
+            <?= htmlspecialchars($c['date_correction']) ?>
+        </span>
+    </div>
+</div>
+                        
 
                         <!-- Body -->
                         <div class="card-body-content">
@@ -722,6 +816,65 @@ $successType = $_GET['success'] ?? '';
         document.getElementById('panel-' + tab).classList.add('active');
         btn.classList.add('active');
     }
+    
+// Fonction pour afficher le popup de confirmation
+function showConfirmPopup(message, onConfirm) {
+    const popup = document.createElement('div');
+    popup.className = 'confirm-popup';
+    popup.innerHTML = `
+        <p style="margin-bottom: 1rem;">${message}</p>
+        <button class="btn-confirm">Oui, supprimer</button>
+        <button class="btn-cancel">Annuler</button>
+    `;
+    document.body.appendChild(popup);
+    
+    popup.querySelector('.btn-confirm').onclick = () => {
+        onConfirm();
+        popup.remove();
+    };
+    popup.querySelector('.btn-cancel').onclick = () => popup.remove();
+}
+
+// Fonction pour supprimer
+function deleteItem(id, type) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce ' + (type === 'devoir' ? 'devoir' : 'correction') + ' ?')) {
+        return;
+    }
+    
+    const action = type === 'devoir' ? 'delete' : 'deletecorrection';
+    
+    fetch('/eduleb/controller/devoirs.php?action=' + action + '&id=' + id, {
+        method: 'GET'
+    })
+    .then(response => response.text())
+    .then(data => {
+        // Afficher un petit message de succès
+        const toast = document.createElement('div');
+        toast.className = 'toast-success';
+        toast.innerHTML = '<i class="fas fa-check-circle"></i> Supprimé avec succès';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+        
+        // Supprimer la carte du DOM sans recharger
+        const card = document.querySelector(`.btn-delete[data-id="${id}"]`).closest('.feed-card');
+        if (card) {
+            card.remove();
+        }
+    })
+    .catch(error => {
+        alert('Erreur: ' + error.message);
+    });
+}
+
+// Ajouter les écouteurs sur tous les boutons supprimer
+document.querySelectorAll('.btn-delete').forEach(button => {
+    button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const id = this.dataset.id;
+        const type = this.dataset.type;
+        deleteItem(id, type);
+    });
+});
 
     // ====== AUTO-HIDE TOAST ======
     setTimeout(function() {

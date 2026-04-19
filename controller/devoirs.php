@@ -86,15 +86,15 @@ class Devoirs
             $temps_estime_resolution, $progression_eleve,
             $mots_cles, $urgence
         ])) {
-            $_SESSION['success_message'] = "✓ Devoir '{$titre}' ajouté avec succès !";
-            echo json_encode(['success' => true, 'message' => "✓ Devoir '{$titre}' ajouté avec succès !"]);
-            exit;
+            echo "succès|Devoir '{$titre}' ajouté avec succès !";
+           return;
         } else {
             $info = $stmt->errorInfo();
-            echo json_encode(['success' => false, 'message' => 'Erreur base de données : ' . $info[2]]);
-            exit;
+            echo "erreur|Erreur base de données : " . $info[2];
+    return;
         }
     }
+
 
     // ============================================================
     //   SOUMETTRE UNE CORRECTION
@@ -173,15 +173,196 @@ class Devoirs
             $suggestions_personnalisees, $ressources_recommandees,
             $rapidite_correction, $ton_feedback, $id_devoir
         ])) {
-            $_SESSION['success_message'] = "✓ Correction ajoutée avec succès pour le devoir #{$id_devoir} !";
-             echo json_encode(['success' => true, 'message' => "✓ Correction ajoutée avec succès pour le devoir #{$id_devoir} !"]);
-            exit;
+            echo "succès|Correction ajoutée avec succès pour le devoir #{$id_devoir} !";
+        return;
         } else {
             $info = $stmt->errorInfo();
-            echo json_encode(['success' => false, 'message' => 'Erreur base de données : ' . $info[2]]);
-            exit;
+            echo "erreur|Erreur base de données : " . $info[2];
+            return;
         }
     }
+ 
+// ============================================================
+//   SUPPRIMER UN DEVOIR
+// ============================================================
+public function delete()
+{
+    $id_devoir = (int)($_GET['id'] ?? 0);
+
+    if ($id_devoir <= 0) {
+        echo "ID invalide";
+        return;
+    }
+
+    // Supprimer d'abord les corrections liées
+    $stmtCorr = $this->conn->prepare("DELETE FROM correction WHERE id_devoir = ?");
+    $stmtCorr->execute([$id_devoir]);
+
+    // Puis supprimer le devoir
+    $stmt = $this->conn->prepare("DELETE FROM devoirs WHERE id_devoir = ?");
+    
+    if ($stmt->execute([$id_devoir])) {
+        echo "succès";
+    } else {
+        echo "erreur";
+    }
+}
+
+// ============================================================
+//   SUPPRIMER UNE CORRECTION
+// ============================================================
+public function deleteCorrection()
+{
+    $id_correction = (int)($_GET['id'] ?? 0);
+
+    if ($id_correction <= 0) {
+        echo "ID invalide";
+        return;
+    }
+
+    $stmt = $this->conn->prepare("DELETE FROM correction WHERE id_correction = ?");
+    
+    if ($stmt->execute([$id_correction])) {
+        echo "succès";
+    } else {
+        echo "erreur";
+    }
+}
+
+// ============================================================
+//   RÉCUPÉRER UN DEVOIR POUR MODIFICATION
+// ============================================================
+public function getDevoir()
+{
+    header('Content-Type: application/json');
+    
+    $id_devoir = (int)($_GET['id'] ?? 0);
+    
+    if ($id_devoir <= 0) {
+        echo json_encode(['success' => false, 'message' => 'ID invalide']);
+        return;
+    }
+    
+    $stmt = $this->conn->prepare("SELECT * FROM devoirs WHERE id_devoir = ?");
+    $stmt->execute([$id_devoir]);
+    $devoir = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($devoir) {
+        echo json_encode(['success' => true, 'data' => $devoir]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Devoir non trouvé']);
+    }
+}
+
+// ============================================================
+//   MODIFIER UN DEVOIR
+// ============================================================
+public function updateDevoir()
+{
+    header('Content-Type: application/json');
+    
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+        return;
+    }
+    
+    $id_devoir = (int)($_POST['id_devoir'] ?? 0);
+    $titre = trim($_POST['titre'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $niveau_difficulte = trim($_POST['niveau_difficulte'] ?? '');
+    $date_soumission = trim($_POST['date_soumission'] ?? '');
+    $type_erreur_predominant = trim($_POST['type_erreur_predominant'] ?? '');
+    $temps_estime_resolution = (int)($_POST['temps_estime_resolution'] ?? 0);
+    $progression_eleve = (int)($_POST['progression_eleve'] ?? 0);
+    $mots_cles = trim($_POST['mots_cles'] ?? '');
+    $urgence = trim($_POST['urgence'] ?? '');
+    
+    $stmt = $this->conn->prepare("
+        UPDATE devoirs SET 
+            titre = ?, description = ?, niveau_difficulte = ?,
+            date_soumission = ?, type_erreur_predominant = ?,
+            temps_estime_resolution = ?, progression_eleve = ?,
+            mots_cles = ?, urgence = ?
+        WHERE id_devoir = ?
+    ");
+    
+    if ($stmt->execute([$titre, $description, $niveau_difficulte, $date_soumission,
+        $type_erreur_predominant, $temps_estime_resolution, $progression_eleve,
+        $mots_cles, $urgence, $id_devoir])) {
+        echo json_encode(['success' => true, 'message' => 'Devoir modifié avec succès']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Erreur lors de la modification']);
+    }
+}
+
+// ============================================================
+//   RÉCUPÉRER UNE CORRECTION POUR MODIFICATION
+// ============================================================
+public function getCorrection()
+{
+    header('Content-Type: application/json');
+    
+    $id_correction = (int)($_GET['id'] ?? 0);
+    
+    if ($id_correction <= 0) {
+        echo json_encode(['success' => false, 'message' => 'ID invalide']);
+        return;
+    }
+    
+    $stmt = $this->conn->prepare("SELECT * FROM correction WHERE id_correction = ?");
+    $stmt->execute([$id_correction]);
+    $correction = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($correction) {
+        echo json_encode(['success' => true, 'data' => $correction]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Correction non trouvée']);
+    }
+}
+
+// ============================================================
+//   MODIFIER UNE CORRECTION
+// ============================================================
+public function updateCorrection()
+{
+    header('Content-Type: application/json');
+    
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+        return;
+    }
+    
+    $id_correction = (int)($_POST['id_correction'] ?? 0);
+    $commentaire = trim($_POST['commentaire'] ?? '');
+    $date_correction = trim($_POST['date_correction'] ?? '');
+    $type_feedback = trim($_POST['type_feedback'] ?? '');
+    $note_estimee = (float)($_POST['note_estimee'] ?? 0);
+    $competences_evaluees = trim($_POST['competences_evaluees'] ?? '');
+    $nombre_iterations = (int)($_POST['nombre_iterations'] ?? 1);
+    $suggestions_personnalisees = trim($_POST['suggestions_personnalisees'] ?? '');
+    $ressources_recommandees = trim($_POST['ressources_recommandees'] ?? '');
+    $rapidite_correction = (int)($_POST['rapidite_correction'] ?? 0);
+    $ton_feedback = trim($_POST['ton_feedback'] ?? '');
+    
+    $stmt = $this->conn->prepare("
+        UPDATE correction SET 
+            commentaire = ?, date_correction = ?, type_feedback = ?,
+            note_estimee = ?, competences_evaluees = ?,
+            nombre_iterations = ?, suggestions_personnalisees = ?,
+            ressources_recommandees = ?, rapidite_correction = ?,
+            ton_feedback = ?
+        WHERE id_correction = ?
+    ");
+    
+    if ($stmt->execute([$commentaire, $date_correction, $type_feedback,
+        $note_estimee, $competences_evaluees, $nombre_iterations,
+        $suggestions_personnalisees, $ressources_recommandees,
+        $rapidite_correction, $ton_feedback, $id_correction])) {
+        echo json_encode(['success' => true, 'message' => 'Correction modifiée avec succès']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Erreur lors de la modification']);
+    }
+}
 }
 
 // --- Appel selon l'action ---
@@ -192,8 +373,19 @@ if ($action === 'submit') {
     $devoir->submit();
 } elseif ($action === 'correct') {
     $devoir->correct();
-} else {
-    echo json_encode(['success' => false, 'message' => 'Action non reconnue']);
-    exit;
+} elseif ($action === 'delete') {
+    $devoir->delete();
+} elseif ($action === 'deletecorrection') {
+    $devoir->deleteCorrection();
+} elseif ($action === 'getdevoir') {
+    $devoir->getDevoir();
+} elseif ($action === 'updatedevoir') {
+    $devoir->updateDevoir();
+} elseif ($action === 'getcorrection') {
+    $devoir->getCorrection();
+} elseif ($action === 'updatecorrection') {
+    $devoir->updateCorrection();
+}else {
+    echo "Action non reconnue";
 }
 ?>
