@@ -505,7 +505,7 @@
 
 								<div class="form-group">
 									<label for="typeerreur"><i class="fas fa-exclamation-triangle"></i> Type d'erreur</label>
-									<select class="form-control" id="typeerreur" required>
+									<select name="type_erreur_predominant" class="form-control" id="typeerreur" required>
 										<option value="">-- Sélectionnez un type --</option>
 										<option value="logique">Logique</option>
 										<option value="syntaxe">Syntaxe</option>
@@ -516,26 +516,26 @@
 
 								<div class="form-group">
 									<label for="temps"><i class="fas fa-clock"></i> Temps estimé (minutes)</label>
-									<input type="number" class="form-control" id="temps" placeholder="45" min="1" max="480" required>
+									<input type="number" name="temps_estime_resolution" class="form-control" id="temps" placeholder="45" min="1" max="480" required>
 									<div class="invalid-feedback">Entrez un nombre valide</div>
 								</div>
 
 								<div class="form-group">
 									<label for="progression"><i class="fas fa-percentage"></i> Progression (%)</label>
-									<input type="number" class="form-control" id="progression" placeholder="75" min="0" max="100" required>
+									<input type="number" name="progression_eleve" class="form-control" id="progression" placeholder="75" min="0" max="100" required>
 									<div class="invalid-feedback">Entrez un pourcentage entre 0-100</div>
 								</div>
 
 								<div class="form-group">
 									<label for="motscles"><i class="fas fa-tags"></i> Mots clés</label>
-									<input type="text" class="form-control" id="motscles" placeholder="Ex: SQL, pointeurs, algèbres, récursion" required>
+									<input type="text" name="mots_cles" class="form-control" id="motscles" placeholder="Ex: SQL, pointeurs, algèbres, récursion" required>
 									<small>Entrez les concepts clés séparés par des virgules</small>
 									<div class="invalid-feedback">Mots clés requis</div>
 								</div>
 
 								<div class="form-group">
 									<label for="urgence"><i class="fas fa-exclamation-circle"></i> Urgence</label>
-									<select class="form-control" id="urgence" required>
+									<select name="urgence" class="form-control" id="urgence" required>
 										<option value="">-- Sélectionnez l'urgence --</option>
 										<option value="faible">Faible</option>
 										<option value="moyenne">Moyenne</option>
@@ -1273,31 +1273,45 @@
 			});
 		});
 
-		// ============ FORM SUBMISSION MESSAGE ============
+		// ============ FLASH MESSAGE AFTER REDIRECT ============
 		document.addEventListener('DOMContentLoaded', function() {
-			const forms = document.querySelectorAll('.needs-validation');
-			
-			forms.forEach(form => {
-				form.addEventListener('submit', function(e) {
-					if (this.classList.contains('was-validated')) {
-						// Show success message
-						const successMsg = document.createElement('div');
-						successMsg.className = 'alert alert-success alert-dismissible fade show';
-						successMsg.role = 'alert';
-						successMsg.innerHTML = `
-							<strong>✓ Succès!</strong> Votre formulaire a été envoyé avec succès.
-							<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-						`;
-						
-						form.insertAdjacentElement('beforebegin', successMsg);
-						
-						// Redirect to feed.html after 2 seconds
-						setTimeout(() => {
-							window.location.href = 'feed.html';
-						}, 2000);
-					}
-				});
-			});
+			const params = new URLSearchParams(window.location.search);
+			const status = params.get('flash_status');
+			const message = params.get('flash_message');
+
+			if (!status || !message) {
+				return;
+			}
+
+			const host = document.querySelector('.col-lg-8.offset-lg-2');
+			if (!host) {
+				return;
+			}
+
+			const alert = document.createElement('div');
+			alert.className = status === 'success'
+				? 'alert alert-success alert-dismissible fade show'
+				: 'alert alert-danger alert-dismissible fade show';
+			alert.setAttribute('role', 'alert');
+
+			const icon = status === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+			const safeMessage = message
+				.replaceAll('&', '&amp;')
+				.replaceAll('<', '&lt;')
+				.replaceAll('>', '&gt;')
+				.replaceAll('"', '&quot;')
+				.replaceAll("'", '&#39;');
+
+			alert.innerHTML = '<i class="fas ' + icon + '"></i> ' + safeMessage
+				+ '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+
+			host.insertBefore(alert, host.firstChild);
+
+			params.delete('flash_status');
+			params.delete('flash_message');
+			const cleanQuery = params.toString();
+			const cleanUrl = window.location.pathname + (cleanQuery ? '?' + cleanQuery : '') + window.location.hash;
+			window.history.replaceState({}, document.title, cleanUrl);
 		});
 	</script>
 

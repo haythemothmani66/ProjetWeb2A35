@@ -447,8 +447,8 @@ $successType = $_GET['success'] ?? '';
                             <li class="menu-item-has-children">
                                 <a href="#">Edufeed</a>
                                 <ul>
-                                    <li><a href="submit.html">Submit Assignment</a></li>
-                                    <li><a href="feed.html">Learning Feed</a></li>
+                                    <li><a href="/eduleb/submit.html">Submit Assignment</a></li>
+                                    <li><a href="/eduleb/feed.html">Learning Feed</a></li>
                                 </ul>
                             </li>
                             <li><a href="partenariat.html">Partenariat</a></li>
@@ -468,8 +468,8 @@ $successType = $_GET['success'] ?? '';
                     <li><a href="about.html">About</a></li>
                     <li><a href="#">Edufeed</a>
                         <ul class="sub-menu">
-                            <li><a href="submit.php">Submit Assignment</a></li>
-                            <li><a href="feed.php">Learning Feed</a></li>
+                            <li><a href="/eduleb/submit.html">Submit Assignment</a></li>
+                            <li><a href="/eduleb/feed.html">Learning Feed</a></li>
                         </ul>
                     </li>
                     <li><a href="partenariat.html">Partenariat</a></li>
@@ -501,7 +501,7 @@ $successType = $_GET['success'] ?? '';
                         </div>
                     </div>
                 </div>
-                <a href="submit.php" class="btn-submit-link align-self-center">
+                <a href="/eduleb/submit.html" class="btn-submit-link align-self-center">
                     <i class="fas fa-plus"></i> Soumettre
                 </a>
             </div>
@@ -531,7 +531,7 @@ $successType = $_GET['success'] ?? '';
                         <i class="fas fa-inbox"></i>
                         <h4>Aucun devoir soumis pour l'instant</h4>
                         <p>Soyez le premier à soumettre un devoir !</p>
-                        <a href="submit.php" class="btn-submit-link mt-3">
+                        <a href="/eduleb/submit.html" class="btn-submit-link mt-3">
                             <i class="fas fa-plus"></i> Soumettre un devoir
                         </a>
                     </div>
@@ -553,7 +553,7 @@ $successType = $_GET['success'] ?? '';
         <button class="btn-delete btn-sm" data-id="<?= $d['id_devoir'] ?>" data-type="devoir">
             <i class="fas fa-trash-alt"></i> Supprimer
         </button>
-        <a href="/eduleb/view/template/submit.php?edit=devoir&id=<?= $d['id_devoir'] ?>" class="btn-edit btn-sm">
+        <a href="/eduleb/submit.html?edit=devoir&id=<?= $d['id_devoir'] ?>" class="btn-edit btn-sm">
             <i class="fas fa-edit"></i> Modifier
         </a>
         <!-- Fin du bouton -->
@@ -672,7 +672,7 @@ $successType = $_GET['success'] ?? '';
         <button class="btn-delete btn-sm" data-id="<?= $c['id_correction'] ?>" data-type="correction">
             <i class="fas fa-trash-alt"></i> Supprimer
         </button>
-        <a href="/eduleb/view/template/submit.php?edit=correction&id=<?= $c['id_correction'] ?>" class="btn-edit btn-sm">
+        <a href="/eduleb/submit.html?edit=correction&id=<?= $c['id_correction'] ?>" class="btn-edit btn-sm">
             <i class="fas fa-edit"></i> Modifier
         </a>
         <!-- Fin du bouton -->
@@ -789,7 +789,7 @@ $successType = $_GET['success'] ?? '';
                     </p>
                 </div>
                 <div class="col-md-6 text-end">
-                    <a href="submit.php" style="color:#6C63FF;text-decoration:none;font-weight:600;font-size:0.9rem;">
+                    <a href="/eduleb/submit.html" style="color:#6C63FF;text-decoration:none;font-weight:600;font-size:0.9rem;">
                         <i class="fas fa-plus-circle"></i> Soumettre un devoir
                     </a>
                 </div>

@@ -25,5 +25,3 @@ function getDBConnection() {
 // Test connection
 // $conn = getDBConnection();
 // echo "CONNECTED SUCCESSFULLY";
-?>
-?>

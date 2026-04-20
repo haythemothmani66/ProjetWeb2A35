@@ -13,14 +13,82 @@ class Devoirs
         $this->conn = getDBConnection();
     }
 
+    private function isAjaxRequest()
+    {
+        $requestedWith = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
+        if ($requestedWith === 'xmlhttprequest') {
+            return true;
+        }
+
+        $accept = strtolower($_SERVER['HTTP_ACCEPT'] ?? '');
+        return strpos($accept, 'application/json') !== false;
+    }
+
+    private function getReturnUrl()
+    {
+        $defaultUrl = '/eduleb/submit.html';
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+
+        if (empty($referer)) {
+            return $defaultUrl;
+        }
+
+        $parts = parse_url($referer);
+        if ($parts === false) {
+            return $defaultUrl;
+        }
+
+        $path = $parts['path'] ?? '';
+        if ($path === '' || strpos($path, '/eduleb/') !== 0) {
+            return $defaultUrl;
+        }
+
+        $query = isset($parts['query']) && $parts['query'] !== '' ? ('?' . $parts['query']) : '';
+        return $path . $query;
+    }
+
+    private function respond(bool $success, string $message, int $statusCode = 200)
+    {
+        if ($this->isAjaxRequest()) {
+            if (!headers_sent()) {
+                header('Content-Type: application/json');
+                http_response_code($statusCode);
+            }
+
+            echo json_encode([
+                'success' => $success,
+                'message' => $message,
+            ]);
+            exit;
+        }
+
+        if ($success) {
+            $_SESSION['success_message'] = $message;
+            unset($_SESSION['form_errors'], $_SESSION['form_data']);
+        } else {
+            $_SESSION['form_errors'] = [$message];
+            $_SESSION['form_data'] = $_POST;
+        }
+
+        $target = $this->getReturnUrl();
+        $separator = strpos($target, '?') === false ? '?' : '&';
+        $target .= $separator
+            . 'flash_status=' . ($success ? 'success' : 'error')
+            . '&flash_message=' . rawurlencode($message);
+
+        if (!headers_sent()) {
+            header('Location: ' . $target);
+        }
+        exit;
+    }
+
     // ============================================================
     //   SOUMETTRE UN DEVOIR
     // ============================================================
     public function submit()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
-            exit;
+            $this->respond(false, 'Méthode non autorisée', 405);
         }
 
         // --- Récupération des données ---
@@ -49,10 +117,7 @@ class Devoirs
         if (empty($urgence))                 $errors[] = "L'urgence est requise.";
 
         if (!empty($errors)) {
-            $_SESSION['form_errors'] = $errors;
-            $_SESSION['form_data'] = $_POST;
-             echo json_encode(['success' => false, 'message' => implode(', ', $errors)]);
-            exit;
+            $this->respond(false, implode(', ', $errors), 422);
         }
 
         // --- Upload fichier ---
@@ -86,12 +151,10 @@ class Devoirs
             $temps_estime_resolution, $progression_eleve,
             $mots_cles, $urgence
         ])) {
-            echo "succès|Devoir '{$titre}' ajouté avec succès !";
-           return;
+            $this->respond(true, "Devoir '{$titre}' ajouté avec succès !");
         } else {
             $info = $stmt->errorInfo();
-            echo "erreur|Erreur base de données : " . $info[2];
-    return;
+            $this->respond(false, "Erreur base de données : " . $info[2], 500);
         }
     }
 
@@ -102,8 +165,7 @@ class Devoirs
     public function correct()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
-            exit;
+            $this->respond(false, 'Méthode non autorisée', 405);
         }
 
         // --- Récupération des données ---
@@ -136,10 +198,7 @@ class Devoirs
         if (empty($ton_feedback))       $errors[] = 'Le ton du feedback est requis.';
 
         if (!empty($errors)) {
-            $_SESSION['form_errors'] = $errors;
-            $_SESSION['form_data'] = $_POST;
-            echo json_encode(['success' => false, 'message' => implode(', ', $errors)]);
-            exit;
+            $this->respond(false, implode(', ', $errors), 422);
         }
 
         // --- Upload fichier corrigé ---
@@ -173,12 +232,10 @@ class Devoirs
             $suggestions_personnalisees, $ressources_recommandees,
             $rapidite_correction, $ton_feedback, $id_devoir
         ])) {
-            echo "succès|Correction ajoutée avec succès pour le devoir #{$id_devoir} !";
-        return;
+            $this->respond(true, "Correction ajoutée avec succès pour le devoir #{$id_devoir} !");
         } else {
             $info = $stmt->errorInfo();
-            echo "erreur|Erreur base de données : " . $info[2];
-            return;
+            $this->respond(false, "Erreur base de données : " . $info[2], 500);
         }
     }
  

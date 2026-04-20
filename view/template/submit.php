@@ -39,15 +39,32 @@ if ($editType && $editId) {
     }
 }
 
-$devoirs = $conn->query("SELECT * FROM devoirs ORDER BY id_devoir DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+$devoirs = $conn->query("SELECT id_devoir, titre FROM devoirs ORDER BY id_devoir DESC")->fetchAll(PDO::FETCH_ASSOC);
 $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
 
-$successMessage = $successMessage ?? "";
-require_once __DIR__ . '/../../config/database.php';
-$conn = getDBConnection();
+$isEditDevoir = ($editType === 'devoir' && is_array($editDevoir));
+$isEditCorrection = ($editType === 'correction' && is_array($editCorrection));
 
-$devoirs = $conn->query("SELECT * FROM devoirs ORDER BY id_devoir DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
-$correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+$devoirFormAction = $isEditDevoir
+    ? '/eduleb/controller/devoirs.php?action=updatedevoir'
+    : '/eduleb/controller/devoirs.php?action=submit';
+
+$correctionFormAction = $isEditCorrection
+    ? '/eduleb/controller/devoirs.php?action=updatecorrection'
+    : '/eduleb/controller/devoirs.php?action=correct';
+
+function oldOrEdit(string $field, array $oldData, ?array $editData): string
+{
+    if (array_key_exists($field, $oldData) && $oldData[$field] !== null && $oldData[$field] !== '') {
+        return (string)$oldData[$field];
+    }
+
+    if (is_array($editData) && array_key_exists($field, $editData) && $editData[$field] !== null) {
+        return (string)$editData[$field];
+    }
+
+    return '';
+}
 ?>
 
 <!DOCTYPE html>
@@ -429,8 +446,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                             <li class="menu-item-has-children">
                                 <a href="#">Edufeed</a>
                                 <ul>
-                                    <li><a href="submit.html">Submit Assignment</a></li>
-                                    <li><a href="feed.html">Learning Feed</a></li>
+                                    <li><a href="/eduleb/submit.html">Submit Assignment</a></li>
+                                    <li><a href="/eduleb/feed.html">Learning Feed</a></li>
                                 </ul>
                             </li>
                             <li><a href="partenariat.html">Partenariat</a></li>
@@ -451,8 +468,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                     <li>
                         <a href="#">Edufeed</a>
                         <ul class="sub-menu">
-                            <li><a href="submit.php">Submit Assignment</a></li>
-                            <li><a href="feed.php">Learning Feed</a></li>
+                            <li><a href="/eduleb/submit.html">Submit Assignment</a></li>
+                            <li><a href="/eduleb/feed.html">Learning Feed</a></li>
                         </ul>
                     </li>
                     <li><a href="partenariat.html">Partenariat</a></li>
@@ -491,13 +508,27 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                     <!--        FORMULAIRE 1 : SOUMETTRE UN DEVOIR   -->
                     <!-- =========================================== -->
                     <div class="modern-form-container">
-                        <h3 class="form-title"><i class="fas fa-file-upload"></i> Soumettre un Devoir</h3>
-                        <p class="form-subtitle">Remplissez tous les champs pour soumettre votre devoir</p>
+                        <h3 class="form-title">
+                            <i class="fas fa-file-upload"></i>
+                            <?= $isEditDevoir ? 'Modifier un Devoir' : 'Soumettre un Devoir' ?>
+                        </h3>
+                        <p class="form-subtitle">
+                            <?= $isEditDevoir
+                                ? 'Mettez à jour les champs du devoir existant'
+                                : 'Remplissez tous les champs pour soumettre votre devoir' ?>
+                        </p>
 
                         <?php if (!empty($successMessage)): ?>
                             <div class="alert-modern success">
                                 <i class="fas fa-check-circle"></i>
                                 <?= htmlspecialchars($successMessage) ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($formErrors)): ?>
+                            <div class="alert-modern error">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <?= htmlspecialchars(implode(' ', $formErrors)) ?>
                             </div>
                         <?php endif; ?>
 
@@ -511,10 +542,14 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
 
                         <!-- ACTION → devoirs.php (submit) -->
                         <form id="form-devoir"
-                              action="/eduleb/controller/devoirs.php?action=submit"
+                              action="<?= htmlspecialchars($devoirFormAction) ?>"
                               method="POST"
                               enctype="multipart/form-data"
                               novalidate>
+
+                            <?php if ($isEditDevoir): ?>
+                                <input type="hidden" name="id_devoir" value="<?= htmlspecialchars((string)$editDevoir['id_devoir']) ?>">
+                            <?php endif; ?>
 
                             <!-- TITRE -->
                             <div class="form-group">
@@ -529,7 +564,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: Algorithme de tri à bulles"
                                        minlength="3"
                                        maxlength="150"
-                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['titre']) : '' ?>"
+                                        value="<?= htmlspecialchars(oldOrEdit('titre', $oldData, $editDevoir)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-titre"></span>
                                 <small class="hint">Donnez un titre descriptif (3 à 150 caractères)</small>
@@ -547,8 +582,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           placeholder="Décrivez le contexte et les défis du devoir..."
                                           minlength="10"
                                           maxlength="1000"
-                                          value="<?= $editDevoir ? htmlspecialchars($editDevoir['description']) : '' ?>"
-                                          required></textarea>
+                                          required><?= htmlspecialchars(oldOrEdit('description', $oldData, $editDevoir)) ?></textarea>
                                 <span class="char-counter" id="counter-description">0 / 1000</span>
                                 <span class="field-feedback" id="fb-description"></span>
                             </div>
@@ -564,16 +598,16 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="file1"
                                        class="form-control"
                                        accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
-                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['fichier']) : '' ?>"
-                                       required>
+                                       <?php if (!$isEditDevoir): ?>required<?php endif; ?>>
                                 <div class="file-preview" id="preview-file1">
                                     <i class="fas fa-check-circle"></i>
                                     <span id="preview-file1-name"></span>
                                 </div>
                                 <span class="field-feedback" id="fb-file1"></span>
-                                <small class="hint">Formats : .py .js .java .cpp .c .png .jpg .jpeg
-                                    
-                                </small>
+                                <small class="hint">Formats : .py .js .java .cpp .c .png .jpg .jpeg</small>
+                                <?php if ($isEditDevoir && !empty($editDevoir['fichier'])): ?>
+                                    <small class="hint">Fichier actuel : <?= htmlspecialchars($editDevoir['fichier']) ?></small>
+                                <?php endif; ?>
                             </div>
 
                             <!-- DATE SOUMISSION -->
@@ -586,7 +620,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="date_soumission"
                                        id="date_soumission"
                                        class="form-control"
-                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['date_soumission']) : '' ?>"
+                                        value="<?= htmlspecialchars(oldOrEdit('date_soumission', $oldData, $editDevoir)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-date_soumission"></span>
                             </div>
@@ -601,9 +635,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
 
                                 required>
                                     <option value="">-- Sélectionnez un niveau --</option>
-                                    <option value="facile">🟢 Facile</option>
-                                    <option value="moyen">🟡 Moyen</option>
-                                    <option value="difficile">🔴 Difficile</option>
+                                    <option value="facile" <?= oldOrEdit('niveau_difficulte', $oldData, $editDevoir) === 'facile' ? 'selected' : '' ?>>🟢 Facile</option>
+                                    <option value="moyen" <?= oldOrEdit('niveau_difficulte', $oldData, $editDevoir) === 'moyen' ? 'selected' : '' ?>>🟡 Moyen</option>
+                                    <option value="difficile" <?= oldOrEdit('niveau_difficulte', $oldData, $editDevoir) === 'difficile' ? 'selected' : '' ?>>🔴 Difficile</option>
                                 </select>
                                 <span class="field-feedback" id="fb-niveau_difficulte"></span>
                             </div>
@@ -616,9 +650,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                 </label>
                                 <select name="type_erreur_predominant" id="type_erreur_predominant" class="form-control" required>
                                     <option value="">-- Sélectionnez un type --</option>
-                                    <option value="logique">⚙️ Logique</option>
-                                    <option value="syntaxe">📝 Syntaxe</option>
-                                    <option value="comprehension">🧠 Compréhension</option>
+                                    <option value="logique" <?= oldOrEdit('type_erreur_predominant', $oldData, $editDevoir) === 'logique' ? 'selected' : '' ?>>⚙️ Logique</option>
+                                    <option value="syntaxe" <?= oldOrEdit('type_erreur_predominant', $oldData, $editDevoir) === 'syntaxe' ? 'selected' : '' ?>>📝 Syntaxe</option>
+                                    <option value="comprehension" <?= oldOrEdit('type_erreur_predominant', $oldData, $editDevoir) === 'comprehension' ? 'selected' : '' ?>>🧠 Compréhension</option>
                                 </select>
                                 <span class="field-feedback" id="fb-type_erreur_predominant"></span>
                             </div>
@@ -636,7 +670,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: 45"
                                        min="1"
                                        max="480"
-                                        value="<?= $editDevoir ? htmlspecialchars($editDevoir['temps_estime_resolution']) : '' ?>"
+                                    value="<?= htmlspecialchars(oldOrEdit('temps_estime_resolution', $oldData, $editDevoir)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-temps_estime_resolution"></span>
                                 <small class="hint">Entre 1 et 480 minutes</small>
@@ -655,7 +689,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: 75"
                                        min="0"
                                        max="100"
-                                        value="<?= $editDevoir ? htmlspecialchars($editDevoir['progression_eleve']) : '' ?>"
+                                    value="<?= htmlspecialchars(oldOrEdit('progression_eleve', $oldData, $editDevoir)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-progression_eleve"></span>
                                 <small class="hint">Pourcentage entre 0 et 100</small>
@@ -672,7 +706,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="mots_cles"
                                        class="form-control"
                                        placeholder="Ex: SQL, jointures, récursion, pointeurs"
-                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['mots_cles']) : '' ?>"
+                                        value="<?= htmlspecialchars(oldOrEdit('mots_cles', $oldData, $editDevoir)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-mots_cles"></span>
                                 <small class="hint">Séparez les mots clés par des virgules</small>
@@ -686,16 +720,19 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                 </label>
                                 <select name="urgence" id="urgence" class="form-control" required>
                                     <option value="">-- Sélectionnez l'urgence --</option>
-                                    <option value="faible">🟢 Faible</option>
-                                    <option value="moyenne">🟡 Moyenne</option>
-                                    <option value="urgente">🔴 Urgente</option>
+                                    <option value="faible" <?= oldOrEdit('urgence', $oldData, $editDevoir) === 'faible' ? 'selected' : '' ?>>🟢 Faible</option>
+                                    <option value="moyenne" <?= oldOrEdit('urgence', $oldData, $editDevoir) === 'moyenne' ? 'selected' : '' ?>>🟡 Moyenne</option>
+                                    <option value="urgente" <?= oldOrEdit('urgence', $oldData, $editDevoir) === 'urgente' ? 'selected' : '' ?>>🔴 Urgente</option>
                                 </select>
                                 <span class="field-feedback" id="fb-urgence"></span>
                             </div>
 
                             <button type="submit" class="btn btn-submit" id="btn-devoir">
                                 <span class="spinner"></span>
-                                <span class="btn-text"><i class="fas fa-paper-plane"></i>&nbsp; Publier le Devoir</span>
+                                <span class="btn-text">
+                                    <i class="fas <?= $isEditDevoir ? 'fa-save' : 'fa-paper-plane' ?>"></i>&nbsp;
+                                    <?= $isEditDevoir ? 'Enregistrer la modification' : 'Publier le Devoir' ?>
+                                </span>
                             </button>
                         </form>
                     </div>
@@ -704,8 +741,15 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                     <!--      FORMULAIRE 2 : SOUMETTRE UNE CORRECTION -->
                     <!-- ============================================ -->
                     <div class="modern-form-container">
-                        <h3 class="form-title"><i class="fas fa-check-circle"></i> Soumettre une Correction</h3>
-                        <p class="form-subtitle">Remplissez tous les champs pour corriger un devoir</p>
+                        <h3 class="form-title">
+                            <i class="fas fa-check-circle"></i>
+                            <?= $isEditCorrection ? 'Modifier une Correction' : 'Soumettre une Correction' ?>
+                        </h3>
+                        <p class="form-subtitle">
+                            <?= $isEditCorrection
+                                ? 'Mettez à jour les champs de la correction existante'
+                                : 'Remplissez tous les champs pour corriger un devoir' ?>
+                        </p>
 
                         <!-- Barre de progression correction -->
                         <div class="form-progress">
@@ -718,26 +762,31 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
 
                         <!-- ACTION → devoirs.php (correct) -->
                         <form id="form-correction"
-                              action="/eduleb/controller/devoirs.php?action=correct"
+                              action="<?= htmlspecialchars($correctionFormAction) ?>"
                               method="POST"
                               enctype="multipart/form-data"
                               novalidate>
 
+                            <?php if ($isEditCorrection): ?>
+                                <input type="hidden" name="id_correction" value="<?= htmlspecialchars((string)$editCorrection['id_correction']) ?>">
+                            <?php endif; ?>
+
                             <!-- ID DEVOIR (sélection) -->
                             <div class="form-group">
                                 <label for="id_devoir">
-                                    <i class="fas fa-link"></i> Devoir à corriger
+                                    <i class="fas fa-link"></i> Quel devoir voulez-vous corriger ? (ID devoir)
                                     <span class="required-star">*</span>
                                 </label>
                                 <select name="id_devoir" id="id_devoir" class="form-control" required>
                                     <option value="">-- Sélectionnez un devoir --</option>
                                     <?php foreach ($devoirs as $d): ?>
-                                        <option value="<?= htmlspecialchars($d['id_devoir']) ?>">
+                                        <option value="<?= htmlspecialchars($d['id_devoir']) ?>" <?= oldOrEdit('id_devoir', $oldData, $editCorrection) === (string)$d['id_devoir'] ? 'selected' : '' ?>>
                                             #<?= htmlspecialchars($d['id_devoir']) ?> — <?= htmlspecialchars($d['titre']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                                 <span class="field-feedback" id="fb-id_devoir"></span>
+                                <small class="hint">Choisissez l'ID du devoir concerné avant de soumettre la correction.</small>
                             </div>
 
                             <!-- COMMENTAIRE -->
@@ -752,8 +801,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           placeholder="Donnez votre feedback détaillé..."
                                           minlength="10"
                                           maxlength="1000"
-                                          value="<?= $editCorrection ? htmlspecialchars($editCorrection['commentaire']) : '' ?>"
-                                          required></textarea>
+                                          required><?= htmlspecialchars(oldOrEdit('commentaire', $oldData, $editCorrection)) ?></textarea>
                                 <span class="char-counter" id="counter-commentaire">0 / 1000</span>
                                 <span class="field-feedback" id="fb-commentaire"></span>
                             </div>
@@ -769,14 +817,16 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="file2"
                                        class="form-control"
                                        accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
-                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['fichier_corrige']) : '' ?>"
-                                       required>
+                                       <?php if (!$isEditCorrection): ?>required<?php endif; ?>>
                                 <div class="file-preview" id="preview-file2">
                                     <i class="fas fa-check-circle"></i>
                                     <span id="preview-file2-name"></span>
                                 </div>
                                 <span class="field-feedback" id="fb-file2"></span>
                                 <small class="hint">Formats : .py .js .java .cpp .c</small>
+                                <?php if ($isEditCorrection && !empty($editCorrection['fichier_corrige'])): ?>
+                                    <small class="hint">Fichier actuel : <?= htmlspecialchars($editCorrection['fichier_corrige']) ?></small>
+                                <?php endif; ?>
                             </div>
 
                             <!-- DATE CORRECTION -->
@@ -789,7 +839,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="date_correction"
                                        id="date_correction"
                                        class="form-control"
-                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['date_correction']) : '' ?>"
+                                    value="<?= htmlspecialchars(oldOrEdit('date_correction', $oldData, $editCorrection)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-date_correction"></span>
                             </div>
@@ -804,9 +854,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
 
                                 required>
                                     <option value="">-- Sélectionnez un type --</option>
-                                    <option value="explicatif">📖 Explicatif</option>
-                                    <option value="direct">⚡ Direct</option>
-                                    <option value="guide">🧭 Guidé</option>
+                                    <option value="explicatif" <?= oldOrEdit('type_feedback', $oldData, $editCorrection) === 'explicatif' ? 'selected' : '' ?>>📖 Explicatif</option>
+                                    <option value="direct" <?= oldOrEdit('type_feedback', $oldData, $editCorrection) === 'direct' ? 'selected' : '' ?>>⚡ Direct</option>
+                                    <option value="guide" <?= oldOrEdit('type_feedback', $oldData, $editCorrection) === 'guide' ? 'selected' : '' ?>>🧭 Guidé</option>
                                 </select>
                                 <span class="field-feedback" id="fb-type_feedback"></span>
                             </div>
@@ -825,7 +875,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        min="0"
                                        max="20"
                                        step="0.5"
-                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['note_estimee']) : '' ?>"
+                                    value="<?= htmlspecialchars(oldOrEdit('note_estimee', $oldData, $editCorrection)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-note_estimee"></span>
                                 <small class="hint">Valeur entre 0 et 20 (pas de 0.5)</small>
@@ -842,7 +892,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="competences_evaluees"
                                        class="form-control"
                                        placeholder="Ex: Algorithmique, Français, Physique"
-                                        value="<?= $editCorrection? htmlspecialchars($editCorrection['competences_evaluees']) : '' ?>"
+                                    value="<?= htmlspecialchars(oldOrEdit('competences_evaluees', $oldData, $editCorrection)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-competences_evaluees"></span>
                                 <small class="hint">Séparez les compétences par des virgules</small>
@@ -861,7 +911,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: 2"
                                        min="1"
                                        max="10"
-                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['nombre_iterations']) : '' ?>"
+                                    value="<?= htmlspecialchars(oldOrEdit('nombre_iterations', $oldData, $editCorrection)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-nombre_iterations"></span>
                                 <small class="hint">Entre 1 et 10 itérations</small>
@@ -876,7 +926,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           id="suggestions_personnalisees"
                                           class="form-control"
                                           placeholder="Suggérez des améliorations et ressources..."
-                                          maxlength="800"><?= $editCorrection ? htmlspecialchars($editCorrection['suggestions_personnalisees']) : '' ?></textarea>
+                                          maxlength="800"><?= htmlspecialchars(oldOrEdit('suggestions_personnalisees', $oldData, $editCorrection)) ?></textarea>
                                 <span class="char-counter" id="counter-suggestions">0 / 800</span>
                             </div>
 
@@ -890,7 +940,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="ressources_recommandees"
                                        class="form-control"
                                        placeholder="Ex: https://exemple.com, https://tutoriel.com"
-                                       value="<?= $editCorrection ? htmlspecialchars($editCorrection['ressources_recommandees']) : '' ?>">
+                                        value="<?= htmlspecialchars(oldOrEdit('ressources_recommandees', $oldData, $editCorrection)) ?>">
                                 <small class="hint">Liens séparés par des virgules</small>
                             </div>
 
@@ -907,7 +957,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        placeholder="Ex: 30"
                                        min="1"
                                        max="480"
-                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['rapidite_correction']) : '' ?>"
+                                    value="<?= htmlspecialchars(oldOrEdit('rapidite_correction', $oldData, $editCorrection)) ?>"
                                        required>
                                 <span class="field-feedback" id="fb-rapidite_correction"></span>
                                 <small class="hint">Entre 1 et 480 minutes</small>
@@ -921,16 +971,19 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                 </label>
                                 <select name="ton_feedback" id="ton_feedback" class="form-control" required>
                                     <option value="">-- Sélectionnez un ton --</option>
-                                    <option value="encourageant">😊 Encourageant</option>
-                                    <option value="strict">😤 Strict</option>
-                                    <option value="neutre">😐 Neutre</option>
+                                    <option value="encourageant" <?= oldOrEdit('ton_feedback', $oldData, $editCorrection) === 'encourageant' ? 'selected' : '' ?>>😊 Encourageant</option>
+                                    <option value="strict" <?= oldOrEdit('ton_feedback', $oldData, $editCorrection) === 'strict' ? 'selected' : '' ?>>😤 Strict</option>
+                                    <option value="neutre" <?= oldOrEdit('ton_feedback', $oldData, $editCorrection) === 'neutre' ? 'selected' : '' ?>>😐 Neutre</option>
                                 </select>
                                 <span class="field-feedback" id="fb-ton_feedback"></span>
                             </div>
 
                             <button type="submit" class="btn btn-submit btn-submit-correction" id="btn-correction">
                                 <span class="spinner"></span>
-                                <span class="btn-text"><i class="fas fa-check"></i>&nbsp; Soumettre la Correction</span>
+                                <span class="btn-text">
+                                    <i class="fas <?= $isEditCorrection ? 'fa-save' : 'fa-check' ?>"></i>&nbsp;
+                                    <?= $isEditCorrection ? 'Enregistrer la modification' : 'Soumettre la Correction' ?>
+                                </span>
                             </button>
                         </form>
                     </div>
@@ -973,8 +1026,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                             <h4>Liens rapides</h4>
                             <ul class="footer-links">
                                 <li><a href="about.html"><i class="fas fa-chevron-right"></i> À propos</a></li>
-                                <li><a href="submit.php"><i class="fas fa-chevron-right"></i> Soumettre</a></li>
-                                <li><a href="feed.php"><i class="fas fa-chevron-right"></i> Feed</a></li>
+                                <li><a href="/eduleb/submit.html"><i class="fas fa-chevron-right"></i> Soumettre</a></li>
+                                <li><a href="/eduleb/feed.html"><i class="fas fa-chevron-right"></i> Feed</a></li>
                                 <li><a href="contact.html"><i class="fas fa-chevron-right"></i> Contact</a></li>
                             </ul>
                         </div>
@@ -1050,6 +1103,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         ton_feedback:           { empty: 'Veuillez sélectionner un ton.', ok: 'Ton sélectionné ✓' },
     };
 
+    const isEditDevoir = <?= $isEditDevoir ? 'true' : 'false' ?>;
+    const isEditCorrection = <?= $isEditCorrection ? 'true' : 'false' ?>;
+
     // ============================================================
     //   AFFICHER FEEDBACK SOUS UN CHAMP
     // ============================================================
@@ -1069,39 +1125,49 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
     // ============================================================
     //   VALIDER UN CHAMP
     // ============================================================
-    function validateField(field) {
+    function validateField(field, mode = 'live') {
         const id   = field.id || field.name;
         const msgs = MESSAGES[id] || {};
-        let valid  = true;
+        const isSubmitValidation = mode === 'submit';
+        const isTouched = field.dataset.touched === '1';
+        const isFile = field.type === 'file';
+
+        const rawValue = typeof field.value === 'string' ? field.value : '';
+        const value = rawValue.trim();
+        const hasValue = isFile
+            ? (field.files && field.files.length > 0)
+            : value.length > 0;
 
         field.classList.remove('is-valid', 'is-invalid');
 
         // Champ requis vide
-        if (field.hasAttribute('required') && !field.value.trim() && field.type !== 'file') {
-            showFeedback(id, 'error', msgs.empty || 'Ce champ est requis.');
-            field.classList.add('is-invalid');
+        if (field.hasAttribute('required') && !hasValue) {
+            if (isSubmitValidation || isTouched) {
+                showFeedback(id, 'error', msgs.empty || 'Ce champ est requis.');
+                field.classList.add('is-invalid');
+            } else {
+                clearFeedback(id);
+            }
+
             return false;
         }
 
-        // File required
-        if (field.type === 'file' && field.hasAttribute('required')) {
-            if (!field.files || field.files.length === 0) {
-                showFeedback(id, 'error', msgs.empty || 'Fichier requis.');
-                field.classList.add('is-invalid');
-                return false;
-            }
+        // Champs optionnels vides : pas de message permanent
+        if (!field.hasAttribute('required') && !hasValue) {
+            clearFeedback(id);
+            return true;
         }
 
         // Longueur minimale
-        if (field.minLength && field.value.trim().length < field.minLength && field.value.trim().length > 0) {
+        if (!isFile && field.minLength && value.length < field.minLength) {
             showFeedback(id, 'error', msgs.short || `Minimum ${field.minLength} caractères.`);
             field.classList.add('is-invalid');
             return false;
         }
 
         // Plage numérique
-        if (field.type === 'number' && field.value.trim() !== '') {
-            const val = parseFloat(field.value);
+        if (field.type === 'number' && value !== '') {
+            const val = parseFloat(value);
             const min = field.min !== '' ? parseFloat(field.min) : -Infinity;
             const max = field.max !== '' ? parseFloat(field.max) : Infinity;
             if (val < min || val > max) {
@@ -1112,14 +1178,14 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         }
 
         // Valide
-        if (field.value.trim() || (field.type === 'file' && field.files && field.files.length > 0)) {
+        if (hasValue) {
             showFeedback(id, 'success', msgs.ok || 'Valide ✓');
             field.classList.add('is-valid');
         } else {
             clearFeedback(id);
         }
 
-        return valid;
+        return true;
     }
 
     // ============================================================
@@ -1183,6 +1249,47 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         });
     }
 
+    function showPopup(message, type) {
+        const popup = document.createElement('div');
+        popup.className = 'popup-message ' + type;
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+        popup.innerHTML = '<i class="fas ' + icon + '"></i> ' + message;
+        document.body.appendChild(popup);
+        setTimeout(() => {
+            popup.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => popup.remove(), 300);
+        }, 4000);
+    }
+
+    async function submitEditFormAjax(formElement, redirectTarget) {
+        const response = await fetch(formElement.action, {
+            method: 'POST',
+            body: new FormData(formElement),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const raw = await response.text();
+        let payload = null;
+
+        try {
+            payload = JSON.parse(raw);
+        } catch (error) {
+            payload = null;
+        }
+
+        if (!response.ok || !payload || payload.success !== true) {
+            throw new Error((payload && payload.message) ? payload.message : 'La modification a échoué.');
+        }
+
+        showPopup(payload.message || 'Modification enregistrée avec succès.', 'success');
+
+        setTimeout(function() {
+            window.location.href = redirectTarget;
+        }, 900);
+    }
+
     // ============================================================
     //   INITIALISATION
     // ============================================================
@@ -1201,14 +1308,19 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         document.querySelectorAll('.form-control').forEach(function(field) {
             ['blur', 'change'].forEach(function(evt) {
                 field.addEventListener(evt, function() {
-                    validateField(this);
+                    if (evt === 'change') {
+                        this.dataset.touched = '1';
+                    }
+                    validateField(this, 'live');
                     updateProgress('form-devoir',     'devoir-progress-bar',     'devoir-progress-label');
                     updateProgress('form-correction', 'correction-progress-bar', 'correction-progress-label');
                 });
             });
-            if (field.tagName === 'INPUT' && field.type !== 'file') {
+
+            if ((field.tagName === 'INPUT' && field.type !== 'file') || field.tagName === 'TEXTAREA') {
                 field.addEventListener('input', function() {
-                    if (this.value.trim().length > 0) validateField(this);
+                    this.dataset.touched = '1';
+                    validateField(this, 'live');
                     updateProgress('form-devoir',     'devoir-progress-bar',     'devoir-progress-label');
                     updateProgress('form-correction', 'correction-progress-bar', 'correction-progress-label');
                 });
@@ -1218,12 +1330,12 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         // ======================================================
         //   SOUMISSION FORMULAIRE DEVOIR
         // ======================================================
-        document.getElementById('form-devoir').addEventListener('submit', function(e) {
+        document.getElementById('form-devoir').addEventListener('submit', async function(e) {
             const requiredFields = this.querySelectorAll('[required]');
             let allValid = true;
 
             requiredFields.forEach(function(field) {
-                if (!validateField(field)) allValid = false;
+                if (!validateField(field, 'submit')) allValid = false;
             });
 
             if (!allValid) {
@@ -1238,30 +1350,29 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
             const btn = document.getElementById('btn-devoir');
             btn.classList.add('loading');
             btn.disabled = true;
-            // Le formulaire part vers PHP → redirection sur feed.php
-        });
 
-        function showPopup(message, type) {
-    const popup = document.createElement('div');
-    popup.className = 'popup-message ' + type;
-    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
-    popup.innerHTML = '<i class="fas ' + icon + '"></i> ' + message;
-    document.body.appendChild(popup);
-    setTimeout(() => {
-        popup.style.animation = 'slideOutRight 0.3s ease forwards';
-        setTimeout(() => popup.remove(), 300);
-    }, 4000);
-}
+            if (isEditDevoir) {
+                e.preventDefault();
+
+                try {
+                    await submitEditFormAjax(this, '/eduleb/feed.html?success=devoir');
+                } catch (error) {
+                    showPopup(error.message || 'Erreur lors de la mise à jour du devoir.', 'error');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            }
+        });
 
         // ======================================================
         //   SOUMISSION FORMULAIRE CORRECTION
         // ======================================================
-        document.getElementById('form-correction').addEventListener('submit', function(e) {
+        document.getElementById('form-correction').addEventListener('submit', async function(e) {
             const requiredFields = this.querySelectorAll('[required]');
             let allValid = true;
 
             requiredFields.forEach(function(field) {
-                if (!validateField(field)) allValid = false;
+                if (!validateField(field, 'submit')) allValid = false;
             });
 
             if (!allValid) {
@@ -1274,9 +1385,19 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
             const btn = document.getElementById('btn-correction');
             btn.classList.add('loading');
             btn.disabled = true;
+
+            if (isEditCorrection) {
+                e.preventDefault();
+
+                try {
+                    await submitEditFormAjax(this, '/eduleb/feed.html?success=correction');
+                } catch (error) {
+                    showPopup(error.message || 'Erreur lors de la mise à jour de la correction.', 'error');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            }
         });
-        submitFormAjax('form-devoir', 'submit', 'btn-devoir');
-    submitFormAjax('form-correction', 'correct', 'btn-correction');
 });
     
     </script>

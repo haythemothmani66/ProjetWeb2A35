@@ -1,0 +1,102 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@edumatch.com",
+      "password": "$2b$10$1OaAETI7Fbs0fxrbGsd3/OviNB4qm932kdpH50MW7Lgb0ZOuSR9em",
+      "role": "admin",
+      "status": "active",
+      "created_at": "2026-04-14T08:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "email": "student.a@edumatch.com",
+      "password": "$2b$10$1OaAETI7Fbs0fxrbGsd3/OviNB4qm932kdpH50MW7Lgb0ZOuSR9em",
+      "role": "student",
+      "status": "active",
+      "created_at": "2026-04-02T10:22:00.000Z"
+    },
+    {
+      "id": 3,
+      "email": "teacher.lina@edumatch.com",
+      "password": "$2b$10$1OaAETI7Fbs0fxrbGsd3/OviNB4qm932kdpH50MW7Lgb0ZOuSR9em",
+      "role": "teacher",
+      "status": "pending",
+      "created_at": "2026-04-10T12:05:00.000Z"
+    },
+    {
+      "id": 4,
+      "email": "teacher.samir@edumatch.com",
+      "password": "$2b$10$1OaAETI7Fbs0fxrbGsd3/OviNB4qm932kdpH50MW7Lgb0ZOuSR9em",
+      "role": "teacher",
+      "status": "active",
+      "created_at": "2026-03-25T09:15:00.000Z"
+    },
+    {
+      "id": 5,
+      "email": "student.meriem@edumatch.com",
+      "password": "$2b$10$1OaAETI7Fbs0fxrbGsd3/OviNB4qm932kdpH50MW7Lgb0ZOuSR9em",
+      "role": "student",
+      "status": "suspended",
+      "created_at": "2026-03-12T15:34:00.000Z"
+    },
+    {
+      "id": 6,
+      "email": "teacher.anas@edumatch.com",
+      "password": "$2b$10$1OaAETI7Fbs0fxrbGsd3/OviNB4qm932kdpH50MW7Lgb0ZOuSR9em",
+      "role": "teacher",
+      "status": "pending",
+      "created_at": "2026-04-11T14:45:00.000Z"
+    }
+  ],
+  "profiles": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "nom": "Platform",
+      "prenom": "Admin",
+      "telephone": "0600000000",
+      "photo": ""
+    },
+    {
+      "id": 2,
+      "user_id": 2,
+      "nom": "Belkacem",
+      "prenom": "Sara",
+      "telephone": "0611002200",
+      "photo": ""
+    },
+    {
+      "id": 3,
+      "user_id": 3,
+      "nom": "Saadi",
+      "prenom": "Lina",
+      "telephone": "0677223300",
+      "photo": ""
+    },
+    {
+      "id": 4,
+      "user_id": 4,
+      "nom": "Naji",
+      "prenom": "Samir",
+      "telephone": "0655441100",
+      "photo": ""
+    },
+    {
+      "id": 5,
+      "user_id": 5,
+      "nom": "Meriem",
+      "prenom": "Alaa",
+      "telephone": "0622334455",
+      "photo": ""
+    },
+    {
+      "id": 6,
+      "user_id": 6,
+      "nom": "Benali",
+      "prenom": "Anas",
+      "telephone": "0699331188",
+      "photo": ""
+    }
+  ]
+}

@@ -1,0 +1,1301 @@
+<?php
+
+session_start();
+
+// Récupérer et effacer les messages
+$successMessage = $_SESSION['success_message'] ?? '';
+$formErrors = $_SESSION['form_errors'] ?? [];
+$oldData = $_SESSION['form_data'] ?? [];
+
+// Effacer les sessions après récupération
+unset($_SESSION['success_message']);
+unset($_SESSION['form_errors']);
+unset($_SESSION['form_data']);
+
+
+
+// Pour pré-remplir les champs (optionnel)
+$oldDevoir = $oldData;
+$oldCorrection = $oldData;
+
+require_once __DIR__ . '/../../../../../config/database.php';
+$conn = getDBConnection();
+
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+$pageMarker = '/view/backoffice/src/pages/backoffice/';
+$appBaseUrl = '';
+$markerPos = strpos($scriptName, $pageMarker);
+
+if ($markerPos !== false) {
+    $appBaseUrl = substr($scriptName, 0, $markerPos);
+} else {
+    $appBaseUrl = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+    if ($appBaseUrl === '.' || $appBaseUrl === '/') {
+        $appBaseUrl = '';
+    }
+}
+
+$backofficeSrcBaseUrl = $appBaseUrl . '/view/backoffice/src';
+$backofficePageBaseUrl = $backofficeSrcBaseUrl . '/pages/backoffice';
+$controllerUrl = $appBaseUrl . '/controller/devoirs.php';
+
+// Récupérer l'ID à modifier depuis l'URL
+$editType = $_GET['edit'] ?? '';
+$editId = (int)($_GET['id'] ?? 0);
+$editDevoir = null;
+$editCorrection = null;
+
+if ($editType && $editId) {
+    if ($editType === 'devoir') {
+        $stmt = $conn->prepare("SELECT * FROM devoirs WHERE id_devoir = ?");
+        $stmt->execute([$editId]);
+        $editDevoir = $stmt->fetch(PDO::FETCH_ASSOC);
+    } elseif ($editType === 'correction') {
+        $stmt = $conn->prepare("SELECT * FROM correction WHERE id_correction = ?");
+        $stmt->execute([$editId]);
+        $editCorrection = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
+
+$devoirs = $conn->query("SELECT * FROM devoirs ORDER BY id_devoir DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+$correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+$successMessage = $successMessage ?? "";
+?>
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Submit Backoffice - EduFeed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($backofficeSrcBaseUrl) ?>/assets/css/theme.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/fonts/themify-icons.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/owlcarousel/css/owl.carousel.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/owlcarousel/css/owl.theme.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/css/jquery-simple-mobilemenu.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/css/magnific-popup.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/css/animate.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/css/style.css">
+
+    <style>
+        .popup-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: slideInRight 0.3s ease forwards;
+}
+.popup-message.success { background: #10B981; color: white; }
+.popup-message.error { background: #EF4444; color: white; }
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+        :root {
+            --primary: #465FFF;
+            --secondary: #0EA5E9;
+            --success: #16A34A;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --light-bg: #F8FAFC;
+            --border: #DFE6EF;
+            --text: #111827;
+            --shadow-lg: 0 15px 40px rgba(15,23,42,0.1);
+        }
+
+        body {
+            background: #F5F7FB;
+            font-family: 'Public Sans', sans-serif;
+        }
+
+        /* ============ FORM CONTAINER ============ */
+        .modern-form-container {
+            background: linear-gradient(135deg, #ffffff 0%, #f3f6ff 100%);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255,255,255,0.6);
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            animation: slideIn 0.5s ease forwards;
+        }
+        .modern-form-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+        .modern-form-container:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        }
+
+        /* ============ TITLES ============ */
+        .form-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+            text-align: center;
+        }
+        .form-subtitle {
+            font-size: 0.95rem;
+            color: #64748B;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        /* ============ FORM GROUP ============ */
+        .form-group {
+            margin-bottom: 1.4rem;
+            position: relative;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.4rem;
+            font-size: 0.92rem;
+            letter-spacing: 0.2px;
+        }
+        .form-group label .required-star {
+            color: var(--danger);
+            margin-left: 3px;
+        }
+        .form-group small.hint {
+            display: block;
+            color: #94A3B8;
+            margin-top: 0.2rem;
+            font-size: 0.82rem;
+        }
+
+        /* ============ INPUT FIELDS ============ */
+        .form-control {
+            border-radius: 0.75rem !important;
+            padding: 0.8rem 1rem !important;
+            border: 2px solid var(--border) !important;
+            font-size: 0.95rem;
+            transition: all 0.3s ease !important;
+            background-color: #fff !important;
+            color: var(--text) !important;
+            font-family: 'DM Sans', sans-serif;
+            width: 100%;
+        }
+        .form-control::placeholder { color: #CBD5E1; font-weight: 400; }
+        .form-control:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(108,99,255,0.12) !important;
+            outline: none !important;
+            background-color: #fff !important;
+        }
+        textarea.form-control {
+            min-height: 110px;
+            resize: vertical;
+            font-family: 'DM Sans', sans-serif;
+        }
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236C63FF' d='M0 3l6 6 6-6z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem !important;
+            cursor: pointer;
+        }
+        input[type="file"] { padding: 0.3rem 0 !important; }
+        input[type="file"]::file-selector-button {
+            background: linear-gradient(135deg, var(--primary), #8B5CF6);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.55rem 1.1rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.88rem;
+            transition: all 0.3s ease;
+            margin-right: 0.75rem;
+        }
+        input[type="file"]::file-selector-button:hover { transform: translateY(-1px); }
+
+        /* ============ VALIDATION STATES ============ */
+        .form-control.is-valid {
+            border-color: var(--success) !important;
+            background-image: none !important;
+        }
+        .form-control.is-valid:focus {
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.12) !important;
+        }
+        .form-control.is-invalid {
+            border-color: var(--danger) !important;
+            background-image: none !important;
+        }
+        .form-control.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.12) !important;
+        }
+
+        /* ============ FEEDBACK MESSAGES ============ */
+        .field-feedback {
+            display: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            margin-top: 0.35rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.4rem;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .field-feedback.error {
+            display: flex;
+            color: var(--danger);
+            background: rgba(239,68,68,0.08);
+        }
+        .field-feedback.success {
+            display: flex;
+            color: var(--success);
+            background: rgba(16,185,129,0.08);
+        }
+
+        /* ============ CHAR COUNTER ============ */
+        .char-counter {
+            font-size: 0.8rem;
+            color: #94A3B8;
+            text-align: right;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        .char-counter.warning { color: var(--warning); font-weight: 600; }
+        .char-counter.over { color: var(--danger); font-weight: 700; }
+
+        /* ============ FILE PREVIEW ============ */
+        .file-preview {
+            display: none;
+            margin-top: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: rgba(16,185,129,0.08);
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--success);
+            font-weight: 600;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .file-preview.show { display: flex; }
+
+        /* ============ PROGRESS BAR ============ */
+        .form-progress {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .form-progress-label {
+            font-size: 0.85rem;
+            color: #64748B;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .progress {
+            height: 6px;
+            border-radius: 999px;
+            background: var(--border);
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 999px;
+            transition: width 0.4s ease;
+        }
+
+        /* ============ SECTION DIVIDER ============ */
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            color: #94A3B8;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .section-divider::before, .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ============ BUTTONS ============ */
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary), #8B5CF6) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 0.75rem !important;
+            padding: 0.9rem 2rem !important;
+            font-weight: 700 !important;
+            font-size: 1rem !important;
+            transition: all 0.3s ease !important;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            width: 100% !important;
+            cursor: pointer;
+        }
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(108,99,255,0.35) !important;
+        }
+        .btn-submit:active { transform: translateY(-1px); }
+        .btn-submit-correction {
+            background: linear-gradient(135deg, var(--success), #059669) !important;
+        }
+        .btn-submit-correction:hover {
+            box-shadow: 0 10px 25px rgba(16,185,129,0.35) !important;
+        }
+
+        /* ============ LOADING SPINNER ON SUBMIT ============ */
+        .btn-submit .spinner {
+            display: none;
+            width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.4);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-right: 0.5rem;
+        }
+        .btn-submit.loading .spinner { display: inline-block; }
+        .btn-submit.loading .btn-text { opacity: 0.7; }
+
+        /* ============ ALERT ============ */
+        .alert-modern {
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .alert-modern.success {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.3);
+            color: #065F46;
+        }
+        .alert-modern.error {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #991B1B;
+        }
+        .alert-modern i { font-size: 1.2rem; }
+
+        /* ============ ANIMATION ============ */
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .modern-form-container { padding: 1.5rem; }
+            .form-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+
+<body data-spy="scroll" data-offset="80">
+
+    <!-- START PRELOADER -->
+    <div class="preloaders"><span class="loader"></span></div>
+    <!-- END PRELOADER -->
+
+    <!-- START NAVBAR -->
+    <div id="navigation" class="navbar-light bg-faded site-navigation">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-20 align-self-center">
+                    <div class="site-logo">
+                        <a href="<?= htmlspecialchars($backofficeSrcBaseUrl) ?>/index.html"><img src="<?= htmlspecialchars($appBaseUrl) ?>/assets/img/logo.png" alt=""></a>
+                    </div>
+                </div>
+                <div class="col-60 d-flex">
+                    <nav id="main-menu">
+                        <ul>
+                            <li><a href="<?= htmlspecialchars($backofficeSrcBaseUrl) ?>/index.html">Home</a></li>
+                            <li><a href="about.html">About</a></li>
+                            <li class="menu-item-has-children">
+                                <a href="#">Edufeed</a>
+                                <ul>
+                                    <li><a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php">Submit Assignment</a></li>
+                                    <li><a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/feed_back.php">Learning Feed</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="partenariat.html">Partenariat</a></li>
+                            <li><a href="evenement.html">Événement</a></li>
+                            <li><a href="quiz.html">Quiz</a></li>
+                            <li><a href="offre-emploi.html">Offre d'emploi</a></li>
+                            <li><a href="contact.html">Contact</a></li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="col-20 d-none d-xl-block text-end align-self-center">
+                    <a href="#" class="header-btn">Sign In</a>
+                    <a href="contact.html" class="btn_one">Sign Up</a>
+                </div>
+                <ul class="mobile_menu">
+                    <li><a href="<?= htmlspecialchars($backofficeSrcBaseUrl) ?>/index.html">Home</a></li>
+                    <li><a href="about.html">About</a></li>
+                    <li>
+                        <a href="#">Edufeed</a>
+                        <ul class="sub-menu">
+                            <li><a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php">Submit Assignment</a></li>
+                            <li><a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/feed_back.php">Learning Feed</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="partenariat.html">Partenariat</a></li>
+                    <li><a href="evenement.html">Événement</a></li>
+                    <li><a href="quiz.html">Quiz</a></li>
+                    <li><a href="offre-emploi.html">Offre d'emploi</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <!-- END NAVBAR -->
+
+    <!-- START SECTION TOP -->
+    <section class="section-top">
+        <div class="container">
+            <div class="col-lg-10 offset-lg-1 text-center">
+                <div class="section-top-title wow fadeInRight" data-wow-duration="1s" data-wow-delay="0.3s" data-wow-offset="0">
+                    <h1>EduFeed</h1>
+                    <ul>
+                        <li><a href="<?= htmlspecialchars($backofficeSrcBaseUrl) ?>/index.html">Home</a></li>
+                        <li> / Soumettre</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- END SECTION TOP -->
+
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 offset-lg-2">
+
+                    <!-- =========================================== -->
+                    <!--        FORMULAIRE 1 : SOUMETTRE UN DEVOIR   -->
+                    <!-- =========================================== -->
+                    <div class="modern-form-container">
+                        <h3 class="form-title"><i class="fas fa-file-upload"></i> Soumettre un Devoir</h3>
+                        <p class="form-subtitle">Remplissez tous les champs pour soumettre votre devoir</p>
+
+                        <?php if (!empty($successMessage)): ?>
+                            <div class="alert-modern success">
+                                <i class="fas fa-check-circle"></i>
+                                <?= htmlspecialchars($successMessage) ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Barre de progression -->
+                        <div class="form-progress">
+                            <div class="form-progress-label" id="devoir-progress-label">Progression : 0 / 9 champs remplis</div>
+                            <div class="progress">
+                                <div class="progress-bar" id="devoir-progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- ACTION → devoirs.php (submit) -->
+                        <form id="form-devoir"
+                            action="<?= htmlspecialchars($controllerUrl) ?>?action=submit"
+                              method="POST"
+                              enctype="multipart/form-data"
+                              novalidate>
+
+                            <!-- TITRE -->
+                            <div class="form-group">
+                                <label for="titre">
+                                    <i class="fas fa-heading"></i> Titre du devoir
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="text"
+                                       name="titre"
+                                       id="titre"
+                                       class="form-control"
+                                       placeholder="Ex: Algorithme de tri à bulles"
+                                       minlength="3"
+                                       maxlength="150"
+                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['titre']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-titre"></span>
+                                <small class="hint">Donnez un titre descriptif (3 à 150 caractères)</small>
+                            </div>
+
+                            <!-- DESCRIPTION -->
+                            <div class="form-group">
+                                <label for="description">
+                                    <i class="fas fa-align-left"></i> Description
+                                    <span class="required-star">*</span>
+                                </label>
+                                <textarea name="description"
+                                          id="description"
+                                          class="form-control"
+                                          placeholder="Décrivez le contexte et les défis du devoir..."
+                                          minlength="10"
+                                          maxlength="1000"
+                                          value="<?= $editDevoir ? htmlspecialchars($editDevoir['description']) : '' ?>"
+                                          required></textarea>
+                                <span class="char-counter" id="counter-description">0 / 1000</span>
+                                <span class="field-feedback" id="fb-description"></span>
+                            </div>
+
+                            <!-- FICHIER CODE -->
+                            <div class="form-group">
+                                <label for="file1">
+                                    <i class="fas fa-file-code"></i> Fichier du code
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="file"
+                                       name="file1"
+                                       id="file1"
+                                       class="form-control"
+                                       accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
+                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['fichier']) : '' ?>"
+                                       required>
+                                <div class="file-preview" id="preview-file1">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span id="preview-file1-name"></span>
+                                </div>
+                                <span class="field-feedback" id="fb-file1"></span>
+                                <small class="hint">Formats : .py .js .java .cpp .c .png .jpg .jpeg
+                                    
+                                </small>
+                            </div>
+
+                            <!-- DATE SOUMISSION -->
+                            <div class="form-group">
+                                <label for="date_soumission">
+                                    <i class="fas fa-calendar-alt"></i> Date de soumission
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="date"
+                                       name="date_soumission"
+                                       id="date_soumission"
+                                       class="form-control"
+                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['date_soumission']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-date_soumission"></span>
+                            </div>
+
+                            <!-- NIVEAU DIFFICULTÉ -->
+                            <div class="form-group">
+                                <label for="niveau_difficulte">
+                                    <i class="fas fa-graduation-cap"></i> Niveau de difficulté
+                                    <span class="required-star">*</span>
+                                </label>
+                                <select name="niveau_difficulte" id="niveau_difficulte" class="form-control" 
+
+                                required>
+                                    <option value="">-- Sélectionnez un niveau --</option>
+                                    <option value="facile">🟢 Facile</option>
+                                    <option value="moyen">🟡 Moyen</option>
+                                    <option value="difficile">🔴 Difficile</option>
+                                </select>
+                                <span class="field-feedback" id="fb-niveau_difficulte"></span>
+                            </div>
+
+                            <!-- TYPE ERREUR PREDOMINANT -->
+                            <div class="form-group">
+                                <label for="type_erreur_predominant">
+                                    <i class="fas fa-exclamation-triangle"></i> Type d'erreur prédominant
+                                    <span class="required-star">*</span>
+                                </label>
+                                <select name="type_erreur_predominant" id="type_erreur_predominant" class="form-control" required>
+                                    <option value="">-- Sélectionnez un type --</option>
+                                    <option value="logique">⚙️ Logique</option>
+                                    <option value="syntaxe">📝 Syntaxe</option>
+                                    <option value="comprehension">🧠 Compréhension</option>
+                                </select>
+                                <span class="field-feedback" id="fb-type_erreur_predominant"></span>
+                            </div>
+
+                            <!-- TEMPS ESTIMÉ -->
+                            <div class="form-group">
+                                <label for="temps_estime_resolution">
+                                    <i class="fas fa-clock"></i> Temps estimé de résolution (minutes)
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="number"
+                                       name="temps_estime_resolution"
+                                       id="temps_estime_resolution"
+                                       class="form-control"
+                                       placeholder="Ex: 45"
+                                       min="1"
+                                       max="480"
+                                        value="<?= $editDevoir ? htmlspecialchars($editDevoir['temps_estime_resolution']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-temps_estime_resolution"></span>
+                                <small class="hint">Entre 1 et 480 minutes</small>
+                            </div>
+
+                            <!-- PROGRESSION ÉLÈVE -->
+                            <div class="form-group">
+                                <label for="progression_eleve">
+                                    <i class="fas fa-percentage"></i> Progression de l'élève (%)
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="number"
+                                       name="progression_eleve"
+                                       id="progression_eleve"
+                                       class="form-control"
+                                       placeholder="Ex: 75"
+                                       min="0"
+                                       max="100"
+                                        value="<?= $editDevoir ? htmlspecialchars($editDevoir['progression_eleve']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-progression_eleve"></span>
+                                <small class="hint">Pourcentage entre 0 et 100</small>
+                            </div>
+
+                            <!-- MOTS CLÉS -->
+                            <div class="form-group">
+                                <label for="mots_cles">
+                                    <i class="fas fa-tags"></i> Mots clés
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="text"
+                                       name="mots_cles"
+                                       id="mots_cles"
+                                       class="form-control"
+                                       placeholder="Ex: SQL, jointures, récursion, pointeurs"
+                                       value="<?= $editDevoir ? htmlspecialchars($editDevoir['mots_cles']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-mots_cles"></span>
+                                <small class="hint">Séparez les mots clés par des virgules</small>
+                            </div>
+
+                            <!-- URGENCE -->
+                            <div class="form-group">
+                                <label for="urgence">
+                                    <i class="fas fa-exclamation-circle"></i> Niveau d'urgence
+                                    <span class="required-star">*</span>
+                                </label>
+                                <select name="urgence" id="urgence" class="form-control" required>
+                                    <option value="">-- Sélectionnez l'urgence --</option>
+                                    <option value="faible">🟢 Faible</option>
+                                    <option value="moyenne">🟡 Moyenne</option>
+                                    <option value="urgente">🔴 Urgente</option>
+                                </select>
+                                <span class="field-feedback" id="fb-urgence"></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-submit" id="btn-devoir">
+                                <span class="spinner"></span>
+                                <span class="btn-text"><i class="fas fa-paper-plane"></i>&nbsp; Publier le Devoir</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- ============================================ -->
+                    <!--      FORMULAIRE 2 : SOUMETTRE UNE CORRECTION -->
+                    <!-- ============================================ -->
+                    <div class="modern-form-container">
+                        <h3 class="form-title"><i class="fas fa-check-circle"></i> Soumettre une Correction</h3>
+                        <p class="form-subtitle">Remplissez tous les champs pour corriger un devoir</p>
+
+                        <!-- Barre de progression correction -->
+                        <div class="form-progress">
+                            <div class="form-progress-label" id="correction-progress-label">Progression : 0 / 9 champs remplis</div>
+                            <div class="progress">
+                                <div class="progress-bar" style="background: linear-gradient(90deg, #10B981, #059669);"
+                                     id="correction-progress-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- ACTION → devoirs.php (correct) -->
+                        <form id="form-correction"
+                            action="<?= htmlspecialchars($controllerUrl) ?>?action=correct"
+                              method="POST"
+                              enctype="multipart/form-data"
+                              novalidate>
+
+                            <!-- ID DEVOIR (sélection) -->
+                            <div class="form-group">
+                                <label for="id_devoir">
+                                    <i class="fas fa-link"></i> Devoir à corriger
+                                    <span class="required-star">*</span>
+                                </label>
+                                <select name="id_devoir" id="id_devoir" class="form-control" required>
+                                    <option value="">-- Sélectionnez un devoir --</option>
+                                    <?php foreach ($devoirs as $d): ?>
+                                        <option value="<?= htmlspecialchars($d['id_devoir']) ?>">
+                                            #<?= htmlspecialchars($d['id_devoir']) ?> — <?= htmlspecialchars($d['titre']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <span class="field-feedback" id="fb-id_devoir"></span>
+                            </div>
+
+                            <!-- COMMENTAIRE -->
+                            <div class="form-group">
+                                <label for="commentaire">
+                                    <i class="fas fa-comment-dots"></i> Commentaire
+                                    <span class="required-star">*</span>
+                                </label>
+                                <textarea name="commentaire"
+                                          id="commentaire"
+                                          class="form-control"
+                                          placeholder="Donnez votre feedback détaillé..."
+                                          minlength="10"
+                                          maxlength="1000"
+                                          value="<?= $editCorrection ? htmlspecialchars($editCorrection['commentaire']) : '' ?>"
+                                          required></textarea>
+                                <span class="char-counter" id="counter-commentaire">0 / 1000</span>
+                                <span class="field-feedback" id="fb-commentaire"></span>
+                            </div>
+
+                            <!-- FICHIER CORRIGÉ -->
+                            <div class="form-group">
+                                <label for="file2">
+                                    <i class="fas fa-file-code"></i> Fichier corrigé
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="file"
+                                       name="file2"
+                                       id="file2"
+                                       class="form-control"
+                                       accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['fichier_corrige']) : '' ?>"
+                                       required>
+                                <div class="file-preview" id="preview-file2">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span id="preview-file2-name"></span>
+                                </div>
+                                <span class="field-feedback" id="fb-file2"></span>
+                                <small class="hint">Formats : .py .js .java .cpp .c</small>
+                            </div>
+
+                            <!-- DATE CORRECTION -->
+                            <div class="form-group">
+                                <label for="date_correction">
+                                    <i class="fas fa-calendar-check"></i> Date de correction
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="date"
+                                       name="date_correction"
+                                       id="date_correction"
+                                       class="form-control"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['date_correction']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-date_correction"></span>
+                            </div>
+
+                            <!-- TYPE FEEDBACK -->
+                            <div class="form-group">
+                                <label for="type_feedback">
+                                    <i class="fas fa-comment"></i> Type de feedback
+                                    <span class="required-star">*</span>
+                                </label>
+                                <select name="type_feedback" id="type_feedback" class="form-control" 
+
+                                required>
+                                    <option value="">-- Sélectionnez un type --</option>
+                                    <option value="explicatif">📖 Explicatif</option>
+                                    <option value="direct">⚡ Direct</option>
+                                    <option value="guide">🧭 Guidé</option>
+                                </select>
+                                <span class="field-feedback" id="fb-type_feedback"></span>
+                            </div>
+
+                            <!-- NOTE ESTIMÉE -->
+                            <div class="form-group">
+                                <label for="note_estimee">
+                                    <i class="fas fa-star"></i> Note estimée (/20)
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="number"
+                                       name="note_estimee"
+                                       id="note_estimee"
+                                       class="form-control"
+                                       placeholder="Ex: 15"
+                                       min="0"
+                                       max="20"
+                                       step="0.5"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['note_estimee']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-note_estimee"></span>
+                                <small class="hint">Valeur entre 0 et 20 (pas de 0.5)</small>
+                            </div>
+
+                            <!-- COMPÉTENCES ÉVALUÉES -->
+                            <div class="form-group">
+                                <label for="competences_evaluees">
+                                    <i class="fas fa-brain"></i> Compétences évaluées
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="text"
+                                       name="competences_evaluees"
+                                       id="competences_evaluees"
+                                       class="form-control"
+                                       placeholder="Ex: Algorithmique, Français, Physique"
+                                        value="<?= $editCorrection? htmlspecialchars($editCorrection['competences_evaluees']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-competences_evaluees"></span>
+                                <small class="hint">Séparez les compétences par des virgules</small>
+                            </div>
+
+                            <!-- NOMBRE D'ITÉRATIONS -->
+                            <div class="form-group">
+                                <label for="nombre_iterations">
+                                    <i class="fas fa-sync-alt"></i> Nombre d'itérations
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="number"
+                                       name="nombre_iterations"
+                                       id="nombre_iterations"
+                                       class="form-control"
+                                       placeholder="Ex: 2"
+                                       min="1"
+                                       max="10"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['nombre_iterations']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-nombre_iterations"></span>
+                                <small class="hint">Entre 1 et 10 itérations</small>
+                            </div>
+
+                            <!-- SUGGESTIONS PERSONNALISÉES -->
+                            <div class="form-group">
+                                <label for="suggestions_personnalisees">
+                                    <i class="fas fa-lightbulb"></i> Suggestions personnalisées
+                                </label>
+                                <textarea name="suggestions_personnalisees"
+                                          id="suggestions_personnalisees"
+                                          class="form-control"
+                                          placeholder="Suggérez des améliorations et ressources..."
+                                          maxlength="800"><?= $editCorrection ? htmlspecialchars($editCorrection['suggestions_personnalisees']) : '' ?></textarea>
+                                <span class="char-counter" id="counter-suggestions">0 / 800</span>
+                            </div>
+
+                            <!-- RESSOURCES RECOMMANDÉES -->
+                            <div class="form-group">
+                                <label for="ressources_recommandees">
+                                    <i class="fas fa-link"></i> Ressources recommandées
+                                </label>
+                                <input type="text"
+                                       name="ressources_recommandees"
+                                       id="ressources_recommandees"
+                                       class="form-control"
+                                       placeholder="Ex: https://exemple.com, https://tutoriel.com"
+                                       value="<?= $editCorrection ? htmlspecialchars($editCorrection['ressources_recommandees']) : '' ?>">
+                                <small class="hint">Liens séparés par des virgules</small>
+                            </div>
+
+                            <!-- RAPIDITÉ CORRECTION -->
+                            <div class="form-group">
+                                <label for="rapidite_correction">
+                                    <i class="fas fa-hourglass-end"></i> Rapidité de correction (minutes)
+                                    <span class="required-star">*</span>
+                                </label>
+                                <input type="number"
+                                       name="rapidite_correction"
+                                       id="rapidite_correction"
+                                       class="form-control"
+                                       placeholder="Ex: 30"
+                                       min="1"
+                                       max="480"
+                                        value="<?= $editCorrection ? htmlspecialchars($editCorrection['rapidite_correction']) : '' ?>"
+                                       required>
+                                <span class="field-feedback" id="fb-rapidite_correction"></span>
+                                <small class="hint">Entre 1 et 480 minutes</small>
+                            </div>
+
+                            <!-- TON DU FEEDBACK -->
+                            <div class="form-group">
+                                <label for="ton_feedback">
+                                    <i class="fas fa-smile"></i> Ton du feedback
+                                    <span class="required-star">*</span>
+                                </label>
+                                <select name="ton_feedback" id="ton_feedback" class="form-control" required>
+                                    <option value="">-- Sélectionnez un ton --</option>
+                                    <option value="encourageant">😊 Encourageant</option>
+                                    <option value="strict">😤 Strict</option>
+                                    <option value="neutre">😐 Neutre</option>
+                                </select>
+                                <span class="field-feedback" id="fb-ton_feedback"></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-submit btn-submit-correction" id="btn-correction">
+                                <span class="spinner"></span>
+                                <span class="btn-text"><i class="fas fa-check"></i>&nbsp; Soumettre la Correction</span>
+                            </button>
+                        </form>
+                    </div>
+
+                </div><!-- /col -->
+            </div><!-- /row -->
+        </div><!-- /container -->
+    </section>
+
+    <!-- ===================== FOOTER ===================== -->
+    <div class="modern-footer">
+        <div class="footer-main">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-6 col-md-12">
+                        <div class="footer-brand">
+                            <div class="footer-logo">
+                                <a href="<?= htmlspecialchars($backofficeSrcBaseUrl) ?>/index.html"><img src="<?= htmlspecialchars($appBaseUrl) ?>/assets/img/logo.png" alt="EduMatch Logo"></a>
+                            </div>
+                            <div class="brand-info">
+                                <h3>EduMatch</h3>
+                                <span class="brand-tagline">Smart Learning Platform</span>
+                            </div>
+                        </div>
+                        <div class="footer-description">
+                            <p>EduMatch connecte étudiants et enseignants via un système interactif de soumission et correction de devoirs.</p>
+                        </div>
+                        <div class="footer-social">
+                            <h4>Suivez-nous</h4>
+                            <div class="social-links">
+                                <a href="#" class="social-link facebook"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#" class="social-link twitter"><i class="fab fa-twitter"></i></a>
+                                <a href="#" class="social-link instagram"><i class="fab fa-instagram"></i></a>
+                                <a href="#" class="social-link linkedin"><i class="fab fa-linkedin-in"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="footer-section">
+                            <h4>Liens rapides</h4>
+                            <ul class="footer-links">
+                                <li><a href="about.html"><i class="fas fa-chevron-right"></i> À propos</a></li>
+                                <li><a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php"><i class="fas fa-chevron-right"></i> Soumettre</a></li>
+                                <li><a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/feed_back.php"><i class="fas fa-chevron-right"></i> Feed</a></li>
+                                <li><a href="contact.html"><i class="fas fa-chevron-right"></i> Contact</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="footer-section">
+                            <h4>Fonctionnalités</h4>
+                            <ul class="footer-links">
+                                <li><i class="fas fa-check-circle text-success"></i> Apprentissage interactif</li>
+                                <li><i class="fas fa-check-circle text-success"></i> Feedback en temps réel</li>
+                                <li><i class="fas fa-check-circle text-success"></i> Analyses de notes</li>
+                                <li><i class="fas fa-check-circle text-success"></i> Mobile friendly</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p style="color:#94a3b8;margin:0;font-size:0.9rem;">
+                            &copy; 2026 EduMatch. Tous droits réservés.
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <a href="#" style="color:#94a3b8;text-decoration:none;margin-left:1.5rem;font-size:0.9rem;">Confidentialité</a>
+                        <a href="#" style="color:#94a3b8;text-decoration:none;margin-left:1.5rem;font-size:0.9rem;">Conditions</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END FOOTER -->
+
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/jquery-1.12.4.min.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/modernizr-2.8.3.min.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/jquery-simple-mobilemenu.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/owlcarousel/js/owl.carousel.min.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/jquery.magnific-popup.min.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/jquery.inview.min.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/scrolltopcontrol.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/wow.min.js"></script>
+    <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/scripts.js"></script>
+
+    <script>
+    // ============================================================
+    //   MESSAGES D'ERREUR PAR CHAMP
+    // ============================================================
+    const MESSAGES = {
+        titre:                  { empty: 'Le titre est requis.', short: 'Minimum 3 caractères.', ok: 'Titre valide ✓' },
+        description:            { empty: 'La description est requise.', short: 'Minimum 10 caractères.', ok: 'Description valide ✓' },
+        file1:                  { empty: 'Veuillez choisir un fichier.', ok: 'Fichier sélectionné ✓' },
+        date_soumission:        { empty: 'La date est requise.', ok: 'Date valide ✓' },
+        niveau_difficulte:      { empty: 'Veuillez sélectionner un niveau.', ok: 'Niveau sélectionné ✓' },
+        type_erreur_predominant:{ empty: 'Veuillez sélectionner un type d\'erreur.', ok: 'Type sélectionné ✓' },
+        temps_estime_resolution:{ empty: 'Le temps estimé est requis.', range: 'Valeur entre 1 et 480.', ok: 'Temps valide ✓' },
+        progression_eleve:      { empty: 'La progression est requise.', range: 'Valeur entre 0 et 100.', ok: 'Progression valide ✓' },
+        mots_cles:              { empty: 'Les mots clés sont requis.', ok: 'Mots clés valides ✓' },
+        urgence:                { empty: 'Veuillez sélectionner l\'urgence.', ok: 'Urgence sélectionnée ✓' },
+        // Correction
+        id_devoir:              { empty: 'Veuillez sélectionner un devoir.', ok: 'Devoir sélectionné ✓' },
+        commentaire:            { empty: 'Le commentaire est requis.', short: 'Minimum 10 caractères.', ok: 'Commentaire valide ✓' },
+        file2:                  { empty: 'Veuillez choisir un fichier corrigé.', ok: 'Fichier sélectionné ✓' },
+        date_correction:        { empty: 'La date de correction est requise.', ok: 'Date valide ✓' },
+        type_feedback:          { empty: 'Veuillez sélectionner un type de feedback.', ok: 'Type sélectionné ✓' },
+        note_estimee:           { empty: 'La note est requise.', range: 'Note entre 0 et 20.', ok: 'Note valide ✓' },
+        competences_evaluees:   { empty: 'Les compétences sont requises.', ok: 'Compétences valides ✓' },
+        nombre_iterations:      { empty: 'Le nombre d\'itérations est requis.', range: 'Valeur entre 1 et 10.', ok: 'Valide ✓' },
+        rapidite_correction:    { empty: 'La rapidité est requise.', range: 'Valeur entre 1 et 480.', ok: 'Valide ✓' },
+        ton_feedback:           { empty: 'Veuillez sélectionner un ton.', ok: 'Ton sélectionné ✓' },
+    };
+
+    // ============================================================
+    //   AFFICHER FEEDBACK SOUS UN CHAMP
+    // ============================================================
+    function showFeedback(fieldId, type, message) {
+        const el = document.getElementById('fb-' + fieldId);
+        if (!el) return;
+        el.textContent = (type === 'error' ? '⚠ ' : '✓ ') + message;
+        el.className = 'field-feedback ' + type;
+    }
+    function clearFeedback(fieldId) {
+        const el = document.getElementById('fb-' + fieldId);
+        if (!el) return;
+        el.textContent = '';
+        el.className = 'field-feedback';
+    }
+
+    // ============================================================
+    //   VALIDER UN CHAMP
+    // ============================================================
+    function validateField(field) {
+        const id   = field.id || field.name;
+        const msgs = MESSAGES[id] || {};
+        let valid  = true;
+
+        field.classList.remove('is-valid', 'is-invalid');
+
+        // Champ requis vide
+        if (field.hasAttribute('required') && !field.value.trim() && field.type !== 'file') {
+            showFeedback(id, 'error', msgs.empty || 'Ce champ est requis.');
+            field.classList.add('is-invalid');
+            return false;
+        }
+
+        // File required
+        if (field.type === 'file' && field.hasAttribute('required')) {
+            if (!field.files || field.files.length === 0) {
+                showFeedback(id, 'error', msgs.empty || 'Fichier requis.');
+                field.classList.add('is-invalid');
+                return false;
+            }
+        }
+
+        // Longueur minimale
+        if (field.minLength && field.value.trim().length < field.minLength && field.value.trim().length > 0) {
+            showFeedback(id, 'error', msgs.short || `Minimum ${field.minLength} caractères.`);
+            field.classList.add('is-invalid');
+            return false;
+        }
+
+        // Plage numérique
+        if (field.type === 'number' && field.value.trim() !== '') {
+            const val = parseFloat(field.value);
+            const min = field.min !== '' ? parseFloat(field.min) : -Infinity;
+            const max = field.max !== '' ? parseFloat(field.max) : Infinity;
+            if (val < min || val > max) {
+                showFeedback(id, 'error', msgs.range || `Valeur entre ${field.min} et ${field.max}.`);
+                field.classList.add('is-invalid');
+                return false;
+            }
+        }
+
+        // Valide
+        if (field.value.trim() || (field.type === 'file' && field.files && field.files.length > 0)) {
+            showFeedback(id, 'success', msgs.ok || 'Valide ✓');
+            field.classList.add('is-valid');
+        } else {
+            clearFeedback(id);
+        }
+
+        return valid;
+    }
+
+    // ============================================================
+    //   BARRE DE PROGRESSION
+    // ============================================================
+    function updateProgress(formId, barId, labelId, total) {
+        const form   = document.getElementById(formId);
+        const bar    = document.getElementById(barId);
+        const label  = document.getElementById(labelId);
+        if (!form || !bar || !label) return;
+
+        const required = form.querySelectorAll('[required]');
+        let filled = 0;
+        required.forEach(f => {
+            if (f.type === 'file') { if (f.files && f.files.length > 0) filled++; }
+            else if (f.value.trim()) filled++;
+        });
+        const pct = Math.round((filled / required.length) * 100);
+        bar.style.width = pct + '%';
+        label.textContent = `Progression : ${filled} / ${required.length} champs remplis`;
+    }
+
+    // ============================================================
+    //   COMPTEUR DE CARACTÈRES
+    // ============================================================
+    function setupCharCounter(textareaId, counterId, max) {
+        const ta = document.getElementById(textareaId);
+        const counter = document.getElementById(counterId);
+        if (!ta || !counter) return;
+        ta.addEventListener('input', function() {
+            const len = this.value.length;
+            counter.textContent = `${len} / ${max}`;
+            counter.className = 'char-counter';
+            if (len > max * 0.9) counter.classList.add('warning');
+            if (len >= max) counter.classList.add('over');
+        });
+    }
+
+    // ============================================================
+    //   PRÉVISUALISATION FICHIER
+    // ============================================================
+    function setupFilePreview(inputId, previewId, previewNameId) {
+        const input   = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        const nameEl  = document.getElementById(previewNameId);
+        if (!input || !preview || !nameEl) return;
+        input.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                const file = this.files[0];
+                const size = (file.size / 1024).toFixed(1);
+                nameEl.textContent = `${file.name} (${size} Ko)`;
+                preview.classList.add('show');
+                showFeedback(inputId, 'success', MESSAGES[inputId]?.ok || 'Fichier sélectionné ✓');
+                this.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+            } else {
+                preview.classList.remove('show');
+            }
+            updateProgress('form-devoir',     'devoir-progress-bar',     'devoir-progress-label');
+            updateProgress('form-correction', 'correction-progress-bar', 'correction-progress-label');
+        });
+    }
+
+    // ============================================================
+    //   INITIALISATION
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Compteurs textarea
+        setupCharCounter('description',               'counter-description',  1000);
+        setupCharCounter('commentaire',               'counter-commentaire',  1000);
+        setupCharCounter('suggestions_personnalisees','counter-suggestions',   800);
+
+        // Previews fichiers
+        setupFilePreview('file1', 'preview-file1', 'preview-file1-name');
+        setupFilePreview('file2', 'preview-file2', 'preview-file2-name');
+
+        // Validation en temps réel sur chaque champ
+        document.querySelectorAll('.form-control').forEach(function(field) {
+            ['blur', 'change'].forEach(function(evt) {
+                field.addEventListener(evt, function() {
+                    validateField(this);
+                    updateProgress('form-devoir',     'devoir-progress-bar',     'devoir-progress-label');
+                    updateProgress('form-correction', 'correction-progress-bar', 'correction-progress-label');
+                });
+            });
+            if (field.tagName === 'INPUT' && field.type !== 'file') {
+                field.addEventListener('input', function() {
+                    if (this.value.trim().length > 0) validateField(this);
+                    updateProgress('form-devoir',     'devoir-progress-bar',     'devoir-progress-label');
+                    updateProgress('form-correction', 'correction-progress-bar', 'correction-progress-label');
+                });
+            }
+        });
+
+        // ======================================================
+        //   SOUMISSION FORMULAIRE DEVOIR
+        // ======================================================
+        document.getElementById('form-devoir').addEventListener('submit', function(e) {
+            const requiredFields = this.querySelectorAll('[required]');
+            let allValid = true;
+
+            requiredFields.forEach(function(field) {
+                if (!validateField(field)) allValid = false;
+            });
+
+            if (!allValid) {
+                e.preventDefault();
+                // Scroll vers le premier champ invalide
+                const firstInvalid = this.querySelector('.is-invalid');
+                if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            // Animation bouton chargement
+            const btn = document.getElementById('btn-devoir');
+            btn.classList.add('loading');
+            btn.disabled = true;
+            // Le formulaire part vers PHP → redirection sur feed.php
+        });
+
+        function showPopup(message, type) {
+    const popup = document.createElement('div');
+    popup.className = 'popup-message ' + type;
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    popup.innerHTML = '<i class="fas ' + icon + '"></i> ' + message;
+    document.body.appendChild(popup);
+    setTimeout(() => {
+        popup.style.animation = 'slideOutRight 0.3s ease forwards';
+        setTimeout(() => popup.remove(), 300);
+    }, 4000);
+}
+
+        // ======================================================
+        //   SOUMISSION FORMULAIRE CORRECTION
+        // ======================================================
+        document.getElementById('form-correction').addEventListener('submit', function(e) {
+            const requiredFields = this.querySelectorAll('[required]');
+            let allValid = true;
+
+            requiredFields.forEach(function(field) {
+                if (!validateField(field)) allValid = false;
+            });
+
+            if (!allValid) {
+                e.preventDefault();
+                const firstInvalid = this.querySelector('.is-invalid');
+                if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            const btn = document.getElementById('btn-correction');
+            btn.classList.add('loading');
+            btn.disabled = true;
+        });
+});
+    
+    </script>
+</body>
+</html>

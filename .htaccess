@@ -1,6 +1,9 @@
 RewriteEngine On
 RewriteBase /eduleb/
 
+# Canonical front-office template URLs to routed pages
+RewriteRule ^view/template/(feed|submit)\.(html|php)$ $1.html [R=302,L,NC,QSA]
+
 # Let existing files and directories load normally
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d

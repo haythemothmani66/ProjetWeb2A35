@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta content="EduMatch" name="author" />
+  <title>EduMatch Submit Devoir & Correction</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="../../assets/css/theme.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <script src="../../assets/js/vendors/color-modes.js"></script>
+  <script>
+    if (localStorage.getItem('sidebarExpanded') === 'false') {
+      document.documentElement.classList.add('collapsed');
+      document.documentElement.classList.remove('expanded');
+    } else {
+      document.documentElement.classList.remove('collapsed');
+      document.documentElement.classList.add('expanded');
+    }
+  </script>
+</head>
+
+<body>
+  <div>
+    <div data-include-html="../../partials/sidebar-collapse.html"></div>
+
+    <div id="content" class="position-relative h-100">
+      <div data-include-html="../../partials/topbar-second.html"></div>
+
+      <div class="custom-container">
+        <div class="row mb-6 g-6 align-items-center">
+          <div class="col-lg-8 col-12">
+            <p class="text-uppercase text-secondary small mb-2">EduMatch BackOffice</p>
+            <h1 class="mb-2">Submit Devoir and Correction</h1>
+            <p class="mb-0 text-secondary">Admin can submit new devoirs and corrections directly from the dashboard.</p>
+          </div>
+          <div class="col-lg-4 col-12 text-lg-end">
+            <a href="./feed_back.html" class="btn btn-dark">
+              <i class="ti ti-rss me-1"></i>
+              Open Feed Management
+            </a>
+          </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 mb-6 g-6">
+          <div class="col">
+            <div class="card card-lg h-100">
+              <div class="card-body">
+                <div class="text-secondary mb-2">Total Devoirs</div>
+                <div id="statTotalDevoirs" class="fs-2 fw-bold">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card card-lg h-100">
+              <div class="card-body">
+                <div class="text-secondary mb-2">Total Corrections</div>
+                <div id="statTotalCorrections" class="fs-2 fw-bold text-success">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-6 mb-6">
+          <div class="col-xl-6 col-12">
+            <div class="card card-lg">
+              <div class="card-header border-bottom-0">
+                <h5 class="mb-0"><i class="ti ti-file-upload me-2"></i>Soumettre un Devoir</h5>
+              </div>
+              <div class="card-body">
+                <form id="devoirForm" novalidate>
+                  <div class="mb-3">
+                    <label for="titre" class="form-label">Titre</label>
+                    <input type="text" id="titre" name="titre" class="form-control" required minlength="3" maxlength="150" />
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="4" required minlength="10" maxlength="1000"></textarea>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="file1" class="form-label">Fichier</label>
+                    <input type="file" id="file1" name="file1" class="form-control" accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg" required />
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label for="date_soumission" class="form-label">Date de soumission</label>
+                      <input type="date" id="date_soumission" name="date_soumission" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="niveau_difficulte" class="form-label">Niveau</label>
+                      <select id="niveau_difficulte" name="niveau_difficulte" class="form-select" required>
+                        <option value="">Select</option>
+                        <option value="facile">Facile</option>
+                        <option value="moyen">Moyen</option>
+                        <option value="difficile">Difficile</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row g-3 mt-0">
+                    <div class="col-md-6">
+                      <label for="type_erreur_predominant" class="form-label">Type erreur</label>
+                      <select id="type_erreur_predominant" name="type_erreur_predominant" class="form-select" required>
+                        <option value="">Select</option>
+                        <option value="logique">Logique</option>
+                        <option value="syntaxe">Syntaxe</option>
+                        <option value="comprehension">Compréhension</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label for="urgence" class="form-label">Urgence</label>
+                      <select id="urgence" name="urgence" class="form-select" required>
+                        <option value="">Select</option>
+                        <option value="faible">Faible</option>
+                        <option value="moyenne">Moyenne</option>
+                        <option value="urgente">Urgente</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row g-3 mt-0">
+                    <div class="col-md-6">
+                      <label for="temps_estime_resolution" class="form-label">Temps estimé (min)</label>
+                      <input type="number" id="temps_estime_resolution" name="temps_estime_resolution" class="form-control" min="1" max="480" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="progression_eleve" class="form-label">Progression (%)</label>
+                      <input type="number" id="progression_eleve" name="progression_eleve" class="form-control" min="0" max="100" required />
+                    </div>
+                  </div>
+
+                  <div class="mb-3 mt-3">
+                    <label for="mots_cles" class="form-label">Mots clés</label>
+                    <input type="text" id="mots_cles" name="mots_cles" class="form-control" placeholder="sql, joins, recursion" required />
+                  </div>
+
+                  <button type="submit" class="btn btn-dark w-100" id="submitDevoirBtn">
+                    <i class="ti ti-send me-1"></i>
+                    Publier le Devoir
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-6 col-12">
+            <div class="card card-lg">
+              <div class="card-header border-bottom-0">
+                <h5 class="mb-0"><i class="ti ti-checkup-list me-2"></i>Soumettre une Correction</h5>
+              </div>
+              <div class="card-body">
+                <form id="correctionForm" novalidate>
+                  <div class="mb-3">
+                    <label for="id_devoir" class="form-label">Devoir concerné</label>
+                    <select id="id_devoir" name="id_devoir" class="form-select" required>
+                      <option value="">Loading devoirs...</option>
+                    </select>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="commentaire" class="form-label">Commentaire</label>
+                    <textarea id="commentaire" name="commentaire" class="form-control" rows="4" required minlength="10" maxlength="1000"></textarea>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="file2" class="form-label">Fichier corrigé</label>
+                    <input type="file" id="file2" name="file2" class="form-control" accept=".py,.js,.java,.cpp,.c" required />
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label for="date_correction" class="form-label">Date correction</label>
+                      <input type="date" id="date_correction" name="date_correction" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="type_feedback" class="form-label">Type feedback</label>
+                      <select id="type_feedback" name="type_feedback" class="form-select" required>
+                        <option value="">Select</option>
+                        <option value="explicatif">Explicatif</option>
+                        <option value="direct">Direct</option>
+                        <option value="guide">Guidé</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row g-3 mt-0">
+                    <div class="col-md-6">
+                      <label for="note_estimee" class="form-label">Note /20</label>
+                      <input type="number" id="note_estimee" name="note_estimee" class="form-control" min="0" max="20" step="0.5" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="nombre_iterations" class="form-label">Iterations</label>
+                      <input type="number" id="nombre_iterations" name="nombre_iterations" class="form-control" min="1" max="10" required />
+                    </div>
+                  </div>
+
+                  <div class="mb-3 mt-3">
+                    <label for="competences_evaluees" class="form-label">Compétences évaluées</label>
+                    <input type="text" id="competences_evaluees" name="competences_evaluees" class="form-control" required />
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="suggestions_personnalisees" class="form-label">Suggestions personnalisées</label>
+                    <textarea id="suggestions_personnalisees" name="suggestions_personnalisees" class="form-control" rows="3"></textarea>
+                  </div>
+
+                  <div class="mb-3">
+                    <label for="ressources_recommandees" class="form-label">Ressources recommandées</label>
+                    <input type="text" id="ressources_recommandees" name="ressources_recommandees" class="form-control" placeholder="https://... , https://..." />
+                  </div>
+
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label for="rapidite_correction" class="form-label">Rapidité (min)</label>
+                      <input type="number" id="rapidite_correction" name="rapidite_correction" class="form-control" min="1" max="480" required />
+                    </div>
+                    <div class="col-md-6">
+                      <label for="ton_feedback" class="form-label">Ton feedback</label>
+                      <select id="ton_feedback" name="ton_feedback" class="form-select" required>
+                        <option value="">Select</option>
+                        <option value="encourageant">Encourageant</option>
+                        <option value="strict">Strict</option>
+                        <option value="neutre">Neutre</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button type="submit" class="btn btn-success w-100 mt-3" id="submitCorrectionBtn">
+                    <i class="ti ti-check me-1"></i>
+                    Publier la Correction
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+  <script>
+    async function loadHtmlIncludes() {
+      const includeTargets = document.querySelectorAll('[data-include-html]');
+
+      for (const target of includeTargets) {
+        const includePath = target.getAttribute('data-include-html');
+        const response = await fetch(includePath);
+
+        if (!response.ok) {
+          target.outerHTML = '';
+          continue;
+        }
+
+        let html = await response.text();
+        html = html.replaceAll('@@webRoot/', '../../');
+        html = html.replaceAll('@@webRoot', '../..');
+        target.outerHTML = html;
+      }
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load ' + src));
+        document.body.appendChild(script);
+      });
+    }
+
+    async function bootSubmitPage() {
+      await loadHtmlIncludes();
+
+      const scripts = [
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+        'https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js',
+        '../../assets/js/main.js',
+        '../../assets/js/vendors/sidebarnav.js',
+        '../../assets/js/backoffice-submit.js'
+      ];
+
+      for (const scriptPath of scripts) {
+        try {
+          await loadScript(scriptPath);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+
+    bootSubmitPage();
+  </script>
+</body>
+
+</html>
