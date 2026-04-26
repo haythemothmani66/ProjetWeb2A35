@@ -21,6 +21,20 @@ $oldCorrection = $oldData;
 require_once __DIR__ . '/../../config/database.php';
 $conn = getDBConnection();
 
+
+// Vérifier si on vient du feed pour ajouter une correction à un devoir spécifique
+$addCorrectionFor = $_GET['add_correction_for'] ?? '';
+$devoirTitle = $_GET['title'] ?? '';
+
+if ($addCorrectionFor && is_numeric($addCorrectionFor)) {
+    // Stocker l'ID du devoir dans une variable pour pré-remplir le formulaire
+    $prefillDevoirId = (int)$addCorrectionFor;
+    $prefillDevoirTitle = htmlspecialchars($devoirTitle);
+} else {
+    $prefillDevoirId = null;
+    $prefillDevoirTitle = null;
+}
+
 // Récupérer l'ID à modifier depuis l'URL
 $editType = $_GET['edit'] ?? '';
 $editId = (int)($_GET['id'] ?? 0);
@@ -774,14 +788,15 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                             <!-- ID DEVOIR (sélection) -->
                             <div class="form-group">
                                 <label for="id_devoir">
-                                    <i class="fas fa-link"></i> Quel devoir voulez-vous corriger ? (ID devoir)
+                                    <i class="fas fa-link"></i> Quel devoir voulez-vous corriger ? 
                                     <span class="required-star">*</span>
                                 </label>
                                 <select name="id_devoir" id="id_devoir" class="form-control" required>
                                     <option value="">-- Sélectionnez un devoir --</option>
                                     <?php foreach ($devoirs as $d): ?>
-                                        <option value="<?= htmlspecialchars($d['id_devoir']) ?>" <?= oldOrEdit('id_devoir', $oldData, $editCorrection) === (string)$d['id_devoir'] ? 'selected' : '' ?>>
-                                            #<?= htmlspecialchars($d['id_devoir']) ?> — <?= htmlspecialchars($d['titre']) ?>
+                                        <option value="<?= htmlspecialchars($d['id_devoir']) ?>" <?= (oldOrEdit('id_devoir', $oldData, $editCorrection) === (string)$d['id_devoir']) 
+        || ($prefillDevoirId === (int)$d['id_devoir']) ? 'selected' : '' ?>>
+                                             <?= htmlspecialchars($d['titre']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -993,76 +1008,77 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
         </div><!-- /container -->
     </section>
 
-    <!-- ===================== FOOTER ===================== -->
-    <div class="modern-footer">
-        <div class="footer-main">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-6 col-md-12">
-                        <div class="footer-brand">
-                            <div class="footer-logo">
-                                <a href="index.html"><img src="../../assets/img/logo.png" alt="EduMatch Logo"></a>
-                            </div>
-                            <div class="brand-info">
-                                <h3>EduMatch</h3>
-                                <span class="brand-tagline">Smart Learning Platform</span>
-                            </div>
-                        </div>
-                        <div class="footer-description">
-                            <p>EduMatch connecte étudiants et enseignants via un système interactif de soumission et correction de devoirs.</p>
-                        </div>
-                        <div class="footer-social">
-                            <h4>Suivez-nous</h4>
-                            <div class="social-links">
-                                <a href="#" class="social-link facebook"><i class="fab fa-facebook-f"></i></a>
-                                <a href="#" class="social-link twitter"><i class="fab fa-twitter"></i></a>
-                                <a href="#" class="social-link instagram"><i class="fab fa-instagram"></i></a>
-                                <a href="#" class="social-link linkedin"><i class="fab fa-linkedin-in"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-section">
-                            <h4>Liens rapides</h4>
-                            <ul class="footer-links">
-                                <li><a href="about.html"><i class="fas fa-chevron-right"></i> À propos</a></li>
-                                <li><a href="/eduleb/submit.html"><i class="fas fa-chevron-right"></i> Soumettre</a></li>
-                                <li><a href="/eduleb/feed.html"><i class="fas fa-chevron-right"></i> Feed</a></li>
-                                <li><a href="contact.html"><i class="fas fa-chevron-right"></i> Contact</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-section">
-                            <h4>Fonctionnalités</h4>
-                            <ul class="footer-links">
-                                <li><i class="fas fa-check-circle text-success"></i> Apprentissage interactif</li>
-                                <li><i class="fas fa-check-circle text-success"></i> Feedback en temps réel</li>
-                                <li><i class="fas fa-check-circle text-success"></i> Analyses de notes</li>
-                                <li><i class="fas fa-check-circle text-success"></i> Mobile friendly</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+    <!-- START MODERN FOOTER -->
+    <footer class="modern-footer bg-dark text-white py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="footer-brand">
+              <a href="index.html" class="text-decoration-none">
+                <img src="../../assets/img/logo.png" alt="EduMatch Logo" class="mb-3" style="height: 50px;">
+                <h3 class="text-white fw-bold">EduMatch</h3>
+              </a>
+              <p class="mt-3 text-light opacity-75">
+                Smart matching platform connecting students with expert professors across all academic subjects for personalized learning experiences.
+              </p>
+              <div class="social-links mt-3">
+                <a href="#" class="text-white me-3 fs-4"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-white me-3 fs-4"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-white me-3 fs-4"><i class="fab fa-linkedin-in"></i></a>
+                <a href="#" class="text-white me-3 fs-4"><i class="fab fa-instagram"></i></a>
+              </div>
             </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p style="color:#94a3b8;margin:0;font-size:0.9rem;">
-                            &copy; 2026 EduMatch. Tous droits réservés.
-                        </p>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <a href="#" style="color:#94a3b8;text-decoration:none;margin-left:1.5rem;font-size:0.9rem;">Confidentialité</a>
-                        <a href="#" style="color:#94a3b8;text-decoration:none;margin-left:1.5rem;font-size:0.9rem;">Conditions</a>
-                    </div>
-                </div>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Platform</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="submit.html" class="text-light text-decoration-none">Submit Requirements</a></li>
+              <li class="mb-2"><a href="feed.html" class="text-light text-decoration-none">Professor Matches</a></li>
+              <li class="mb-2"><a href="about.html" class="text-light text-decoration-none">How It Works</a></li>
+              <li class="mb-2"><a href="contact.html" class="text-light text-decoration-none">Get Matched</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Academic Subjects</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematics</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences</a></li>
+							<li class="mb-2"><a href="#" class="text-light text-decoration-none">coding</a></li>
+							<li class="mb-2"><a href="#" class="text-light text-decoration-none">algorithm</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Languages</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Humanities</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-4 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Contact Info</h5>
+            <div class="contact-info">
+              <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Tunisia,Tunis</p>
+              <p class="mb-2"><i class="fas fa-phone me-2"></i>+216 90 549 254</p>
+              <p class="mb-2"><i class="fas fa-envelope me-2"></i>edumatch@gmail.com</p>
             </div>
+            <div class="newsletter mt-3">
+              <h6 class="fw-bold mb-2">Stay Updated on Academic Tutoring</h6>
+              <div class="input-group">
+                <input type="email" class="form-control" placeholder="Your email" style="border-radius: 25px 0 0 25px;">
+                <button class="btn btn-primary" type="button" style="border-radius: 0 25px 25px 0;">Subscribe</button>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-    <!-- END FOOTER -->
+        <hr class="my-4 opacity-25">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. All rights reserved.</p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <a href="#" class="text-light text-decoration-none me-3">Privacy Policy</a>
+            <a href="#" class="text-light text-decoration-none me-3">Terms of Service</a>
+            <a href="#" class="text-light text-decoration-none">Support</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <!-- END MODERN FOOTER -->
 
     <script src="../../assets/js/jquery-1.12.4.min.js"></script>
     <script src="../../assets/bootstrap/js/bootstrap.min.js"></script>

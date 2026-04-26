@@ -1,3 +1,4 @@
+AddType application/x-httpd-php .html .htm
 RewriteEngine On
 RewriteBase /eduleb/
 
@@ -11,3 +12,4 @@ RewriteRule ^ - [L]
 
 # Route everything else through index.php
 RewriteRule ^ index.php [L,QSA]
+

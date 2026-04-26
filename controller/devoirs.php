@@ -1,6 +1,8 @@
 <?php
 ob_start();
 session_start(); // Pour les messages de succès/erreur
+require_once __DIR__ . '/../model/devoirs_class.php';
+require_once __DIR__ . '/../model/correction_class.php';
 
 require_once __DIR__ . '/../config/database.php';
 
@@ -91,16 +93,31 @@ class Devoirs
             $this->respond(false, 'Méthode non autorisée', 405);
         }
 
-        // --- Récupération des données ---
-        $titre                    = trim($_POST['titre'] ?? '');
-        $description              = trim($_POST['description'] ?? '');
-        $niveau_difficulte        = trim($_POST['niveau_difficulte'] ?? '');
-        $date_soumission          = trim($_POST['date_soumission'] ?? '');
-        $type_erreur_predominant  = trim($_POST['type_erreur_predominant'] ?? '');
-        $temps_estime_resolution  = (int)($_POST['temps_estime_resolution'] ?? 0);
-        $progression_eleve        = (int)($_POST['progression_eleve'] ?? 0);
-        $mots_cles                = trim($_POST['mots_cles'] ?? '');
-        $urgence                  = trim($_POST['urgence'] ?? '');
+        $devoirObj = new Devoir(
+    null,
+    trim($_POST['titre'] ?? ''),
+    trim($_POST['description'] ?? ''),
+    '', // fichier (sera rempli après upload)
+    trim($_POST['date_soumission'] ?? ''),
+    trim($_POST['niveau_difficulte'] ?? ''),
+    trim($_POST['type_erreur_predominant'] ?? ''),
+    (int)($_POST['temps_estime_resolution'] ?? 0),
+    (int)($_POST['progression_eleve'] ?? 0),
+    trim($_POST['mots_cles'] ?? ''),
+    trim($_POST['urgence'] ?? ''),
+    null // id_eleve (à gérer plus tard)
+);
+
+// récupérer les valeurs (pour ne rien casser)
+$titre = $devoirObj->getTitre();
+$description = $devoirObj->getDescription();
+$date_soumission = $devoirObj->getDateSoumission();
+$niveau_difficulte = $devoirObj->getNiveauDifficulte();
+$type_erreur_predominant = $devoirObj->getTypeErreur();
+$temps_estime_resolution = $devoirObj->getTempsEstime();
+$progression_eleve = $devoirObj->getProgression();
+$mots_cles = $devoirObj->getMotsCles();
+$urgence = $devoirObj->getUrgence();
 
         // --- Validation serveur ---
         $errors = [];
@@ -168,18 +185,35 @@ class Devoirs
             $this->respond(false, 'Méthode non autorisée', 405);
         }
 
-        // --- Récupération des données ---
-        $id_devoir                  = (int)($_POST['id_devoir'] ?? 0);
-        $commentaire                = trim($_POST['commentaire'] ?? '');
-        $date_correction            = trim($_POST['date_correction'] ?? '');
-        $type_feedback              = trim($_POST['type_feedback'] ?? '');
-        $note_estimee               = (float)($_POST['note_estimee'] ?? 0);
-        $competences_evaluees       = trim($_POST['competences_evaluees'] ?? '');
-        $nombre_iterations          = (int)($_POST['nombre_iterations'] ?? 1);
-        $suggestions_personnalisees = trim($_POST['suggestions_personnalisees'] ?? '');
-        $ressources_recommandees    = trim($_POST['ressources_recommandees'] ?? '');
-        $rapidite_correction        = (int)($_POST['rapidite_correction'] ?? 0);
-        $ton_feedback               = trim($_POST['ton_feedback'] ?? '');
+        $correctionObj = new Correction(
+    null,
+    trim($_POST['commentaire'] ?? ''),
+    '', // fichier corrigé
+    trim($_POST['date_correction'] ?? ''),
+    trim($_POST['type_feedback'] ?? ''),
+    (float)($_POST['note_estimee'] ?? 0),
+    trim($_POST['competences_evaluees'] ?? ''),
+    (int)($_POST['nombre_iterations'] ?? 1),
+    trim($_POST['suggestions_personnalisees'] ?? ''),
+    trim($_POST['ressources_recommandees'] ?? ''),
+    (int)($_POST['rapidite_correction'] ?? 0),
+    trim($_POST['ton_feedback'] ?? ''),
+    (int)($_POST['id_devoir'] ?? 0),
+    null // id_encadrant
+);
+
+// récupérer les valeurs sans casser ton code
+$id_devoir = $correctionObj->getIdDevoir();
+$commentaire = $correctionObj->getCommentaire();
+$date_correction = $correctionObj->getDateCorrection();
+$type_feedback = $correctionObj->getTypeFeedback();
+$note_estimee = $correctionObj->getNote();
+$competences_evaluees = $correctionObj->getCompetences();
+$nombre_iterations = $correctionObj->getIterations();
+$suggestions_personnalisees = $correctionObj->getSuggestions();
+$ressources_recommandees = $correctionObj->getRessources();
+$rapidite_correction = $correctionObj->getRapidite();
+$ton_feedback = $correctionObj->getTon();
 
         // --- Validation serveur ---
         $errors = [];

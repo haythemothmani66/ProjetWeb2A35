@@ -1,348 +1,741 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <meta content="EduMatch" name="author" />
-  <title>EduMatch Feed Management</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
-  <link rel="stylesheet" href="../../assets/css/theme.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
-  <script src="../../assets/js/vendors/color-modes.js"></script>
-  <script>
-    if (localStorage.getItem('sidebarExpanded') === 'false') {
-      document.documentElement.classList.add('collapsed');
-      document.documentElement.classList.remove('expanded');
-    } else {
-      document.documentElement.classList.remove('collapsed');
-      document.documentElement.classList.add('expanded');
-    }
-  </script>
-</head>
-
-<body>
-  <div>
-    <div data-include-html="../../partials/sidebar-collapse.html"></div>
-
-    <div id="content" class="position-relative h-100">
-      <div data-include-html="../../partials/topbar-second.html"></div>
-
-      <div class="custom-container">
-        <div class="row mb-6 g-6 align-items-center">
-          <div class="col-lg-8 col-12">
-            <p class="text-uppercase text-secondary small mb-2">EduMatch BackOffice</p>
-            <h1 class="mb-2">Devoir and Correction Feed</h1>
-            <p class="mb-0 text-secondary">View, edit, and delete devoirs and corrections from one dashboard page.</p>
-          </div>
-          <div class="col-lg-4 col-12 text-lg-end d-flex justify-content-lg-end gap-2">
-            <a href="./submit_back.html" class="btn btn-dark">
-              <i class="ti ti-plus me-1"></i>
-              Add Submission
-            </a>
-            <button type="button" id="refreshFeedBtn" class="btn btn-white">Refresh</button>
-          </div>
-        </div>
-
-        <div class="row row-cols-1 row-cols-md-2 mb-6 g-6">
-          <div class="col">
-            <div class="card card-lg h-100">
-              <div class="card-body">
-                <div class="text-secondary mb-2">Total Devoirs</div>
-                <div id="statTotalDevoirs" class="fs-2 fw-bold">0</div>
-              </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card card-lg h-100">
-              <div class="card-body">
-                <div class="text-secondary mb-2">Total Corrections</div>
-                <div id="statTotalCorrections" class="fs-2 fw-bold text-success">0</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card card-lg mb-6">
-          <div class="card-body">
-            <div class="row g-3 align-items-end">
-              <div class="col-lg-8 col-12">
-                <label for="searchInput" class="form-label">Search</label>
-                <input id="searchInput" type="text" class="form-control"
-                  placeholder="Search by title, keywords, commentaire, devoir id..." />
-              </div>
-              <div class="col-lg-4 col-12 d-grid">
-                <button type="button" id="clearFiltersBtn" class="btn btn-white">Reset Search</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card card-lg mb-6">
-          <div class="card-header border-bottom-0 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Devoirs</h5>
-            <span id="devoirCountBadge" class="badge text-primary-emphasis bg-primary-subtle">0 devoir(s)</span>
-          </div>
-          <div class="table-responsive">
-            <table class="table text-nowrap mb-0 table-centered table-hover align-middle">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Titre</th>
-                  <th>Date</th>
-                  <th>Niveau</th>
-                  <th>Urgence</th>
-                  <th class="text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="devoirsTableBody">
-                <tr>
-                  <td colspan="6" class="text-center py-5 text-secondary">Loading devoirs...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card card-lg mb-6">
-          <div class="card-header border-bottom-0 d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Corrections</h5>
-            <span id="correctionCountBadge" class="badge text-success-emphasis bg-success-subtle">0 correction(s)</span>
-          </div>
-          <div class="table-responsive">
-            <table class="table text-nowrap mb-0 table-centered table-hover align-middle">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Devoir</th>
-                  <th>Note</th>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th class="text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="correctionsTableBody">
-                <tr>
-                  <td colspan="6" class="text-center py-5 text-secondary">Loading corrections...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="detailsModalLabel">Details</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body" id="detailsModalBody"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="editDevoirModal" tabindex="-1" aria-labelledby="editDevoirModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editDevoirModalLabel">Edit Devoir</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form id="editDevoirForm" novalidate>
-          <div class="modal-body">
-            <input type="hidden" id="editDevoirId" name="id_devoir" />
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label" for="editTitre">Titre</label>
-                <input class="form-control" id="editTitre" name="titre" required />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editDateSoumission">Date</label>
-                <input type="date" class="form-control" id="editDateSoumission" name="date_soumission" required />
-              </div>
-              <div class="col-12">
-                <label class="form-label" for="editDescription">Description</label>
-                <textarea class="form-control" id="editDescription" name="description" rows="4" required></textarea>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editNiveau">Niveau</label>
-                <select class="form-select" id="editNiveau" name="niveau_difficulte" required>
-                  <option value="facile">Facile</option>
-                  <option value="moyen">Moyen</option>
-                  <option value="difficile">Difficile</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editTypeErreur">Type erreur</label>
-                <select class="form-select" id="editTypeErreur" name="type_erreur_predominant" required>
-                  <option value="logique">Logique</option>
-                  <option value="syntaxe">Syntaxe</option>
-                  <option value="comprehension">Compréhension</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editTemps">Temps (min)</label>
-                <input type="number" class="form-control" id="editTemps" name="temps_estime_resolution" min="1" max="480" required />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editProgression">Progression (%)</label>
-                <input type="number" class="form-control" id="editProgression" name="progression_eleve" min="0" max="100" required />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editUrgence">Urgence</label>
-                <select class="form-select" id="editUrgence" name="urgence" required>
-                  <option value="faible">Faible</option>
-                  <option value="moyenne">Moyenne</option>
-                  <option value="urgente">Urgente</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editMotsCles">Mots clés</label>
-                <input class="form-control" id="editMotsCles" name="mots_cles" required />
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-white" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-dark">Save Devoir</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="editCorrectionModal" tabindex="-1" aria-labelledby="editCorrectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="editCorrectionModalLabel">Edit Correction</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <form id="editCorrectionForm" novalidate>
-          <div class="modal-body">
-            <input type="hidden" id="editCorrectionId" name="id_correction" />
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label" for="editDateCorrection">Date</label>
-                <input type="date" class="form-control" id="editDateCorrection" name="date_correction" required />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editTypeFeedback">Type feedback</label>
-                <select class="form-select" id="editTypeFeedback" name="type_feedback" required>
-                  <option value="explicatif">Explicatif</option>
-                  <option value="direct">Direct</option>
-                  <option value="guide">Guidé</option>
-                </select>
-              </div>
-              <div class="col-12">
-                <label class="form-label" for="editCommentaire">Commentaire</label>
-                <textarea class="form-control" id="editCommentaire" name="commentaire" rows="4" required></textarea>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editNote">Note /20</label>
-                <input type="number" class="form-control" id="editNote" name="note_estimee" min="0" max="20" step="0.5" required />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editIterations">Iterations</label>
-                <input type="number" class="form-control" id="editIterations" name="nombre_iterations" min="1" max="10" required />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editRapidite">Rapidité (min)</label>
-                <input type="number" class="form-control" id="editRapidite" name="rapidite_correction" min="1" max="480" required />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label" for="editTon">Ton feedback</label>
-                <select class="form-select" id="editTon" name="ton_feedback" required>
-                  <option value="encourageant">Encourageant</option>
-                  <option value="strict">Strict</option>
-                  <option value="neutre">Neutre</option>
-                </select>
-              </div>
-              <div class="col-12">
-                <label class="form-label" for="editCompetences">Compétences évaluées</label>
-                <input class="form-control" id="editCompetences" name="competences_evaluees" required />
-              </div>
-              <div class="col-12">
-                <label class="form-label" for="editSuggestions">Suggestions personnalisées</label>
-                <textarea class="form-control" id="editSuggestions" name="suggestions_personnalisees" rows="3"></textarea>
-              </div>
-              <div class="col-12">
-                <label class="form-label" for="editRessources">Ressources recommandées</label>
-                <input class="form-control" id="editRessources" name="ressources_recommandees" />
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-white" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-dark">Save Correction</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
-
-  <script>
-    async function loadHtmlIncludes() {
-      const includeTargets = document.querySelectorAll('[data-include-html]');
-
-      for (const target of includeTargets) {
-        const includePath = target.getAttribute('data-include-html');
-        const response = await fetch(includePath);
-
-        if (!response.ok) {
-          target.outerHTML = '';
-          continue;
-        }
-
-        let html = await response.text();
-        html = html.replaceAll('@@webRoot/', '../../');
-        html = html.replaceAll('@@webRoot', '../..');
-        target.outerHTML = html;
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta content="EduMatch" name="author" />
+    <title>EduMatch Feed Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap"
+    />
+    <link rel="stylesheet" href="../../assets/css/theme.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <script src="../../assets/js/vendors/color-modes.js"></script>
+    <script>
+      if (localStorage.getItem("sidebarExpanded") === "false") {
+        document.documentElement.classList.add("collapsed");
+        document.documentElement.classList.remove("expanded");
+      } else {
+        document.documentElement.classList.remove("collapsed");
+        document.documentElement.classList.add("expanded");
       }
-    }
+    </script>
+    <style>
+      .btn-add-correction {
+        background: #10b981;
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        text-decoration: none;
+      }
+      .btn-add-correction:hover {
+        background: #059669;
+        transform: scale(1.05);
+        color: white;
+        text-decoration: none;
+      }
+      .devoir-card {
+        margin-bottom: 2rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.5rem;
+        overflow: hidden;
+      }
+      .devoir-header {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .devoir-body {
+        padding: 1rem;
+      }
+      .corrections-container {
+        margin-left: 2rem;
+        padding-left: 1rem;
+        border-left: 2px solid #10b981;
+      }
+      .correction-card {
+        background: #f9f9f9;
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #e0e0e0;
+      }
+      .urgence-faible {
+        background: #d1fae5;
+        color: #065f46;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+      }
+      .urgence-moyenne {
+        background: #fed7aa;
+        color: #92400e;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+      }
+      .urgence-urgente {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+      }
+      .note-badge {
+        background: linear-gradient(135deg, #f59e0b, #ef4444);
+        color: white;
+        border-radius: 999px;
+        padding: 0.25rem 0.75rem;
+        font-weight: bold;
+        font-size: 0.8rem;
+      }
+      .tag {
+        background: #e0e7ff;
+        color: #4338ca;
+        padding: 0.2rem 0.6rem;
+        border-radius: 0.25rem;
+        font-size: 0.7rem;
+        display: inline-block;
+        margin: 0.2rem;
+      }
+      .detail-chip {
+        background: #f3f4f6;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .search-bar {
+        margin-bottom: 2rem;
+      }
+    </style>
+  </head>
 
-    function loadScript(src) {
-      return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load ' + src));
-        document.body.appendChild(script);
-      });
-    }
+  <body>
+    <div>
+      <div data-include-html="../../partials/sidebar-collapse.html"></div>
 
-    async function bootFeedPage() {
-      await loadHtmlIncludes();
+      <div id="content" class="position-relative h-100">
+        <div data-include-html="../../partials/topbar-second.html"></div>
 
-      const scripts = [
-        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
-        'https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js',
-        '../../assets/js/main.js',
-        '../../assets/js/vendors/sidebarnav.js',
-        '../../assets/js/backoffice-feed.js'
-      ];
+        <div class="custom-container">
+          <div class="row mb-6 g-6 align-items-center">
+            <div class="col-lg-8 col-12">
+              <p class="text-uppercase text-secondary small mb-2">
+                EduMatch BackOffice
+              </p>
+              <h1 class="mb-2">Devoir and Correction Feed</h1>
+              <p class="mb-0 text-secondary">
+                View, edit, and delete devoirs and corrections from one
+                dashboard page.
+              </p>
+            </div>
+            <div
+              class="col-lg-4 col-12 text-lg-end d-flex justify-content-lg-end gap-2"
+            >
+              <a href="./submit_back.php" class="btn btn-dark">
+                <i class="ti ti-plus me-1"></i>
+                Add Submission
+              </a>
+              <button type="button" id="refreshFeedBtn" class="btn btn-white">
+                Refresh
+              </button>
+            </div>
+          </div>
 
-      for (const scriptPath of scripts) {
+          <div class="row row-cols-1 row-cols-md-2 mb-6 g-6">
+            <div class="col">
+              <div class="card card-lg h-100">
+                <div class="card-body">
+                  <div class="text-secondary mb-2">Total Devoirs</div>
+                  <div id="statTotalDevoirs" class="fs-2 fw-bold">0</div>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="card card-lg h-100">
+                <div class="card-body">
+                  <div class="text-secondary mb-2">Total Corrections</div>
+                  <div
+                    id="statTotalCorrections"
+                    class="fs-2 fw-bold text-success"
+                  >
+                    0
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="card card-lg mb-6 search-bar">
+            <div class="card-body">
+              <div class="row g-3 align-items-end">
+                <div class="col-lg-9 col-12">
+                  <label for="searchInput" class="form-label">Search</label>
+                  <input
+                    id="searchInput"
+                    type="text"
+                    class="form-control"
+                    placeholder="Search by title, keywords, commentaire..."
+                  />
+                </div>
+                <div class="col-lg-3 col-12 d-grid">
+                  <button
+                    type="button"
+                    id="clearFiltersBtn"
+                    class="btn btn-white"
+                  >
+                    Reset Search
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feed Container -->
+          <div id="feedContainer">
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2">Loading devoirs and corrections...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="detailsModal"
+      tabindex="-1"
+      aria-labelledby="detailsModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="detailsModalLabel">Details</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body" id="detailsModalBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="toast-container position-fixed top-0 end-0 p-3"
+      id="toastContainer"
+    ></div>
+
+    <script>
+      async function loadHtmlIncludes() {
+        const includeTargets = document.querySelectorAll("[data-include-html]");
+        for (const target of includeTargets) {
+          const includePath = target.getAttribute("data-include-html");
+          const response = await fetch(includePath);
+          if (!response.ok) {
+            target.outerHTML = "";
+            continue;
+          }
+          let html = await response.text();
+          html = html.replaceAll("@@webRoot/", "/eduleb/view/backoffice/src/");
+          html = html.replaceAll("@@webRoot", "/eduleb/view/backoffice/src");
+          target.outerHTML = html;
+        }
+      }
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error("Failed to load " + src));
+          document.body.appendChild(script);
+        });
+      }
+
+      // Configuration
+      const CONFIG = {
+        controllerUrl: "/controller/devoirs_back.php",
+      };
+
+      function getControllerUrl() {
+        const normalized = window.location.pathname.replaceAll("\\", "/");
+        const marker = "/view/backoffice/src/pages/backoffice/";
+        const markerIndex = normalized.indexOf(marker);
+        if (markerIndex !== -1) {
+          const appBase = normalized.slice(0, markerIndex);
+          return `${appBase}/controller/devoirs_back.php`;
+        }
+        return "/controller/devoirs_back.php";
+      }
+
+      function escapeHtml(value) {
+        if (!value) return "";
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function showToast(message, variant) {
+        const toastContainer = document.getElementById("toastContainer");
+        const color = variant === "danger" ? "danger" : "success";
+        const toastId = `toast-${Date.now()}`;
+        const toastMarkup = `
+          <div id="${toastId}" class="toast align-items-center text-bg-${color} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">${escapeHtml(message)}</div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+          </div>
+        `;
+        toastContainer.insertAdjacentHTML("beforeend", toastMarkup);
+        const toastElement = document.getElementById(toastId);
+        const toast = bootstrap.Toast.getOrCreateInstance(toastElement, {
+          delay: 2800,
+        });
+        toast.show();
+        toastElement.addEventListener("hidden.bs.toast", () =>
+          toastElement.remove(),
+        );
+      }
+
+      async function fetchJson(url) {
+        const response = await fetch(url, {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        const raw = await response.text();
+        let payload = null;
         try {
-          await loadScript(scriptPath);
+          payload = JSON.parse(raw);
         } catch (error) {
-          console.error(error);
+          const jsonStart = raw.indexOf("{");
+          const jsonEnd = raw.lastIndexOf("}");
+          if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+            try {
+              payload = JSON.parse(raw.slice(jsonStart, jsonEnd + 1));
+            } catch (innerError) {
+              payload = null;
+            }
+          }
+        }
+        if (!payload) {
+          throw new Error("Invalid JSON response from server.");
+        }
+        if (!response.ok || payload.success === false) {
+          throw new Error(payload.message || "Request failed.");
+        }
+        return payload;
+      }
+
+      function urgenceBadge(urgence) {
+        const normalized = String(urgence || "").toLowerCase();
+        if (normalized === "urgente") {
+          return '<span class="urgence-urgente">🔴 Urgente</span>';
+        }
+        if (normalized === "moyenne") {
+          return '<span class="urgence-moyenne">🟡 Moyenne</span>';
+        }
+        return '<span class="urgence-faible">🟢 Faible</span>';
+      }
+
+      function renderFeed(devoirs, corrections) {
+        const container = document.getElementById("feedContainer");
+
+        // Group corrections by devoir
+        const correctionsByDevoir = {};
+        corrections.forEach((corr) => {
+          if (!correctionsByDevoir[corr.id_devoir]) {
+            correctionsByDevoir[corr.id_devoir] = [];
+          }
+          correctionsByDevoir[corr.id_devoir].push(corr);
+        });
+
+        if (!devoirs || devoirs.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-5">
+              <i class="ti ti-inbox" style="font-size: 3rem;"></i>
+              <h4 class="mt-3">No devoirs found</h4>
+              <p class="text-secondary">Click "Add Submission" to create your first devoir.</p>
+            </div>
+          `;
+          return;
+        }
+
+        let html = "";
+        devoirs.forEach((devoir) => {
+          const devoirCorrections = correctionsByDevoir[devoir.id_devoir] || [];
+
+          html += `
+            <div class="devoir-card" data-devoir-id="${devoir.id_devoir}" data-devoir-title="${escapeHtml(devoir.titre).toLowerCase()}" data-devoir-keywords="${escapeHtml(devoir.mots_cles || "").toLowerCase()}">
+              <div class="devoir-header">
+                <div class="d-flex justify-content-between align-items-start flex-wrap">
+                  <div>
+                    <h4 class="mb-1">📘 ${escapeHtml(devoir.titre)}</h4>
+                    <div class="d-flex gap-2 flex-wrap mt-2">
+                      ${urgenceBadge(devoir.urgence)}
+                      <span class="badge bg-secondary">${escapeHtml(devoir.niveau_difficulte)}</span>
+                      <span class="text-secondary"><i class="ti ti-calendar"></i> ${escapeHtml(devoir.date_soumission)}</span>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-2">
+                    <a href="submit_back.php?add_correction_for=${devoir.id_devoir}&title=${encodeURIComponent(devoir.titre)}" class="btn-add-correction">
+                      <i class="ti ti-plus"></i> Ajouter correction
+                    </a>
+                    <button class="btn btn-sm btn-white edit-devoir" data-id="${devoir.id_devoir}">
+                      <i class="ti ti-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-danger delete-devoir" data-id="${devoir.id_devoir}">
+                      <i class="ti ti-trash"></i> Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="devoir-body">
+                <p class="text-secondary">${escapeHtml(devoir.description)}</p>
+                
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="detail-chip">
+                      <i class="ti ti-alert-triangle"></i>
+                      <strong>Erreur:</strong> ${escapeHtml(devoir.type_erreur_predominant)}
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="detail-chip">
+                      <i class="ti ti-clock"></i>
+                      <strong>Temps:</strong> ${escapeHtml(devoir.temps_estime_resolution)} min
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="detail-chip">
+                      <i class="ti ti-chart-bar"></i>
+                      <strong>Progression:</strong> ${escapeHtml(devoir.progression_eleve)}%
+                    </div>
+                  </div>
+                </div>
+                
+                ${
+                  devoir.mots_cles
+                    ? `
+                  <div class="mt-2">
+                    <strong>Mots clés:</strong>
+                    <div>
+                      ${devoir.mots_cles
+                        .split(",")
+                        .map(
+                          (tag) =>
+                            `<span class="tag">${escapeHtml(tag.trim())}</span>`,
+                        )
+                        .join("")}
+                    </div>
+                  </div>
+                `
+                    : ""
+                }
+                
+                ${
+                  devoir.fichier
+                    ? `
+                  <div class="mt-2">
+                    <a href="#" class="text-primary">📎 ${escapeHtml(devoir.fichier)}</a>
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+              
+              <div class="corrections-container">
+                ${
+                  devoirCorrections.length === 0
+                    ? `
+                  <div class="text-secondary py-2">
+                    <i class="ti ti-message-circle-off"></i> Aucune correction pour ce devoir
+                  </div>
+                `
+                    : `
+                  <div class="mb-2">
+                    <strong><i class="ti ti-check-circle text-success"></i> ${devoirCorrections.length} correction(s)</strong>
+                  </div>
+                  ${devoirCorrections
+                    .map(
+                      (corr) => `
+                    <div class="correction-card" data-correction-id="${corr.id_correction}" data-correction-comment="${escapeHtml(corr.commentaire || "").toLowerCase()}">
+                      <div class="d-flex justify-content-between align-items-start flex-wrap">
+                        <div>
+                          <span class="note-badge">⭐ ${escapeHtml(corr.note_estimee)}/20</span>
+                          <span class="badge bg-info ms-2">${escapeHtml(corr.type_feedback)}</span>
+                          <span class="badge bg-secondary ms-2">${escapeHtml(corr.ton_feedback)}</span>
+                          <span class="text-secondary ms-2"><i class="ti ti-calendar"></i> ${escapeHtml(corr.date_correction)}</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                          <button class="btn btn-sm btn-white edit-correction" data-id="${corr.id_correction}">
+                            <i class="ti ti-edit"></i> Edit
+                          </button>
+                          <button class="btn btn-sm btn-danger delete-correction" data-id="${corr.id_correction}">
+                            <i class="ti ti-trash"></i> Delete
+                          </button>
+                        </div>
+                      </div>
+                      <p class="mt-2 mb-1">${escapeHtml(corr.commentaire)}</p>
+                      <div class="row small">
+                        <div class="col-md-6">
+                          <strong>Itérations:</strong> ${escapeHtml(corr.nombre_iterations)}
+                        </div>
+                        <div class="col-md-6">
+                          <strong>Rapidité:</strong> ${escapeHtml(corr.rapidite_correction)} min
+                        </div>
+                      </div>
+                      ${
+                        corr.competences_evaluees
+                          ? `
+                        <div class="mt-2">
+                          <strong>Compétences:</strong>
+                          ${corr.competences_evaluees
+                            .split(",")
+                            .map(
+                              (comp) =>
+                                `<span class="tag">${escapeHtml(comp.trim())}</span>`,
+                            )
+                            .join("")}
+                        </div>
+                      `
+                          : ""
+                      }
+                      ${
+                        corr.suggestions_personnalisees
+                          ? `
+                        <div class="mt-2 p-2 bg-light rounded">
+                          <strong>💡 Suggestions:</strong><br>
+                          ${escapeHtml(corr.suggestions_personnalisees)}
+                        </div>
+                      `
+                          : ""
+                      }
+                    </div>
+                  `,
+                    )
+                    .join("")}
+                `
+                }
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+
+        // Update stats
+        document.getElementById("statTotalDevoirs").textContent =
+          devoirs.length;
+        document.getElementById("statTotalCorrections").textContent =
+          corrections.length;
+      }
+
+      async function loadFeedData() {
+        const controllerUrl = getControllerUrl();
+        try {
+          const [devoirPayload, correctionPayload] = await Promise.all([
+            fetchJson(`${controllerUrl}?action=listdevoirs`),
+            fetchJson(`${controllerUrl}?action=listcorrections`),
+          ]);
+
+          const devoirs = Array.isArray(devoirPayload.data)
+            ? devoirPayload.data
+            : [];
+          const corrections = Array.isArray(correctionPayload.data)
+            ? correctionPayload.data
+            : [];
+
+          renderFeed(devoirs, corrections);
+
+          // Attach event handlers
+          attachEventHandlers();
+        } catch (error) {
+          console.error("Error loading feed:", error);
+          document.getElementById("feedContainer").innerHTML = `
+            <div class="alert alert-danger">
+              <i class="ti ti-alert-circle"></i> Error loading feed: ${escapeHtml(error.message)}
+            </div>
+          `;
         }
       }
-    }
 
-    bootFeedPage();
-  </script>
-</body>
+      async function deleteItem(type, id) {
+        const label = type === "devoir" ? "devoir" : "correction";
+        if (!confirm(`Delete this ${label}?`)) return;
 
+        const controllerUrl = getControllerUrl();
+        const action = type === "devoir" ? "delete" : "deletecorrection";
+
+        try {
+          const response = await fetch(
+            `${controllerUrl}?action=${action}&id=${encodeURIComponent(id)}`,
+          );
+          const raw = await response.text();
+
+          showToast(`${label} deleted successfully`, "success");
+          await loadFeedData();
+        } catch (error) {
+          showToast(error.message || `Unable to delete ${label}.`, "danger");
+        }
+      }
+
+      function attachEventHandlers() {
+        // Delete devoir
+        document.querySelectorAll(".delete-devoir").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const id = btn.dataset.id;
+            deleteItem("devoir", id);
+          });
+        });
+
+        // Delete correction
+        document.querySelectorAll(".delete-correction").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const id = btn.dataset.id;
+            deleteItem("correction", id);
+          });
+        });
+
+        // Edit devoir - redirect to submit_back.html with edit parameter
+        document.querySelectorAll(".edit-devoir").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const id = btn.dataset.id;
+            window.location.href = `submit_back.php?edit=devoir&id=${id}`;
+          });
+        });
+
+        // Edit correction
+        document.querySelectorAll(".edit-correction").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const id = btn.dataset.id;
+            window.location.href = `submit_back.php?edit=correction&id=${id}`;
+          });
+        });
+
+        // Search functionality
+        const searchInput = document.getElementById("searchInput");
+        const clearBtn = document.getElementById("clearFiltersBtn");
+
+        if (searchInput) {
+          searchInput.addEventListener("input", () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const cards = document.querySelectorAll(".devoir-card");
+
+            cards.forEach((card) => {
+              const devoirTitle = card.dataset.devoirTitle || "";
+              const devoirKeywords = card.dataset.devoirKeywords || "";
+              const corrections = card.querySelectorAll(".correction-card");
+
+              let devoirMatch =
+                searchTerm === "" ||
+                devoirTitle.includes(searchTerm) ||
+                devoirKeywords.includes(searchTerm);
+              let correctionMatch = false;
+
+              corrections.forEach((correction) => {
+                const comment = correction.dataset.correctionComment || "";
+                if (searchTerm !== "" && comment.includes(searchTerm)) {
+                  correctionMatch = true;
+                  correction.style.display = "block";
+                } else if (searchTerm === "") {
+                  correction.style.display = "block";
+                } else {
+                  correction.style.display = "none";
+                }
+              });
+
+              if (devoirMatch || correctionMatch) {
+                card.style.display = "block";
+              } else if (searchTerm !== "") {
+                card.style.display = "none";
+              } else {
+                card.style.display = "block";
+              }
+            });
+          });
+        }
+
+        if (clearBtn) {
+          clearBtn.addEventListener("click", () => {
+            if (searchInput) {
+              searchInput.value = "";
+              searchInput.dispatchEvent(new Event("input"));
+            }
+          });
+        }
+      }
+
+      async function bootFeedPage() {
+        await loadHtmlIncludes();
+
+        const scripts = [
+          "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js",
+          "https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js",
+          "../../assets/js/main.js",
+          "../../assets/js/vendors/sidebarnav.js",
+        ];
+
+        for (const scriptPath of scripts) {
+          try {
+            await loadScript(scriptPath);
+          } catch (error) {
+            console.error(error);
+          }
+        }
+
+        // Load feed data
+        await loadFeedData();
+
+        // Refresh button
+        const refreshBtn = document.getElementById("refreshFeedBtn");
+        if (refreshBtn) {
+          refreshBtn.addEventListener("click", async () => {
+            await loadFeedData();
+            showToast("Feed refreshed", "success");
+          });
+        }
+      }
+
+      bootFeedPage();
+    </script>
+  </body>
 </html>

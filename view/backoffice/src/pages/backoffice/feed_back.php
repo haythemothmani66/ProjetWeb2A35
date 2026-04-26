@@ -30,8 +30,8 @@ $devoirs = $conn->query("
     ORDER BY id_devoir DESC
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-// Récupère TOUTES les correction avec toutes leurs colonnes
-$correction = $conn->query("
+// Récupère TOUTES les corrections avec toutes leurs colonnes
+$corrections = $conn->query("
     SELECT c.id_correction, c.commentaire, c.fichier_corrige, c.date_correction,
            c.type_feedback, c.note_estimee, c.competences_evaluees,
            c.nombre_iterations, c.suggestions_personnalisees,
@@ -70,77 +70,120 @@ $successType = $_GET['success'] ?? '';
 
     <style>
         .btn-edit {
-    background: #F59E0B;
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    padding: 0.3rem 0.8rem;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    text-decoration: none;
-}
+            background: #F59E0B;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            text-decoration: none;
+        }
 
-.btn-edit:hover {
-    background: #D97706;
-    transform: scale(1.05);
-    color: white;
-    text-decoration: none;
-}
+        .btn-edit:hover {
+            background: #D97706;
+            transform: scale(1.05);
+            color: white;
+            text-decoration: none;
+        }
+        
         .btn-delete {
-    background: #EF4444;
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    padding: 0.3rem 0.8rem;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-}
+            background: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
 
-.btn-delete:hover {
-    background: #DC2626;
-    transform: scale(1.05);
-}
+        .btn-delete:hover {
+            background: #DC2626;
+            transform: scale(1.05);
+        }
+        
+        .btn-add-correction {
+            background: #10B981;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            text-decoration: none;
+        }
+        
+        .btn-add-correction:hover {
+            background: #059669;
+            transform: scale(1.05);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-view {
+            background: #6B7280;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .btn-view:hover {
+            background: #4B5563;
+            transform: scale(1.05);
+        }
 
-/* Popup confirmation */
-.confirm-popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    z-index: 10000;
-    text-align: center;
-    min-width: 300px;
-}
+        /* Popup confirmation */
+        .confirm-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 10000;
+            text-align: center;
+            min-width: 300px;
+        }
 
-.confirm-popup button {
-    margin: 0.5rem;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-}
+        .confirm-popup button {
+            margin: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
 
-.confirm-popup .btn-confirm {
-    background: #EF4444;
-    color: white;
-}
+        .confirm-popup .btn-confirm {
+            background: #EF4444;
+            color: white;
+        }
 
-.confirm-popup .btn-cancel {
-    background: #94A3B8;
-    color: white;
-}
+        .confirm-popup .btn-cancel {
+            background: #94A3B8;
+            color: white;
+        }
+        
         :root {
             --primary: #465FFF;
             --secondary: #0EA5E9;
@@ -193,35 +236,6 @@ $successType = $_GET['success'] ?? '';
         @keyframes fadeInRight { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
         @keyframes fadeOut     { from { opacity:1; } to { opacity:0; pointer-events:none; } }
 
-        /* ============ TABS ============ */
-        .feed-tabs {
-            display: flex; gap: 0.5rem;
-            margin-bottom: 2rem;
-            background: white;
-            padding: 0.4rem;
-            border-radius: 1rem;
-            border: 1px solid var(--border);
-            box-shadow: 0 6px 18px rgba(15,23,42,0.06);
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 0.7rem 1rem;
-            border: none;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            font-size: 0.92rem;
-            cursor: pointer;
-            background: transparent;
-            color: var(--muted);
-            transition: all 0.25s;
-        }
-        .tab-btn.active {
-            background: linear-gradient(135deg, #111827, #334155);
-            color: white;
-            box-shadow: 0 8px 18px rgba(15,23,42,0.22);
-        }
-        .tab-btn i { margin-right: 0.4rem; }
-
         /* ============ CARD ============ */
         .feed-card {
             background: var(--card-bg);
@@ -243,8 +257,11 @@ $successType = $_GET['success'] ?? '';
         /* Card header */
         .card-header-bar {
             padding: 1rem 1.5rem;
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
             border-bottom: 1px solid var(--border);
         }
         .card-header-bar.devoir-header {
@@ -422,14 +439,88 @@ $successType = $_GET['success'] ?? '';
         }
         .btn-submit-link:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(108,99,255,0.3); color:white; text-decoration:none; }
 
-        /* Tab panels */
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
+        /* ============ UNIFIED FEED ============ */
+        .devoir-block {
+            margin-bottom: 2.5rem;
+        }
+
+        /* Corrections nested under devoir */
+        .corrections-container {
+            margin: 1rem 0 0 1.5rem;
+            padding-left: 1.5rem;
+            border-left: 3px solid rgba(16,185,129,0.3);
+        }
+
+        .corrections-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--success);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.75rem;
+            background: rgba(16,185,129,0.06);
+            border-radius: 0.5rem;
+            width: fit-content;
+        }
+
+        .no-correction-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.82rem;
+            color: var(--muted);
+            padding: 0.5rem 0.75rem;
+            font-style: italic;
+        }
+
+        .correction-sub-card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: 0 4px 14px rgba(15,23,42,0.06);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            border: 1px solid rgba(16,185,129,0.2);
+            animation: slideUp 0.4s ease forwards;
+        }
+        .correction-sub-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(15,23,42,0.12); transition: all 0.25s; }
 
         /* Responsive */
         @media (max-width: 576px) {
             .details-grid { grid-template-columns: 1fr 1fr; }
             .card-body-content { padding: 1rem; }
+            .corrections-container { margin-left: 0.5rem; padding-left: 0.75rem; }
+        }
+        
+        /* Search and filter bar */
+        .search-filter-bar {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .devbar {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(0,0,0,0.02);
+            border-radius: 0.5rem;
+        }
+        
+        .stats-cards {
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.25rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
     </style>
 </head>
@@ -510,7 +601,7 @@ $successType = $_GET['success'] ?? '';
             <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
                 <div>
                     <h1><i class="fas fa-graduation-cap me-2"></i> EduFeed</h1>
-                    <p>Découvrez les devoirs soumis et leurs correction</p>
+                    <p>Découvrez les devoirs soumis et leurs corrections</p>
                     <div class="stats">
                         <div class="stat-pill">
                             <i class="fas fa-file-alt"></i>
@@ -518,7 +609,7 @@ $successType = $_GET['success'] ?? '';
                         </div>
                         <div class="stat-pill">
                             <i class="fas fa-check-double"></i>
-                            <span><?= count($correction) ?> correction<?= count($correction) > 1 ? 's' : '' ?></span>
+                            <span><?= count($corrections) ?> correction<?= count($corrections) > 1 ? 's' : '' ?></span>
                         </div>
                     </div>
                 </div>
@@ -532,20 +623,46 @@ $successType = $_GET['success'] ?? '';
     <!-- MAIN CONTENT -->
     <section class="py-4">
         <div class="container">
-
-            <!-- TABS -->
-            <div class="feed-tabs">
-                <button class="tab-btn active" onclick="switchTab('devoirs', this)">
-                    <i class="fas fa-book"></i> Devoirs (<?= count($devoirs) ?>)
-                </button>
-                <button class="tab-btn" onclick="switchTab('correction', this)">
-                    <i class="fas fa-check-circle"></i> correction (<?= count($correction) ?>)
-                </button>
+            
+            <!-- Search Bar -->
+            <div class="search-filter-bar">
+                <div class="row g-3">
+                    <div class="col-md-10">
+                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un devoir ou une correction...">
+                    </div>
+                    <div class="col-md-2">
+                        <button id="clearSearchBtn" class="btn btn-secondary w-100">Effacer</button>
+                    </div>
+                </div>
             </div>
 
-            <!-- ==================== TAB DEVOIRS ==================== -->
-             
-            <div class="tab-panel active" id="panel-devoirs">
+            <!-- Stats Cards -->
+            <div class="row stats-cards">
+                <div class="col-md-6">
+                    <div class="stat-card">
+                        <h5>Total Devoirs</h5>
+                        <h2 class="text-primary"><?= count($devoirs) ?></h2>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="stat-card">
+                        <h5>Total Corrections</h5>
+                        <h2 class="text-success"><?= count($corrections) ?></h2>
+                    </div>
+                </div>
+            </div>
+
+            <?php
+            // Regrouper les corrections par id_devoir pour affichage hiérarchique
+            $correctionsByDevoir = [];
+            foreach ($corrections as $c) {
+                $correctionsByDevoir[$c['id_devoir']][] = $c;
+            }
+            ?>
+
+            <!-- ==================== FEED UNIFIÉ ==================== -->
+
+            <div id="unified-feed">
 
                 <?php if (empty($devoirs)): ?>
                     <div class="empty-state">
@@ -558,243 +675,214 @@ $successType = $_GET['success'] ?? '';
                     </div>
                 <?php else: ?>
                     <?php foreach ($devoirs as $i => $d): ?>
-                    <div class="feed-card" style="animation-delay: <?= $i * 0.07 ?>s">
+                    <?php $devoirCorrections = $correctionsByDevoir[$d['id_devoir']] ?? []; ?>
+                    <div class="devoir-block" data-devoir-title="<?= strtolower(htmlspecialchars($d['titre'])) ?>" data-devoir-description="<?= strtolower(htmlspecialchars($d['description'])) ?>" data-devoir-keywords="<?= strtolower(htmlspecialchars($d['mots_cles'])) ?>" data-devoir-id="<?= $d['id_devoir'] ?>">
+                        <div class="feed-card">
 
-                        <!-- Header -->
-                         <!-- Dans l'en-tête de la carte devoir, ajoutez ce bouton -->
-<div class="card-header-bar devoir-header">
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <span class="card-type-badge badge-devoir">
-            <i class="fas fa-book-open"></i> Devoir
-        </span>
-        <span class="card-id"># <?= htmlspecialchars($d['id_devoir']) ?></span>
-    </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- AJOUTEZ CE BOUTON SUPPRIMER -->
-        <button class="btn-delete btn-sm" data-id="<?= $d['id_devoir'] ?>" data-type="devoir">
-            <i class="fas fa-trash-alt"></i> Supprimer
-        </button>
-        <a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php?edit=devoir&id=<?= $d['id_devoir'] ?>" class="btn-edit btn-sm">
-            <i class="fas fa-edit"></i> Modifier
-        </a>
-        <!-- Fin du bouton -->
-        <?php
-            $urg = $d['urgence'] ?? 'faible';
-            $urgClass = 'urgence-' . strtolower($urg);
-            $urgIcon  = ($urg === 'urgente') ? '🔴' : (($urg === 'moyenne') ? '🟡' : '🟢');
-        ?>
-        <span class="urgence-pill <?= $urgClass ?>">
-            <?= $urgIcon ?> <?= htmlspecialchars(ucfirst($urg)) ?>
-        </span>
-        <span class="card-date">
-            <i class="fas fa-calendar-alt"></i>
-            <?= htmlspecialchars($d['date_soumission']) ?>
-        </span>
-    </div>
-</div>
-                        
-
-                        <!-- Body -->
-                        <div class="card-body-content">
-
-                            <!-- Titre -->
-                            <h4 class="card-title">
-                                <i class="fas fa-heading" style="color:var(--primary);margin-right:0.4rem;"></i>
-                                <?= htmlspecialchars($d['titre']) ?>
-                            </h4>
-
-                            <!-- Description -->
-                            <p class="card-description">
-                                <?= nl2br(htmlspecialchars($d['description'])) ?>
-                            </p>
-
-                            <!-- Détails en grille -->
-                            <div class="details-grid">
-                                <div class="detail-chip">
-                                    <i class="fas fa-graduation-cap"></i>
-                                    <span><strong>Niveau :</strong> <?= htmlspecialchars(ucfirst($d['niveau_difficulte'])) ?></span>
+                            <!-- Header -->
+                            <div class="card-header-bar devoir-header">
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <span class="card-type-badge badge-devoir">
+                                        <i class="fas fa-book-open"></i> Devoir
+                                    </span>
+                                    <h5 class="mb-0"><?= htmlspecialchars($d['titre']) ?></h5>
+                                    <?php
+                                        $urg = $d['urgence'] ?? 'faible';
+                                        $urgClass = 'urgence-' . strtolower($urg);
+                                        $urgIcon  = ($urg === 'urgente') ? '🔴' : (($urg === 'moyenne') ? '🟡' : '🟢');
+                                    ?>
+                                    <span class="urgence-pill <?= $urgClass ?>">
+                                        <?= $urgIcon ?> <?= htmlspecialchars(ucfirst($urg)) ?>
+                                    </span>
+                                    <span class="card-date">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <?= htmlspecialchars($d['date_soumission']) ?>
+                                    </span>
                                 </div>
-                                <div class="detail-chip">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                    <span><strong>Erreur :</strong> <?= htmlspecialchars(ucfirst($d['type_erreur_predominant'])) ?></span>
-                                </div>
-                                <div class="detail-chip">
-                                    <i class="fas fa-clock"></i>
-                                    <span><strong>Temps :</strong> <?= htmlspecialchars($d['temps_estime_resolution']) ?> min</span>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <a href="/eduleb/submit_back.php?add_correction_for=<?= $d['id_devoir'] ?>&title=<?= urlencode($d['titre']) ?>" 
+                               class="btn-add-correction btn-sm">
+                                <i class="fas fa-plus-circle"></i> Ajouter une correction
+                            </a>
+
+                                    <a href="/eduleb/submit_back.php?edit=devoir&id=<?= $d['id_devoir'] ?>" class="btn-edit btn-sm">
+                                <i class="fas fa-edit"></i> Modifier </a>
+
+                                    <button class="btn-delete" data-id="<?= $d['id_devoir'] ?>" data-type="devoir">
+                                        <i class="fas fa-trash-alt"></i> Supprimer
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Progression -->
-                            <div class="detail-chip mb-3" style="flex-direction:column;align-items:flex-start;gap:0.3rem;">
-                                <div class="d-flex align-items-center gap-2 w-100">
-                                    <i class="fas fa-percentage" style="color:var(--primary);"></i>
-                                    <strong>Progression : <?= htmlspecialchars($d['progression_eleve']) ?>%</strong>
+                            <!-- Body -->
+                            <div class="card-body-content">
+
+                                <!-- Description -->
+                                <p class="card-description">
+                                    <?= nl2br(htmlspecialchars($d['description'])) ?>
+                                </p>
+
+                                <!-- Détails en grille -->
+                                <div class="details-grid">
+                                    <div class="detail-chip">
+                                        <i class="fas fa-graduation-cap"></i>
+                                        <span><strong>Niveau :</strong> <?= htmlspecialchars(ucfirst($d['niveau_difficulte'])) ?></span>
+                                    </div>
+                                    <div class="detail-chip">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span><strong>Erreur :</strong> <?= htmlspecialchars(ucfirst($d['type_erreur_predominant'])) ?></span>
+                                    </div>
+                                    <div class="detail-chip">
+                                        <i class="fas fa-clock"></i>
+                                        <span><strong>Temps :</strong> <?= htmlspecialchars($d['temps_estime_resolution']) ?> min</span>
+                                    </div>
+                                    <div class="detail-chip">
+                                        <i class="fas fa-percentage"></i>
+                                        <span><strong>Progression :</strong> <?= htmlspecialchars($d['progression_eleve']) ?>%</span>
+                                    </div>
                                 </div>
-                                <div class="w-100" style="height:6px;background:var(--border);border-radius:999px;overflow:hidden;">
-                                    <div style="width:<?= (int)$d['progression_eleve'] ?>%;height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:999px;"></div>
+
+                                <!-- Progression bar -->
+                                <div class="progression-mini mb-3">
+                                    <div class="progression-label">Progression de l'élève</div>
+                                    <div class="bar-track">
+                                        <div class="bar-fill" style="width: <?= (int)$d['progression_eleve'] ?>%"></div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Mots clés -->
-                            <?php if (!empty($d['mots_cles'])): ?>
-                            <div class="mb-2">
-                                <small style="color:var(--muted);font-weight:600;"><i class="fas fa-tags"></i> Mots clés :</small>
-                                <div class="tags-row">
-                                    <?php foreach (explode(',', $d['mots_cles']) as $tag): ?>
-                                        <span class="tag"><?= htmlspecialchars(trim($tag)) ?></span>
-                                    <?php endforeach; ?>
+                                <!-- Mots clés -->
+                                <?php if (!empty($d['mots_cles'])): ?>
+                                <div class="mb-2">
+                                    <small style="color:var(--muted);font-weight:600;"><i class="fas fa-tags"></i> Mots clés :</small>
+                                    <div class="tags-row">
+                                        <?php foreach (explode(',', $d['mots_cles']) as $tag): ?>
+                                            <span class="tag"><?= htmlspecialchars(trim($tag)) ?></span>
+                                        <?php endforeach; ?>
+                                    </div>
                                 </div>
-                            </div>
-                            <?php endif; ?>
+                                <?php endif; ?>
 
-                            <!-- Fichier -->
-                            <?php if (!empty($d['fichier'])): ?>
-                            <div class="mt-2">
-                                          <a href="<?= htmlspecialchars($appBaseUrl) ?>/uploads/devoirs/<?= htmlspecialchars($d['fichier']) ?>"
-                                   class="file-link" target="_blank">
-                                    <i class="fas fa-file-code"></i>
-                                    <?= htmlspecialchars($d['fichier']) ?>
-                                </a>
-                            </div>
-                            <?php endif; ?>
-
-                        </div>
-                    </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-
-            </div><!-- /panel-devoirs -->
-
-            <!-- ==================== TAB correction ==================== -->
-            
-            <div class="tab-panel" id="panel-correction">
-
-                <?php if (empty($correction)): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-comments"></i>
-                        <h4>Aucune correction soumise pour l'instant</h4>
-                        <p>Les correction apparaîtront ici après soumission.</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($correction as $i => $c): ?>
-                    <div class="feed-card" style="animation-delay: <?= $i * 0.07 ?>s">
-
-                        <!-- Header -->
-                          <!-- Dans l'en-tête de la carte correction -->
-<div class="card-header-bar correction-header">
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <span class="card-type-badge badge-correction">
-            <i class="fas fa-check-circle"></i> Correction
-        </span>
-        <span class="card-id"># <?= htmlspecialchars($c['id_correction']) ?></span>
-    </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- AJOUTEZ CE BOUTON SUPPRIMER -->
-        <button class="btn-delete btn-sm" data-id="<?= $c['id_correction'] ?>" data-type="correction">
-            <i class="fas fa-trash-alt"></i> Supprimer
-        </button>
-        <a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php?edit=correction&id=<?= $c['id_correction'] ?>" class="btn-edit btn-sm">
-            <i class="fas fa-edit"></i> Modifier
-        </a>
-        <!-- Fin du bouton -->
-        <span class="note-badge">
-            <i class="fas fa-star"></i>
-            <?= htmlspecialchars($c['note_estimee']) ?>/20
-        </span>
-        <span class="card-date">
-            <i class="fas fa-calendar-check"></i>
-            <?= htmlspecialchars($c['date_correction']) ?>
-        </span>
-    </div>
-</div>
-                        
-
-                        <!-- Body -->
-                        <div class="card-body-content">
-
-                            <!-- Lien vers le devoir corrigé -->
-                            <?php if (!empty($c['devoir_titre'])): ?>
-                            <div class="linked-devoir">
-                                <i class="fas fa-link"></i>
-                                Devoir #<?= htmlspecialchars($c['id_devoir']) ?> :
-                                <?= htmlspecialchars($c['devoir_titre']) ?>
-                            </div>
-                            <?php endif; ?>
-
-                            <!-- Commentaire -->
-                            <h4 class="card-title"><i class="fas fa-comment-dots" style="color:var(--success);margin-right:0.4rem;"></i> Commentaire</h4>
-                            <p class="card-description"><?= nl2br(htmlspecialchars($c['commentaire'])) ?></p>
-
-                            <!-- Détails grille -->
-                            <div class="details-grid">
-                                <div class="detail-chip">
-                                    <i class="fas fa-comment icon-green"></i>
-                                    <span><strong>Type :</strong> <?= htmlspecialchars(ucfirst($c['type_feedback'])) ?></span>
-                                </div>
-                                <div class="detail-chip">
-                                    <i class="fas fa-smile icon-green"></i>
-                                    <span><strong>Ton :</strong> <?= htmlspecialchars(ucfirst($c['ton_feedback'])) ?></span>
-                                </div>
-                                <div class="detail-chip">
-                                    <i class="fas fa-sync-alt icon-orange"></i>
-                                    <span><strong>Itérations :</strong> <?= htmlspecialchars($c['nombre_iterations']) ?></span>
-                                </div>
-                                <div class="detail-chip">
-                                    <i class="fas fa-hourglass-end icon-orange"></i>
-                                    <span><strong>Rapidité :</strong> <?= htmlspecialchars($c['rapidite_correction']) ?> min</span>
-                                </div>
-                            </div>
-
-                            <!-- Compétences évaluées -->
-                            <?php if (!empty($c['competences_evaluees'])): ?>
-                            <div class="mb-2">
-                                <small style="color:var(--muted);font-weight:600;"><i class="fas fa-brain"></i> Compétences :</small>
-                                <div class="tags-row">
-                                    <?php foreach (explode(',', $c['competences_evaluees']) as $comp): ?>
-                                        <span class="tag green"><?= htmlspecialchars(trim($comp)) ?></span>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-
-                            <!-- Suggestions -->
-                            <?php if (!empty($c['suggestions_personnalisees'])): ?>
-                            <div class="extra-block">
-                                <strong><i class="fas fa-lightbulb"></i> Suggestions personnalisées</strong>
-                                <?= nl2br(htmlspecialchars($c['suggestions_personnalisees'])) ?>
-                            </div>
-                            <?php endif; ?>
-
-                            <!-- Ressources -->
-                            <?php if (!empty($c['ressources_recommandees'])): ?>
-                            <div class="extra-block" style="border-left-color:var(--success);">
-                                <strong><i class="fas fa-link"></i> Ressources recommandées</strong>
-                                <?php foreach (explode(',', $c['ressources_recommandees']) as $url): ?>
-                                    <?php $url = trim($url); if (empty($url)) continue; ?>
-                                    <a href="<?= htmlspecialchars($url) ?>" target="_blank" style="display:block;color:var(--primary);font-size:0.85rem;">
-                                        <?= htmlspecialchars($url) ?>
+                                <!-- Fichier -->
+                                <?php if (!empty($d['fichier'])): ?>
+                                <div class="mt-2">
+                                    <a href="<?= htmlspecialchars($appBaseUrl) ?>/uploads/devoirs/<?= htmlspecialchars($d['fichier']) ?>"
+                                       class="file-link" target="_blank">
+                                        <i class="fas fa-file-code"></i>
+                                        <?= htmlspecialchars($d['fichier']) ?>
                                     </a>
+                                </div>
+                                <?php endif; ?>
+
+                            </div>
+                        </div><!-- /feed-card devoir -->
+
+                        <!-- ===== CORRECTIONS IMBRIQUÉES ===== -->
+                        <div class="corrections-container">
+                            <?php if (empty($devoirCorrections)): ?>
+                                <div class="no-correction-label">
+                                    <i class="fas fa-comment-slash"></i> Aucune correction pour ce devoir
+                                </div>
+                            <?php else: ?>
+                                <div class="corrections-label">
+                                    <i class="fas fa-check-double"></i>
+                                    <?= count($devoirCorrections) ?> correction<?= count($devoirCorrections) > 1 ? 's' : '' ?>
+                                </div>
+                                <?php foreach ($devoirCorrections as $j => $c): ?>
+                                <div class="correction-sub-card" data-correction-comment="<?= strtolower(htmlspecialchars($c['commentaire'])) ?>">
+                                    <!-- Header correction -->
+                                    <div class="card-header-bar correction-header">
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="card-type-badge badge-correction">
+                                                <i class="fas fa-check-circle"></i> Correction
+                                            </span>
+                                            <span class="note-badge">
+                                                <i class="fas fa-star"></i>
+                                                <?= htmlspecialchars($c['note_estimee']) ?>/20
+                                            </span>
+                                            <span class="card-date">
+                                                <i class="fas fa-calendar-check"></i>
+                                                <?= htmlspecialchars($c['date_correction']) ?>
+                                            </span>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php?edit=correction&id=<?= $c['id_correction'] ?>" class="btn-edit">
+                                                <i class="fas fa-edit"></i> Modifier
+                                            </a>
+                                            <button class="btn-delete" data-id="<?= $c['id_correction'] ?>" data-type="correction">
+                                                <i class="fas fa-trash-alt"></i> Supprimer
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Body correction -->
+                                    <div class="card-body-content">
+                                        <!-- Commentaire -->
+                                        <p class="card-description"><?= nl2br(htmlspecialchars($c['commentaire'])) ?></p>
+                                        <!-- Détails grille -->
+                                        <div class="details-grid">
+                                            <div class="detail-chip">
+                                                <i class="fas fa-comment icon-green"></i>
+                                                <span><strong>Type :</strong> <?= htmlspecialchars(ucfirst($c['type_feedback'])) ?></span>
+                                            </div>
+                                            <div class="detail-chip">
+                                                <i class="fas fa-smile icon-green"></i>
+                                                <span><strong>Ton :</strong> <?= htmlspecialchars(ucfirst($c['ton_feedback'])) ?></span>
+                                            </div>
+                                            <div class="detail-chip">
+                                                <i class="fas fa-sync-alt icon-orange"></i>
+                                                <span><strong>Itérations :</strong> <?= htmlspecialchars($c['nombre_iterations']) ?></span>
+                                            </div>
+                                            <div class="detail-chip">
+                                                <i class="fas fa-hourglass-end icon-orange"></i>
+                                                <span><strong>Rapidité :</strong> <?= htmlspecialchars($c['rapidite_correction']) ?> min</span>
+                                            </div>
+                                        </div>
+                                        <?php if (!empty($c['competences_evaluees'])): ?>
+                                        <div class="mb-2">
+                                            <small style="color:var(--muted);font-weight:600;"><i class="fas fa-brain"></i> Compétences :</small>
+                                            <div class="tags-row">
+                                                <?php foreach (explode(',', $c['competences_evaluees']) as $comp): ?>
+                                                    <span class="tag green"><?= htmlspecialchars(trim($comp)) ?></span>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($c['suggestions_personnalisees'])): ?>
+                                        <div class="extra-block">
+                                            <strong><i class="fas fa-lightbulb"></i> Suggestions personnalisées</strong>
+                                            <?= nl2br(htmlspecialchars($c['suggestions_personnalisees'])) ?>
+                                        </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($c['ressources_recommandees'])): ?>
+                                        <div class="extra-block" style="border-left-color:var(--success);">
+                                            <strong><i class="fas fa-link"></i> Ressources recommandées</strong>
+                                            <?php foreach (explode(',', $c['ressources_recommandees']) as $url): ?>
+                                                <?php $url = trim($url); if (empty($url)) continue; ?>
+                                                <a href="<?= htmlspecialchars($url) ?>" target="_blank" style="display:block;color:var(--primary);font-size:0.85rem;">
+                                                    <?= htmlspecialchars($url) ?>
+                                                </a>
+                                            <?php endforeach; ?>
+                                        </div>
+                                        <?php endif; ?>
+                                        <?php if (!empty($c['fichier_corrige'])): ?>
+                                        <div class="mt-2">
+                                            <a href="<?= htmlspecialchars($appBaseUrl) ?>/uploads/corrections/<?= htmlspecialchars($c['fichier_corrige']) ?>"
+                                               class="file-link" target="_blank">
+                                                <i class="fas fa-file-code"></i>
+                                                Télécharger le fichier corrigé
+                                            </a>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div><!-- /correction-sub-card -->
                                 <?php endforeach; ?>
-                            </div>
                             <?php endif; ?>
+                        </div><!-- /corrections-container -->
 
-                            <!-- Fichier corrigé -->
-                            <?php if (!empty($c['fichier_corrige'])): ?>
-                            <div class="mt-2">
-                                          <a href="<?= htmlspecialchars($appBaseUrl) ?>/uploads/corrections/<?= htmlspecialchars($c['fichier_corrige']) ?>"
-                                   class="file-link" target="_blank">
-                                    <i class="fas fa-file-code"></i>
-                                    Télécharger le fichier corrigé
-                                </a>
-                            </div>
-                            <?php endif; ?>
-
-                        </div>
-                    </div>
+                    </div><!-- /devoir-block -->
                     <?php endforeach; ?>
                 <?php endif; ?>
 
-            </div><!-- /panel-correction -->
+            </div><!-- /unified-feed -->
 
         </div><!-- /container -->
     </section>
@@ -830,86 +918,116 @@ $successType = $_GET['success'] ?? '';
     <script src="<?= htmlspecialchars($appBaseUrl) ?>/assets/js/scripts.js"></script>
 
     <script>
-    // ====== TABS ======
-    function switchTab(tab, btn) {
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('panel-' + tab).classList.add('active');
-        btn.classList.add('active');
-    }
-    
-// Fonction pour afficher le popup de confirmation
-function showConfirmPopup(message, onConfirm) {
-    const popup = document.createElement('div');
-    popup.className = 'confirm-popup';
-    popup.innerHTML = `
-        <p style="margin-bottom: 1rem;">${message}</p>
-        <button class="btn-confirm">Oui, supprimer</button>
-        <button class="btn-cancel">Annuler</button>
-    `;
-    document.body.appendChild(popup);
-    
-    popup.querySelector('.btn-confirm').onclick = () => {
-        onConfirm();
-        popup.remove();
-    };
-    popup.querySelector('.btn-cancel').onclick = () => popup.remove();
-}
-
-// Fonction pour supprimer
-function deleteItem(id, type) {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce ' + (type === 'devoir' ? 'devoir' : 'correction') + ' ?')) {
-        return;
-    }
-    
-    const action = type === 'devoir' ? 'delete' : 'deletecorrection';
-    const controllerUrl = <?= json_encode($controllerUrl) ?>;
-    
-    fetch(controllerUrl + '?action=' + action + '&id=' + encodeURIComponent(id), {
-        method: 'GET'
-    })
-    .then(response => response.text())
-    .then(data => {
-        // Afficher un petit message de succès
-        const toast = document.createElement('div');
-        toast.className = 'toast-success';
-        toast.innerHTML = '<i class="fas fa-check-circle"></i> Supprimé avec succès';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2000);
-        
-        // Supprimer la carte du DOM sans recharger
-        const card = document.querySelector(`.btn-delete[data-id="${id}"]`).closest('.feed-card');
-        if (card) {
-            card.remove();
+    // Fonction pour supprimer
+    function deleteItem(id, type) {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer ce ' + (type === 'devoir' ? 'devoir' : 'correction') + ' ?')) {
+            return;
         }
-    })
-    .catch(error => {
-        alert('Erreur: ' + error.message);
-    });
-}
+        
+        const action = type === 'devoir' ? 'delete' : 'deletecorrection';
+        const controllerUrl = <?= json_encode($controllerUrl) ?>;
+        
+        fetch(controllerUrl + '?action=' + action + '&id=' + encodeURIComponent(id), {
+            method: 'GET'
+        })
+        .then(response => response.text())
+        .then(data => {
+            const toast = document.createElement('div');
+            toast.className = 'toast-success';
+            toast.innerHTML = '<i class="fas fa-check-circle"></i> Supprimé avec succès';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+            
+            // Reload the page to refresh the feed
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        })
+        .catch(error => {
+            alert('Erreur: ' + error.message);
+        });
+    }
 
-// Ajouter les écouteurs sur tous les boutons supprimer
-document.querySelectorAll('.btn-delete').forEach(button => {
-    button.addEventListener('click', function(e) {
-        e.preventDefault();
-        const id = this.dataset.id;
-        const type = this.dataset.type;
-        deleteItem(id, type);
+    // Ajouter les écouteurs sur tous les boutons supprimer
+    document.querySelectorAll('.btn-delete').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            const type = this.dataset.type;
+            deleteItem(id, type);
+        });
     });
-});
 
     // ====== AUTO-HIDE TOAST ======
     setTimeout(function() {
         const toast = document.querySelector('.toast-success');
         if (toast) toast.remove();
     }, 4000);
-
-    // Ouvrir onglet correction si redirigé depuis correction submit
-    <?php if ($successType === 'correction'): ?>
-    document.addEventListener('DOMContentLoaded', function() {
-        switchTab('correction', document.querySelectorAll('.tab-btn')[1]);
-    });
-    <?php endif; ?>
+    
+    // ====== SEARCH FUNCTIONALITY ======
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const devoirBlocks = document.querySelectorAll('.devoir-block');
+    
+    function filterFeed() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        
+        devoirBlocks.forEach(block => {
+            const devoirTitle = block.dataset.devoirTitle || '';
+            const devoirDescription = block.dataset.devoirDescription || '';
+            const devoirKeywords = block.dataset.devoirKeywords || '';
+            const corrections = block.querySelectorAll('.correction-sub-card');
+            
+            let devoirMatch = false;
+            let correctionMatch = false;
+            
+            // Check if devoir matches
+            if (searchTerm === '') {
+                devoirMatch = true;
+            } else {
+                if (devoirTitle.includes(searchTerm) || 
+                    devoirDescription.includes(searchTerm) || 
+                    devoirKeywords.includes(searchTerm)) {
+                    devoirMatch = true;
+                }
+            }
+            
+            // Check corrections
+            corrections.forEach(correction => {
+                const correctionComment = correction.dataset.correctionComment || '';
+                if (searchTerm !== '' && correctionComment.includes(searchTerm)) {
+                    correctionMatch = true;
+                    correction.style.display = 'block';
+                } else if (searchTerm === '') {
+                    correction.style.display = 'block';
+                } else if (!correctionComment.includes(searchTerm)) {
+                    correction.style.display = 'none';
+                }
+            });
+            
+            // Show/hide devoir block
+            if (devoirMatch || correctionMatch) {
+                block.style.display = 'block';
+            } else if (searchTerm !== '' && !devoirMatch && !correctionMatch) {
+                block.style.display = 'none';
+            } else if (searchTerm === '') {
+                block.style.display = 'block';
+            } else {
+                block.style.display = 'none';
+            }
+        });
+    }
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterFeed);
+    }
+    
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            filterFeed();
+        });
+    }
     </script>
 
 </body>
