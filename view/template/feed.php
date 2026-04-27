@@ -122,8 +122,86 @@ $successType = $_GET['success'] ?? '';
     <link rel="stylesheet" href="../../assets/css/magnific-popup.css">
     <link rel="stylesheet" href="../../assets/css/animate.css">
     <link rel="stylesheet" href="../../assets/css/style.css">
+    <!-- Garder SEULEMENT ces deux, dans cet ordre -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
+
+              /* Bouton PDF */
+      .btn-pdf {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.7rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+      }
+      .btn-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(220,38,38,0.3);
+        color: white;
+        background: linear-gradient(135deg, #b91c1c, #991b1b);
+      }
+      
+      /* Loader PDF */
+      .pdf-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .pdf-loader .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255,255,255,0.3);
+        border-top: 5px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Masquer les boutons lors de l'impression/PDF */
+      @media print {
+        .btn-pdf, .btn-refresh, .btn-delete, .btn-edit, .btn-add-correction,
+        .btn-submit-link, .header-btn, .btn_one, .mobile_menu, .site-navigation,
+        .modern-footer, .search-filter-form, .toast-success {
+          display: none !important;
+        }
+        .feed-card {
+          break-inside: avoid;
+          page-break-inside: avoid;
+          box-shadow: none;
+          border: 1px solid #ddd;
+        }
+        body {
+          background: white;
+        }
+        .container {
+          max-width: 100%;
+        }
+      }
 
         /* Bouton Refresh */
 .btn-refresh {
@@ -670,9 +748,14 @@ $successType = $_GET['success'] ?? '';
                     </div>
                 </div>
             </div>
-            <a href="/eduleb/submit.html" class="btn-submit-link align-self-center">
-                <i class="fas fa-plus"></i> Nouveau devoir
-            </a>
+                        <div class="d-flex gap-2 align-self-center">
+                <button id="exportPDFBtn" class="btn-pdf">
+                    <i class="fas fa-file-pdf"></i> Exporter PDF
+                </button>
+                <a href="/eduleb/submit.html" class="btn-submit-link">
+                    <i class="fas fa-plus"></i> Nouveau devoir
+                </a>
+            </div>
         </div>
 
         <!-- Barre de recherche et filtres -->
@@ -710,7 +793,7 @@ $successType = $_GET['success'] ?? '';
 
     <!-- MAIN CONTENT -->
     <section class="py-4">
-        <div class="container">
+        <div class="container" id="feedContainer">
 
             <?php if (empty($devoirs)): ?>
                 <div class="empty-state">
@@ -1064,6 +1147,108 @@ function resetFilters() {
     // Soumettre le formulaire
     document.querySelector('.search-filter-form').submit();
 }
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const exportBtn = document.getElementById('exportPDFBtn');
+    if (!exportBtn) return;
+
+    exportBtn.addEventListener('click', async function (e) {
+        e.preventDefault();
+
+        const cards = document.querySelectorAll('.feed-card');
+        if (!cards.length) { alert("Aucune carte trouvée."); return; }
+
+        const loader = document.createElement('div');
+        loader.className = 'pdf-loader';
+        loader.innerHTML = '<div class="spinner"></div><div id="pdf-progress">Préparation...</div>';
+        document.body.appendChild(loader);
+
+        const styleAnim = document.createElement('style');
+        styleAnim.id = 'pdf-no-anim';
+        styleAnim.textContent = `
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                opacity: 1 !important;
+            }
+            .feed-card {
+                overflow: visible !important;
+                box-shadow: none !important;
+                background-color: #ffffff !important;
+                border: 1px solid #E2E8F0 !important;
+                margin-bottom: 0 !important;
+            }
+            .card-header-bar.devoir-header { background: #ede9ff !important; }
+            .badge-devoir { background: #ede9ff !important; color: #6C63FF !important; }
+            .badge-correction { background: #d1fae5 !important; color: #10B981 !important; }
+            .detail-chip { background-color: #F0F4FF !important; color: #1E293B !important; }
+            .btn-pdf, .btn-refresh, .btn-delete, .btn-edit,
+            .btn-add-correction, .btn-submit-link { display: none !important; }
+        `;
+        document.head.appendChild(styleAnim);
+
+        await new Promise(r => setTimeout(r, 400));
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+            const pageW = 210;
+            const pageH = 297;
+            const margin = 10;
+            const maxImgW = pageW - margin * 2;
+            const gap = 5;
+
+            let currentY = margin;
+            let isFirstPage = true;
+
+            for (let i = 0; i < cards.length; i++) {
+                document.getElementById('pdf-progress').textContent =
+                    `Carte ${i + 1} / ${cards.length}...`;
+
+                const canvas = await html2canvas(cards[i], {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    useCORS: true,
+                    logging: false,
+                    allowTaint: false,
+                    letterRendering: true
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.92);
+                const ratio = canvas.height / canvas.width;
+                const imgW = maxImgW;
+                const imgH = imgW * ratio;
+
+                // Si la carte ne rentre plus sur la page → nouvelle page
+                if (!isFirstPage && currentY + imgH > pageH - margin) {
+                    pdf.addPage();
+                    currentY = margin;
+                }
+
+                if (isFirstPage) isFirstPage = false;
+
+                pdf.addImage(imgData, 'JPEG', margin, currentY, imgW, imgH);
+                currentY += imgH + gap;
+            }
+
+            pdf.save('EduFeed_' + new Date().toISOString().slice(0, 10) + '.pdf');
+
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:10000;font-weight:bold;';
+            toast.innerHTML = '✓ PDF exporté avec succès !';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+
+        } catch (err) {
+            console.error(err);
+            alert('Erreur PDF: ' + err.message);
+        } finally {
+            document.getElementById('pdf-no-anim')?.remove();
+            loader.remove();
+        }
+    });
+});
 </script>
 </body>
 </html>

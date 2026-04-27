@@ -60,6 +60,67 @@
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+      <script>
+    // ==================== EXPORT PDF FUNCTION ====================
+    document.addEventListener('DOMContentLoaded', function() {
+      const exportBtn = document.getElementById('exportPDFBtn');
+      if (!exportBtn) return;
+      
+      exportBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        
+        // Élément à capturer
+        const element = document.getElementById('feedContainer');
+        if (!element) {
+          alert("Contenu non trouvé pour l'export PDF.");
+          return;
+        }
+        
+        // Afficher le loader
+        const loader = document.createElement('div');
+        loader.className = 'pdf-loader';
+        loader.innerHTML = '<div class="spinner"></div><div>Génération du PDF en cours...</div>';
+        document.body.appendChild(loader);
+        
+        // Masquer temporairement les boutons d'action
+        const buttonsToHide = document.querySelectorAll('.btn-pdf, .header-btn, .btn_one, .mobile_menu, .site-navigation');
+        buttonsToHide.forEach(btn => {
+          if (btn) btn.style.display = 'none';
+        });
+        
+        // Configuration du PDF
+        const opt = {
+          margin: [0.5, 0.5, 0.5, 0.5],
+          filename: 'EduFeed_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, letterRendering: true, useCORS: true },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        
+        try {
+          await html2pdf().set(opt).from(element).save();
+          // Notification de succès (optionnelle)
+          const toast = document.createElement('div');
+          toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:10000;font-weight:bold;';
+          toast.innerHTML = '<i class="fas fa-check-circle"></i> PDF exporté avec succès !';
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 3000);
+        } catch (error) {
+          console.error('Erreur lors de la génération du PDF:', error);
+          alert('Erreur lors de la génération du PDF. Veuillez réessayer.');
+        } finally {
+          // Restaurer les boutons
+          buttonsToHide.forEach(btn => {
+            if (btn) btn.style.display = '';
+          });
+          // Supprimer le loader
+          if (loader) loader.remove();
+        }
+      });
+    });
+  </script>
   </head>
 
   <body data-spy="scroll" data-offset="80">
@@ -168,7 +229,7 @@
           <div class="col-xl-10 col-lg-11 col-md-12">
             <!-- Modern Feed Header -->
             <div class="feed-header-modern">
-              <div class="header-content">
+                            <div class="header-content">
                 <div class="header-icon">
                   <i class="fas fa-graduation-cap"></i>
                 </div>
@@ -178,6 +239,10 @@
                     Découvrez et partagez vos devoirs et corrections
                   </p>
                 </div>
+                <button id="exportPDFBtn" class="btn-pdf">
+                  <i class="fas fa-file-pdf"></i>
+                  Exporter PDF
+                </button>
               </div>
               <div class="header-stats">
                 <div class="stat-item">
@@ -194,7 +259,7 @@
             
 
             <!-- Feed Posts Container -->
-            <div class="feed-posts-container">
+            <div class="feed-posts-container" id="feedContainer">
               <!-- ================= POST 1 ================= -->
               <div class="feed-post-card-modern">
                 <div class="post-header-info">
@@ -435,6 +500,78 @@
 
     <!-- Modern Feed Styles -->
     <style>
+
+            /* Bouton PDF */
+      .btn-pdf {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        margin-left: 1rem;
+      }
+      .btn-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(220,38,38,0.3);
+        color: white;
+        background: linear-gradient(135deg, #b91c1c, #991b1b);
+      }
+      
+      /* Loader PDF */
+      .pdf-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .pdf-loader .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255,255,255,0.3);
+        border-top: 5px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Masquer les boutons lors de l'impression/PDF */
+      @media print {
+        .btn-pdf, .header-btn, .btn_one, .mobile_menu, .site-navigation,
+        .modern-footer, .section-top, .feed-header-modern .btn-pdf {
+          display: none !important;
+        }
+        .feed-post-card-modern {
+          break-inside: avoid;
+          page-break-inside: avoid;
+          box-shadow: none;
+          border: 1px solid #ddd;
+        }
+        body {
+          background: white;
+        }
+      }
       :root {
         --feed-primary: #6366f1;
         --feed-secondary: #06b6d4;

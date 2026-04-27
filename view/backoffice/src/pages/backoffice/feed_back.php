@@ -68,7 +68,79 @@ $successType = $_GET['success'] ?? '';
     <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/css/animate.css">
     <link rel="stylesheet" href="<?= htmlspecialchars($appBaseUrl) ?>/assets/css/style.css">
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
+
+        /* Bouton PDF */
+.btn-pdf {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+.btn-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(220,38,38,0.3);
+    color: white;
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+}
+
+/* Loader PDF */
+.pdf-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    flex-direction: column;
+    gap: 1rem;
+}
+.pdf-loader .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(255,255,255,0.3);
+    border-top: 5px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Masquer boutons lors de l'export PDF */
+@media print {
+    .btn-delete, .btn-edit, .btn-add-correction, .btn-submit-link, 
+    .btn-secondary, .btn-pdf, .btn-delete, .btn-edit, .btn-add-correction,
+    .btn-submit-link, .btn-danger, .btn-warning, .btn-close, .modal, 
+    .toast-success, .header-btn, .btn_one, .mobile_menu, #clearSearchBtn,
+    .search-filter-bar .btn-secondary, .no-print {
+        display: none !important;
+    }
+    .feed-card, .correction-sub-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
         .btn-edit {
             background: #F59E0B;
             color: white;
@@ -669,9 +741,14 @@ $successType = $_GET['success'] ?? '';
                         <i class="fas fa-inbox"></i>
                         <h4>Aucun devoir soumis pour l'instant</h4>
                         <p>Soyez le premier à soumettre un devoir !</p>
-                        <a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php" class="btn-submit-link mt-3">
-                            <i class="fas fa-plus"></i> Soumettre un devoir
-                        </a>
+                        <div class="d-flex gap-2 align-self-center">
+    <button id="exportPDFBtn" class="btn-pdf">
+        <i class="fas fa-file-pdf"></i> Exporter PDF
+    </button>
+    <a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php" class="btn-submit-link">
+        <i class="fas fa-plus"></i> Soumettre
+    </a>
+</div>
                     </div>
                 <?php else: ?>
                     <?php foreach ($devoirs as $i => $d): ?>

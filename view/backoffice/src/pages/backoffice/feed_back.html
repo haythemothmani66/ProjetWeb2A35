@@ -8,6 +8,9 @@
     />
     <meta content="EduMatch" name="author" />
     <title>EduMatch Feed Management</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -38,6 +41,74 @@
       }
     </script>
     <style>
+
+            /* Bouton PDF */
+      .btn-pdf {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+      }
+      .btn-pdf:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(220,38,38,0.3);
+        color: white;
+        background: linear-gradient(135deg, #b91c1c, #991b1b);
+      }
+      
+      /* Loader PDF */
+      .pdf-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .pdf-loader .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255,255,255,0.3);
+        border-top: 5px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Masquer boutons lors de l'impression/PDF */
+      @media print {
+        .btn-delete, .btn-edit, .btn-add-correction, .btn-pdf,
+        .btn-white, .btn-dark, .delete-devoir, .delete-correction,
+        .edit-devoir, .edit-correction, #refreshFeedBtn, #clearFiltersBtn {
+          display: none !important;
+        }
+        .devoir-card, .correction-card {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+      }
+
       .btn-add-correction {
         background: #10b981;
         color: white;
@@ -153,9 +224,13 @@
                 dashboard page.
               </p>
             </div>
-            <div
+                        <div
               class="col-lg-4 col-12 text-lg-end d-flex justify-content-lg-end gap-2"
             >
+              <button type="button" id="exportPDFBtn" class="btn-pdf">
+                <i class="ti ti-file-pdf"></i>
+                Export PDF
+              </button>
               <a href="./submit_back.php" class="btn btn-dark">
                 <i class="ti ti-plus me-1"></i>
                 Add Submission
@@ -164,7 +239,6 @@
                 Refresh
               </button>
             </div>
-          </div>
 
           <div class="row row-cols-1 row-cols-md-2 mb-6 g-6">
             <div class="col">
@@ -704,6 +778,62 @@
         }
       }
 
+            // ==================== EXPORT PDF FUNCTION ====================
+      async function exportToPDF() {
+        const feedContainer = document.getElementById('feedContainer');
+        if (!feedContainer) {
+          showToast('Content not found for PDF export', 'danger');
+          return;
+        }
+
+        // Afficher le loader
+        const loader = document.createElement('div');
+        loader.className = 'pdf-loader';
+        loader.innerHTML = '<div class="spinner"></div><div>Generating PDF...</div>';
+        document.body.appendChild(loader);
+
+        // Masquer temporairement les boutons d'action
+        const buttonsToHide = document.querySelectorAll(
+          '.btn-delete, .btn-edit, .btn-add-correction, .delete-devoir, ' +
+          '.delete-correction, .edit-devoir, .edit-correction, #refreshFeedBtn, #clearFiltersBtn'
+        );
+        buttonsToHide.forEach(btn => {
+          if (btn) btn.style.display = 'none';
+        });
+
+        // Configuration du PDF
+        const opt = {
+          margin: [0.5, 0.5, 0.5, 0.5],
+          filename: 'EduFeed_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, letterRendering: true },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        try {
+          await html2pdf().set(opt).from(feedContainer).save();
+          showToast('PDF exported successfully!', 'success');
+        } catch (error) {
+          console.error('PDF Error:', error);
+          showToast('Error generating PDF', 'danger');
+        } finally {
+          // Restaurer les boutons
+          buttonsToHide.forEach(btn => {
+            if (btn) btn.style.display = '';
+          });
+          // Supprimer le loader
+          if (loader) loader.remove();
+        }
+      }
+
+      // Ajouter l'événement au bouton PDF
+      function attachPDFButtonEvent() {
+        const pdfBtn = document.getElementById('exportPDFBtn');
+        if (pdfBtn) {
+          pdfBtn.addEventListener('click', exportToPDF);
+        }
+      }
+
       async function bootFeedPage() {
         await loadHtmlIncludes();
 
@@ -733,9 +863,13 @@
             showToast("Feed refreshed", "success");
           });
         }
+
+        // Attach PDF button event
+        attachPDFButtonEvent();
       }
 
       bootFeedPage();
     </script>
+    
   </body>
 </html>
