@@ -152,12 +152,18 @@ if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
                 Find the perfect professor match for your academic needs. Personalized connections across all subjects for better understanding and academic success.
               </p>
               <div class="hero-ctas">
+                <?php if (empty($_SESSION['user_id'])): ?>
                 <a href="sign-up.php" class="btn btn-primary btn-lg me-3" style="background: linear-gradient(45deg, #00D4FF, #6366f1); border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; color: white; transition: all 0.3s ease;">
                   Get Started <i class="fas fa-rocket ms-2"></i>
                 </a>
                 <a href="sign-in.php" class="btn btn-outline-light btn-lg" style="border: 2px solid white; color: white; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
                   Connexion <i class="fas fa-sign-in-alt ms-2"></i>
                 </a>
+                <?php else: ?>
+                <a href="profil.php" class="btn btn-primary btn-lg me-3" style="background: linear-gradient(45deg, #00D4FF, #6366f1); border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; color: white; transition: all 0.3s ease;">
+                  Mon Profil <i class="fas fa-user ms-2"></i>
+                </a>
+                <?php endif; ?>
               </div>
             </div>
           </div>
@@ -177,12 +183,18 @@ if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
         <h2 class="cta-title" style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">Ready to Find Your Perfect Professor Match?</h2>
         <p class="cta-subtitle" style="font-size: 1.25rem; margin-bottom: 2rem; opacity: 0.9;">Join thousands of students who have found their ideal professor connections across all academic subjects. Start your journey to academic excellence today.</p>
         <div class="cta-buttons">
+          <?php if (empty($_SESSION['user_id'])): ?>
           <a href="sign-up.php" class="btn btn-light btn-lg me-3" style="background: white; color: #f5576c; border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
             Join EduMatch Today <i class="fas fa-rocket ms-2"></i>
           </a>
           <a href="sign-in.php" class="btn btn-outline-light btn-lg" style="border: 2px solid white; color: white; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
             Already a Member? <i class="fas fa-sign-in-alt ms-2"></i>
           </a>
+          <?php else: ?>
+          <a href="profil.php" class="btn btn-light btn-lg" style="background: white; color: #f5576c; border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+            Mon Profil <i class="fas fa-user ms-2"></i>
+          </a>
+          <?php endif; ?>
         </div>
       </div>
     </section>
@@ -202,8 +214,13 @@ if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
             <h5 class="fw-bold mb-3">Platform</h5>
             <ul class="list-unstyled">
               <li class="mb-2"><a href="index.php" class="text-light text-decoration-none">Home</a></li>
+              <?php if (empty($_SESSION['user_id'])): ?>
               <li class="mb-2"><a href="sign-in.php" class="text-light text-decoration-none">Connexion</a></li>
               <li class="mb-2"><a href="sign-up.php" class="text-light text-decoration-none">Inscription</a></li>
+              <?php else: ?>
+              <li class="mb-2"><a href="profil.php" class="text-light text-decoration-none">Mon Profil</a></li>
+              <li class="mb-2"><a href="/gestion_users/auth/logout" class="text-light text-decoration-none">Deconnexion</a></li>
+              <?php endif; ?>
             </ul>
           </div>
           <div class="col-lg-2 col-md-6 mb-4">

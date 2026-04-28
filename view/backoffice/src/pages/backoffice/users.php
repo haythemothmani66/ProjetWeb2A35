@@ -49,60 +49,49 @@ $stmt = $db->prepare($sql);
 $stmt->execute($params);
 $users = $stmt->fetchAll();
 
-/* Export: fetch ALL for export (no pagination) */
+/* Export Excel: fetch ALL (no pagination) */
 $exportMode = $_GET['export'] ?? '';
-if ($exportMode === 'excel' || $exportMode === 'pdf') {
+if ($exportMode === 'excel') {
     $allStmt = $db->prepare("SELECT * FROM user {$where} ORDER BY created_at DESC");
     $allStmt->execute($params);
     $allUsers = $allStmt->fetchAll();
 
-    if ($exportMode === 'excel') {
-        header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
-        header('Content-Disposition: attachment; filename="utilisateurs_edumatch.xls"');
-        echo "\xEF\xBB\xBF"; // BOM UTF-8
-        echo "<table border='1'><tr><th>Nom</th><th>Prenom</th><th>Email</th><th>Telephone</th><th>Role</th><th>Statut</th><th>Inscrit le</th></tr>";
-        foreach ($allUsers as $u) {
-            echo "<tr>";
-            echo "<td>".htmlspecialchars($u['nom'])."</td>";
-            echo "<td>".htmlspecialchars($u['prenom'])."</td>";
-            echo "<td>".htmlspecialchars($u['email'])."</td>";
-            echo "<td>".htmlspecialchars($u['telephone'] ?? '')."</td>";
-            echo "<td>".htmlspecialchars($u['role'])."</td>";
-            echo "<td>".($u['statut']==1?'Actif':'Bloque')."</td>";
-            echo "<td>".date('d/m/Y', strtotime($u['created_at']))."</td>";
-            echo "</tr>";
-        }
-        echo "</table>";
-        exit;
+    header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="utilisateurs_edumatch.xls"');
+    echo "\xEF\xBB\xBF"; // BOM UTF-8
+    echo "<table border='1'><tr><th>Nom</th><th>Prenom</th><th>Email</th><th>Telephone</th><th>Role</th><th>Statut</th><th>Inscrit le</th></tr>";
+    foreach ($allUsers as $u) {
+        echo "<tr>";
+        echo "<td>".htmlspecialchars($u['nom'])."</td>";
+        echo "<td>".htmlspecialchars($u['prenom'])."</td>";
+        echo "<td>".htmlspecialchars($u['email'])."</td>";
+        echo "<td>".htmlspecialchars($u['telephone'] ?? '')."</td>";
+        echo "<td>".htmlspecialchars($u['role'])."</td>";
+        echo "<td>".($u['statut']==1?'Actif':'Bloque')."</td>";
+        echo "<td>".date('d/m/Y', strtotime($u['created_at']))."</td>";
+        echo "</tr>";
     }
-    if ($exportMode === 'pdf') {
-        /* Generate HTML for PDF print */
-        header('Content-Type: text/html; charset=UTF-8');
-        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Liste Utilisateurs - EduMatch</title>';
-        echo '<style>body{font-family:Arial,sans-serif;margin:20px;}h1{color:#333;font-size:20px;}table{width:100%;border-collapse:collapse;margin-top:15px;font-size:12px;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background:#6366f1;color:white;}.badge-actif{color:green;}.badge-bloque{color:red;}@media print{body{margin:0;}}</style>';
-        echo '</head><body>';
-        echo '<h1>Liste des utilisateurs - EduMatch</h1>';
-        echo '<p>Exporte le '.date('d/m/Y H:i').' — '.$totalUsers.' utilisateur(s)</p>';
-        echo '<table><tr><th>Nom</th><th>Prenom</th><th>Email</th><th>Telephone</th><th>Role</th><th>Statut</th><th>Inscrit le</th></tr>';
-        foreach ($allUsers as $u) {
-            $statusClass = $u['statut']==1 ? 'badge-actif' : 'badge-bloque';
-            $statusText = $u['statut']==1 ? 'Actif' : 'Bloque';
-            echo "<tr>";
-            echo "<td>".htmlspecialchars($u['nom'])."</td>";
-            echo "<td>".htmlspecialchars($u['prenom'])."</td>";
-            echo "<td>".htmlspecialchars($u['email'])."</td>";
-            echo "<td>".htmlspecialchars($u['telephone'] ?? '-')."</td>";
-            echo "<td>".htmlspecialchars(ucfirst($u['role']))."</td>";
-            echo "<td class='{$statusClass}'>{$statusText}</td>";
-            echo "<td>".date('d/m/Y', strtotime($u['created_at']))."</td>";
-            echo "</tr>";
-        }
-        echo '</table>';
-        echo '<script>window.onload=function(){window.print();}</script>';
-        echo '</body></html>';
-        exit;
-    }
+    echo "</table>";
+    exit;
 }
+
+/* Prepare PDF data: fetch ALL users for jsPDF (embedded in page as JSON) */
+$pdfStmt = $db->prepare("SELECT nom,prenom,email,telephone,role,statut,token_verif,created_at FROM user {$where} ORDER BY created_at DESC");
+$pdfStmt->execute($params);
+$pdfAllUsers = $pdfStmt->fetchAll();
+$pdfRows = [];
+foreach ($pdfAllUsers as $u) {
+    $pdfRows[] = [
+        $u['nom'],
+        $u['prenom'],
+        $u['email'],
+        $u['telephone'] ?? '-',
+        ucfirst($u['role']),
+        $u['statut']==1 ? 'Actif' : ($u['token_verif']!==null ? 'Non verifie' : 'Bloque'),
+        date('d/m/Y', strtotime($u['created_at']))
+    ];
+}
+$pdfJson = json_encode($pdfRows, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS);
 
 $BO = '/gestion_users/view/backoffice/src';
 /* Build query string for pagination links */
@@ -155,9 +144,9 @@ $qs = http_build_query(array_filter(['search'=>$search,'role'=>$role]));
               <a href="?<?= $qs ?>&export=excel" class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1">
                 <i class="ti ti-file-spreadsheet"></i> Excel
               </a>
-              <a href="?<?= $qs ?>&export=pdf" target="_blank" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">
+              <button type="button" id="btnExportPDF" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">
                 <i class="ti ti-file-type-pdf"></i> PDF
-              </a>
+              </button>
             </div>
           </div>
           <div class="col-lg-6 col-12 text-lg-end">
@@ -294,5 +283,75 @@ $qs = http_build_query(array_filter(['search'=>$search,'role'=>$role]));
   <script src="<?= $BO ?>/assets/js/vendors/sidebarnav.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="/gestion_users/assets/js/validation.js"></script>
+
+  <!-- jsPDF + autoTable for real PDF download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
+  <script>
+  var pdfData = <?= $pdfJson ?>;
+  var pdfTotal = <?= $totalUsers ?>;
+
+  document.getElementById('btnExportPDF').addEventListener('click', function() {
+    var btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader"></i> Export...';
+
+    try {
+      var jsPDF = window.jspdf.jsPDF;
+      var doc = new jsPDF('l', 'mm', 'a4'); // landscape
+
+      // Title
+      doc.setFontSize(16);
+      doc.setTextColor(99, 102, 241);
+      doc.text('Liste des utilisateurs - EduMatch', 14, 18);
+
+      // Subtitle
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      var now = new Date();
+      var dateStr = now.toLocaleDateString('fr-FR') + ' ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+      doc.text('Exporte le ' + dateStr + ' \u2014 ' + pdfTotal + ' utilisateur(s)', 14, 25);
+
+      // Table
+      doc.autoTable({
+        head: [['Nom', 'Prenom', 'Email', 'Telephone', 'Role', 'Statut', 'Inscrit le']],
+        body: pdfData,
+        startY: 30,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [99, 102, 241],
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 9
+        },
+        bodyStyles: { fontSize: 8 },
+        alternateRowStyles: { fillColor: [245, 245, 255] },
+        styles: { cellPadding: 3, overflow: 'linebreak' },
+        columnStyles: {
+          2: { cellWidth: 55 },
+          5: { cellWidth: 22 }
+        },
+        margin: { left: 14, right: 14 }
+      });
+
+      // Footer with page numbers
+      var pageCount = doc.internal.getNumberOfPages();
+      for (var i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text('EduMatch - Page ' + i + '/' + pageCount, doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 8, { align: 'center' });
+      }
+
+      doc.save('utilisateurs_edumatch.pdf');
+    } catch (err) {
+      console.error('PDF export error:', err);
+      alert('Erreur lors de l\'export PDF.');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-file-type-pdf"></i> PDF';
+  });
+  </script>
 </body>
 </html>
