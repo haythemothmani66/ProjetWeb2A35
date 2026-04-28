@@ -1,0 +1,427 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta content="EduMatch" name="author" />
+  <title>EduMatch Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="./assets/css/theme.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <script src="./assets/js/vendors/color-modes.js"></script>
+  <script>
+    if (localStorage.getItem('sidebarExpanded') === 'false') {
+      document.documentElement.classList.add('collapsed');
+      document.documentElement.classList.remove('expanded');
+    } else {
+      document.documentElement.classList.remove('collapsed');
+      document.documentElement.classList.add('expanded');
+    }
+  </script>
+</head>
+
+<body>
+  <div>
+    <div data-include-html="partials/sidebar-collapse.html"></div>
+
+    <div id="content" class="position-relative h-100">
+      <div data-include-html="partials/topbar-second.html"></div>
+
+      <div class="custom-container">
+        <div class="row mb-6 g-6">
+          <div class="col-xl-8 col-12">
+            <div class="card card-lg bg-gradient-mixed">
+              <div class="card-body p-8 p-lg-9">
+                <p class="text-uppercase text-secondary small mb-2">EduMatch Back Office</p>
+                <h1 class="mb-3">EduMatch Admin</h1>
+                <p class="mb-1">Welcome to your education management dashboard.</p>
+                <p class="mb-5">Track users, contracts, partnerships, and platform communication from one place.</p>
+                <div class="d-flex flex-wrap gap-2">
+                  <a href="./pages/backoffice/users.html" class="btn btn-dark">Manage Users</a>
+                  <a href="#messages-section" class="btn btn-white">Open Messages</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-4 col-12">
+            <div class="card card-lg h-100">
+              <div class="card-body d-flex flex-column gap-5">
+                <div>
+                  <h5 class="mb-1">Platform Snapshot</h5>
+                  <p class="text-secondary mb-0">Live education operations overview</p>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+                  <span>Active Sessions</span>
+                  <span class="fw-semibold">184</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+                  <span>Pending Teacher Reviews</span>
+                  <span class="fw-semibold text-warning">12</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-3">
+                  <span>Unread Messages</span>
+                  <span class="fw-semibold text-primary">34</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span>System Health</span>
+                  <span class="badge text-success-emphasis bg-success-subtle">Stable</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 mb-6 g-6">
+          <div class="col">
+            <div class="card card-lg h-100">
+              <div class="card-body d-flex flex-column gap-4">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="icon-shape icon-lg rounded-circle bg-primary-subtle text-primary-emphasis">
+                    <i class="ti ti-school fs-4"></i>
+                  </div>
+                  <div>Total Students</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center lh-1">
+                  <div class="fs-3 fw-bold">2,480</div>
+                  <div class="text-success small">+8.4%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card card-lg h-100">
+              <div class="card-body d-flex flex-column gap-4">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="icon-shape icon-lg rounded-circle bg-info-subtle text-info-emphasis">
+                    <i class="ti ti-chalkboard fs-4"></i>
+                  </div>
+                  <div>Total Teachers</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center lh-1">
+                  <div class="fs-3 fw-bold">320</div>
+                  <div class="text-success small">+3.1%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card card-lg h-100">
+              <div class="card-body d-flex flex-column gap-4">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="icon-shape icon-lg rounded-circle bg-success-subtle text-success-emphasis">
+                    <i class="ti ti-file-contract fs-4"></i>
+                  </div>
+                  <div>Active Contracts</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center lh-1">
+                  <div class="fs-3 fw-bold">87</div>
+                  <div class="text-success small">+11.2%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card card-lg h-100">
+              <div class="card-body d-flex flex-column gap-4">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="icon-shape icon-lg rounded-circle bg-warning-subtle text-warning-emphasis">
+                    <i class="ti ti-user-plus fs-4"></i>
+                  </div>
+                  <div>New Registrations</div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center lh-1">
+                  <div class="fs-3 fw-bold">54</div>
+                  <div class="text-warning small">This week</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-6 mb-6">
+          <div class="col-xl-8 col-12" id="users-section">
+            <div class="card card-lg h-100">
+              <div class="card-header border-bottom-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Users Management</h5>
+                <a href="./pages/backoffice/users.html" class="btn btn-white btn-sm">View All Users</a>
+              </div>
+              <div class="table-responsive">
+                <table class="table text-nowrap mb-0 table-centered table-hover">
+                  <thead>
+                    <tr>
+                      <th>Group</th>
+                      <th>Total</th>
+                      <th>Active</th>
+                      <th>Pending Validation</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Students</td>
+                      <td>2,480</td>
+                      <td><span class="badge text-success-emphasis bg-success-subtle">2,312 Active</span></td>
+                      <td>91</td>
+                      <td><a href="./pages/backoffice/users.html" class="btn btn-white btn-sm">Manage</a></td>
+                    </tr>
+                    <tr>
+                      <td>Teachers</td>
+                      <td>320</td>
+                      <td><span class="badge text-success-emphasis bg-success-subtle">287 Active</span></td>
+                      <td>18</td>
+                      <td><a href="./pages/backoffice/users.html" class="btn btn-white btn-sm">Review</a></td>
+                    </tr>
+                    <tr>
+                      <td>Admins</td>
+                      <td>14</td>
+                      <td><span class="badge text-success-emphasis bg-success-subtle">14 Active</span></td>
+                      <td>0</td>
+                      <td><a href="./pages/backoffice/users.html" class="btn btn-white btn-sm">Permissions</a></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-4 col-12" id="messages-section">
+            <div class="card card-lg h-100">
+              <div class="card-header border-bottom-0">
+                <h5 class="mb-0">Notifications and Messages</h5>
+              </div>
+              <div class="card-body d-flex flex-column gap-3">
+                <div class="border rounded-3 p-3">
+                  <p class="fw-semibold mb-1">Teacher Application Pending</p>
+                  <p class="text-secondary small mb-2">12 profiles need verification today.</p>
+                  <span class="badge text-warning-emphasis bg-warning-subtle">Pending</span>
+                </div>
+                <div class="border rounded-3 p-3">
+                  <p class="fw-semibold mb-1">Contract Renewal Reminder</p>
+                  <p class="text-secondary small mb-2">7 tutor contracts expire within 5 days.</p>
+                  <span class="badge text-info-emphasis bg-info-subtle">Action Required</span>
+                </div>
+                <div class="border rounded-3 p-3">
+                  <p class="fw-semibold mb-1">New Partnership Message</p>
+                  <p class="text-secondary small mb-2">Lycee Horizon requested a meeting for onboarding.</p>
+                  <span class="badge text-success-emphasis bg-success-subtle">New</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-6 mb-6">
+          <div class="col-xl-6 col-12" id="contracts-section">
+            <div class="card card-lg h-100">
+              <div class="card-header border-bottom-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Contracts</h5>
+                <a href="../../../index.php?controller=contract&action=list" class="btn btn-white btn-sm">Manage Contracts</a>
+              </div>
+              <div class="table-responsive">
+                <table class="table text-nowrap mb-0 table-centered table-hover">
+                  <thead>
+                    <tr>
+                      <th>Contract ID</th>
+                      <th>Company</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardContractsBody">
+                    <tr>
+                      <td colspan="4" class="text-center text-secondary py-4">No contracts submitted yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-6 col-12" id="partnerships-section">
+            <div class="card card-lg h-100">
+              <div class="card-header border-bottom-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Partnerships</h5>
+                <a href="../../../index.php?controller=partenaire&action=list" class="btn btn-white btn-sm">View Partners</a>
+              </div>
+              <div class="table-responsive">
+                <table class="table text-nowrap mb-0 table-centered table-hover">
+                  <thead>
+                    <tr>
+                      <th>Organization</th>
+                      <th>Type</th>
+                      <th>Email</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboardPartnersBody">
+                    <tr>
+                      <td colspan="4" class="text-center text-secondary py-4">No partner requests submitted yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadHtmlIncludes() {
+      const includeTargets = document.querySelectorAll('[data-include-html]');
+
+      for (const target of includeTargets) {
+        const includePath = target.getAttribute('data-include-html');
+        const response = await fetch(includePath);
+
+        if (!response.ok) {
+          target.outerHTML = '';
+          continue;
+        }
+
+        let html = await response.text();
+        html = html.replaceAll('@@webRoot/', './');
+        html = html.replaceAll('@@webRoot', '.');
+        target.outerHTML = html;
+      }
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load ' + src));
+        document.body.appendChild(script);
+      });
+    }
+
+    function readArrayFromStorage(key) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error('Invalid storage content for key:', key, error);
+        return [];
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function getStatusBadgeClass(status) {
+      if (status === 'Actif' || status === 'approved') {
+        return 'text-success-emphasis bg-success-subtle';
+      }
+      if (status === 'Expire' || status === 'Expiré' || status === 'Suspendu' || status === 'rejected') {
+        return 'text-danger-emphasis bg-danger-subtle';
+      }
+      return 'text-warning-emphasis bg-warning-subtle';
+    }
+
+    function renderDashboardContracts() {
+      const tbody = document.getElementById('dashboardContractsBody');
+      if (!tbody) {
+        return;
+      }
+
+      const frontofficeContracts = readArrayFromStorage('edumatch_frontoffice_contracts');
+      const contracts = frontofficeContracts.length > 0 ? frontofficeContracts : readArrayFromStorage('contracts');
+
+      if (!contracts.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">No contracts submitted yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = contracts.slice(0, 5).map((contract, index) => {
+        const reference = contract.contract_ref || contract.id || index + 1;
+        const company = contract.company_name || contract.organization_name || (contract.id_partenaire ? ('Partner #' + contract.id_partenaire) : '-');
+        const type = contract.type_contrat || '-';
+        const status = contract.statut || 'pending';
+
+        return '<tr>' +
+          '<td>' + escapeHtml(reference) + '</td>' +
+          '<td>' + escapeHtml(company) + '</td>' +
+          '<td>' + escapeHtml(type) + '</td>' +
+          '<td><span class="badge ' + getStatusBadgeClass(status) + '">' + escapeHtml(status) + '</span></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function renderDashboardPartners() {
+      const tbody = document.getElementById('dashboardPartnersBody');
+      if (!tbody) {
+        return;
+      }
+
+      const frontofficePartners = readArrayFromStorage('edumatch_frontoffice_partners');
+      const partners = frontofficePartners.length > 0 ? frontofficePartners : readArrayFromStorage('partners');
+
+      if (!partners.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-secondary py-4">No partner requests submitted yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = partners.slice(0, 5).map((partner) => {
+        const organization = partner.organization_name || '-';
+        const type = partner.partner_type || '-';
+        const email = partner.email || '-';
+        const status = partner.status || 'pending';
+
+        return '<tr>' +
+          '<td>' + escapeHtml(organization) + '</td>' +
+          '<td>' + escapeHtml(type) + '</td>' +
+          '<td>' + escapeHtml(email) + '</td>' +
+          '<td><span class="badge ' + getStatusBadgeClass(status) + '">' + escapeHtml(status) + '</span></td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function renderDashboardData() {
+      renderDashboardContracts();
+      renderDashboardPartners();
+    }
+
+    async function bootDashboard() {
+      await loadHtmlIncludes();
+
+      const scripts = [
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+        'https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js',
+        './assets/js/main.js',
+        './assets/js/vendors/sidebarnav.js'
+      ];
+
+      for (const scriptPath of scripts) {
+        try {
+          await loadScript(scriptPath);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      renderDashboardData();
+      window.addEventListener('storage', renderDashboardData);
+    }
+
+    bootDashboard();
+  </script>
+</body>
+
+</html>

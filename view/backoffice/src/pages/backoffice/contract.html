@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta content="EduMatch" name="author" />
+  <meta http-equiv="refresh" content="0; url=../../../../../index.php?controller=contract&action=list" />
+  <title>Contracts - EduMatch</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="../../assets/css/theme.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <script src="../../assets/js/vendors/color-modes.js"></script>
+  <script>
+    if (localStorage.getItem('sidebarExpanded') === 'false') {
+      document.documentElement.classList.add('collapsed');
+      document.documentElement.classList.remove('expanded');
+    } else {
+      document.documentElement.classList.remove('collapsed');
+      document.documentElement.classList.add('expanded');
+    }
+
+    window.location.replace('../../../../../index.php?controller=contract&action=list');
+  </script>
+</head>
+
+<body>
+  <div>
+    <div data-include-html="../../partials/sidebar-collapse.html"></div>
+
+    <div id="content" class="position-relative h-100">
+      <div data-include-html="../../partials/topbar-second.html"></div>
+
+      <div class="custom-container">
+        <div class="row mb-6 g-6 align-items-center">
+          <div class="col-lg-8 col-12">
+            <p class="text-uppercase text-secondary small mb-2">EduMatch BackOffice</p>
+            <h1 class="mb-2">Contracts Management</h1>
+            <p class="mb-0 text-secondary">Manage partnership agreements, teacher contracts, and legal documents.</p>
+          </div>
+          <div class="col-lg-4 col-12 text-lg-end">
+            <button type="button" id="clearFormBtn" class="btn btn-white">
+              <i class="ti ti-clear-formatting me-1"></i>
+              Clear Form
+            </button>
+          </div>
+        </div>
+
+        <!-- FORM SECTION -->
+        <div class="card card-lg mb-6">
+          <div class="card-header">
+            <h5 class="mb-0">Add New Contract</h5>
+          </div>
+          <div class="card-body p-6">
+            <form id="contratForm" enctype="multipart/form-data" class="needs-validation" novalidate>
+              <div class="row g-4">
+                <div class="col-md-6">
+                  <label for="id_partenaire" class="form-label">Partner ID <span class="text-danger">*</span></label>
+                  <input type="number" name="id_partenaire" id="id_partenaire" min="1" step="1" required class="form-control" />
+                  <div class="invalid-feedback">L'ID partenaire doit etre un entier positif.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="type_contrat" class="form-label">Contract Type <span class="text-danger">*</span></label>
+                  <select name="type_contrat" id="type_contrat" class="form-select" required>
+                    <option value="">Choose</option>
+                    <option>CDD</option>
+                    <option>CDI</option>
+                    <option>Partenariat</option>
+                    <option>Stage</option>
+                  </select>
+                  <div class="invalid-feedback">Veuillez selectionner un type de contrat.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="date_debut" class="form-label">Start Date <span class="text-danger">*</span></label>
+                  <input type="date" name="date_debut" id="date_debut" required class="form-control" />
+                  <div class="invalid-feedback">Veuillez selectionner la date de debut du contrat.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="date_fin" class="form-label">End Date <span class="text-danger">*</span></label>
+                  <input type="date" name="date_fin" id="date_fin" required class="form-control" />
+                  <div class="invalid-feedback">La date de fin doit etre posterieure ou egale a la date de debut.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="date_signature" class="form-label">Signature Date <span class="text-danger">*</span></label>
+                  <input type="date" name="date_signature" id="date_signature" required class="form-control" />
+                  <div class="invalid-feedback">La date de signature ne doit pas depasser la date de fin.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="statut" class="form-label">Status <span class="text-danger">*</span></label>
+                  <select name="statut" id="statut" class="form-select" required>
+                    <option value="">Choose</option>
+                    <option>Actif</option>
+                    <option>Expiré</option>
+                    <option>Suspendu</option>
+                  </select>
+                  <div class="invalid-feedback">Veuillez selectionner un statut.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="renouvellement_auto" class="form-label">Auto Renewal <span class="text-danger">*</span></label>
+                  <select name="renouvellement_auto" id="renouvellement_auto" class="form-select" required>
+                    <option value="">Choose</option>
+                    <option value="oui">Yes</option>
+                    <option value="non">No</option>
+                  </select>
+                  <div class="invalid-feedback">Veuillez selectionner une option de renouvellement automatique.</div>
+                </div>
+
+                <div class="col-md-6">
+                  <label for="document_pdf" class="form-label">PDF Document <span class="text-danger">*</span></label>
+                  <input type="file" name="document_pdf" id="document_pdf" accept="application/pdf" required class="form-control" />
+                  <div class="invalid-feedback">Importez un fichier PDF valide (max 5 Mo).</div>
+                </div>
+
+                <div class="col-12">
+                  <label for="details" class="form-label">Details <span class="text-danger">*</span></label>
+                  <textarea name="details" id="details" minlength="15" required class="form-control" rows="4" placeholder="Enter contract details, terms, and conditions..."></textarea>
+                  <div class="invalid-feedback">Le champ details doit contenir au moins 15 caracteres.</div>
+                </div>
+
+                <div class="col-12">
+                  <hr />
+                  <div class="d-flex gap-3 justify-content-end">
+                    <button type="reset" class="btn btn-white">Reset</button>
+                    <button type="submit" class="btn btn-dark">Save Contract</button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Recent Contracts Table -->
+        <div class="card card-lg">
+          <div class="card-header border-bottom-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Contracts</h5>
+            <span id="contractsCountBadge" class="badge text-primary-emphasis bg-primary-subtle">0 contracts</span>
+          </div>
+          <div class="table-responsive">
+            <table class="table text-nowrap mb-0 table-centered table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Company / Partner</th>
+                  <th>Type</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Status</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="contractsTableBody">
+                <tr>
+                  <td colspan="7" class="text-center py-5 text-secondary">No contracts found. Create your first contract above.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed top-0 end-0 p-3" id="toastContainer"></div>
+
+  <script>
+    async function loadHtmlIncludes() {
+      const includeTargets = document.querySelectorAll('[data-include-html]');
+
+      for (const target of includeTargets) {
+        const includePath = target.getAttribute('data-include-html');
+        try {
+          const response = await fetch(includePath);
+          if (!response.ok) {
+            target.outerHTML = '';
+            continue;
+          }
+          let html = await response.text();
+          html = html.replaceAll('@@webRoot/', '../../');
+          html = html.replaceAll('@@webRoot', '../..');
+          target.outerHTML = html;
+        } catch (error) {
+          console.error('Error loading include:', error);
+          target.outerHTML = '';
+        }
+      }
+    }
+
+    function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Failed to load ' + src));
+        document.body.appendChild(script);
+      });
+    }
+
+    function showToast(message, type = 'success') {
+      const toastContainer = document.getElementById('toastContainer');
+      if (!toastContainer) return;
+      
+      const toastId = 'toast-' + Date.now();
+      const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+      
+      const toastHtml = `
+        <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+          <div class="d-flex">
+            <div class="toast-body">${message}</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+        </div>
+      `;
+      
+      toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+      const toastElement = document.getElementById(toastId);
+      if (toastElement && typeof bootstrap !== 'undefined') {
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', () => {
+          toastElement.remove();
+        });
+      }
+    }
+
+    function setFieldValidationState(field, isValid, message = '') {
+      if (!field) return;
+
+      field.setCustomValidity(isValid ? '' : message);
+      field.classList.toggle('is-invalid', !isValid);
+      field.classList.toggle('is-valid', isValid && String(field.value || '').trim() !== '');
+
+      const feedback = field.parentElement ? field.parentElement.querySelector('.invalid-feedback') : null;
+      if (!isValid && feedback && message) {
+        feedback.textContent = message;
+      }
+    }
+
+    function resetFormValidation(form) {
+      form.querySelectorAll('.form-control, .form-select').forEach((field) => {
+        field.classList.remove('is-valid', 'is-invalid');
+        field.setCustomValidity('');
+      });
+      form.classList.remove('was-validated');
+    }
+
+    function validateContractForm() {
+      const idPartenaire = document.getElementById('id_partenaire');
+      const typeContrat = document.getElementById('type_contrat');
+      const dateDebut = document.getElementById('date_debut');
+      const dateFin = document.getElementById('date_fin');
+      const dateSignature = document.getElementById('date_signature');
+      const statut = document.getElementById('statut');
+      const renouvellementAuto = document.getElementById('renouvellement_auto');
+      const documentPdf = document.getElementById('document_pdf');
+      const details = document.getElementById('details');
+
+      let isValid = true;
+
+      const markInvalid = (field, message) => {
+        setFieldValidationState(field, false, message);
+        isValid = false;
+      };
+
+      const markValid = (field) => {
+        setFieldValidationState(field, true);
+      };
+
+      const partnerIdValue = Number(idPartenaire.value);
+      if (!idPartenaire.value.trim() || !Number.isInteger(partnerIdValue) || partnerIdValue < 1) {
+        markInvalid(idPartenaire, 'L\'ID partenaire doit etre un entier positif.');
+      } else {
+        markValid(idPartenaire);
+      }
+
+      if (!typeContrat.value) {
+        markInvalid(typeContrat, 'Veuillez selectionner un type de contrat.');
+      } else {
+        markValid(typeContrat);
+      }
+
+      if (!dateDebut.value) {
+        markInvalid(dateDebut, 'Veuillez selectionner la date de debut du contrat.');
+      } else {
+        markValid(dateDebut);
+      }
+
+      if (!dateFin.value) {
+        markInvalid(dateFin, 'Veuillez selectionner la date de fin du contrat.');
+      } else {
+        markValid(dateFin);
+      }
+
+      if (dateDebut.value && dateFin.value && dateFin.value < dateDebut.value) {
+        markInvalid(dateFin, 'La date de fin doit etre posterieure ou egale a la date de debut.');
+      }
+
+      if (!dateSignature.value) {
+        markInvalid(dateSignature, 'Veuillez selectionner la date de signature.');
+      } else {
+        markValid(dateSignature);
+      }
+
+      if (dateSignature.value && dateFin.value && dateSignature.value > dateFin.value) {
+        markInvalid(dateSignature, 'La date de signature ne doit pas depasser la date de fin.');
+      }
+
+      if (!statut.value) {
+        markInvalid(statut, 'Veuillez selectionner un statut.');
+      } else {
+        markValid(statut);
+      }
+
+      if (!renouvellementAuto.value) {
+        markInvalid(renouvellementAuto, 'Veuillez selectionner une option de renouvellement automatique.');
+      } else {
+        markValid(renouvellementAuto);
+      }
+
+      const pdfFile = documentPdf.files && documentPdf.files[0] ? documentPdf.files[0] : null;
+      if (!pdfFile) {
+        markInvalid(documentPdf, 'Veuillez importer un fichier PDF.');
+      } else {
+        const isPdfByName = /\.pdf$/i.test(pdfFile.name);
+        const isPdfByType = pdfFile.type === '' || pdfFile.type === 'application/pdf' || pdfFile.type === 'application/x-pdf';
+
+        if (!isPdfByName && !isPdfByType) {
+          markInvalid(documentPdf, 'Seuls les fichiers PDF sont acceptes.');
+        } else if (pdfFile.size > 5 * 1024 * 1024) {
+          markInvalid(documentPdf, 'La taille du fichier PDF ne doit pas depasser 5 Mo.');
+        } else {
+          markValid(documentPdf);
+        }
+      }
+
+      const detailsValue = details.value.trim();
+      if (!detailsValue) {
+        markInvalid(details, 'Veuillez renseigner les details du contrat.');
+      } else if (detailsValue.length < 15) {
+        markInvalid(details, 'Le champ details doit contenir au moins 15 caracteres.');
+      } else {
+        markValid(details);
+      }
+
+      return isValid;
+    }
+
+    const FRONTOFFICE_CONTRACTS_KEY = 'edumatch_frontoffice_contracts';
+    const LEGACY_CONTRACTS_KEY = 'contracts';
+
+    function readArrayFromStorage(key) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error('Invalid storage content for key:', key, error);
+        return [];
+      }
+    }
+
+    function loadContractsFromStorage() {
+      const frontofficeContracts = readArrayFromStorage(FRONTOFFICE_CONTRACTS_KEY);
+      if (frontofficeContracts.length > 0) {
+        return frontofficeContracts;
+      }
+      return readArrayFromStorage(LEGACY_CONTRACTS_KEY);
+    }
+
+    function saveContractsToStorage(contracts) {
+      localStorage.setItem(FRONTOFFICE_CONTRACTS_KEY, JSON.stringify(contracts));
+    }
+
+    function getNextContractId(contracts) {
+      let maxId = 0;
+      contracts.forEach((contract) => {
+        const parsedId = Number.parseInt(contract.id, 10);
+        if (Number.isFinite(parsedId) && parsedId > maxId) {
+          maxId = parsedId;
+        }
+      });
+      return maxId + 1;
+    }
+
+    function formatContractPartner(contract) {
+      if (contract.company_name) {
+        return contract.company_name;
+      }
+      if (contract.organization_name) {
+        return contract.organization_name;
+      }
+      if (contract.id_partenaire !== undefined && contract.id_partenaire !== null && String(contract.id_partenaire).trim() !== '') {
+        return 'Partner #' + contract.id_partenaire;
+      }
+      return '-';
+    }
+
+    // Load contracts from localStorage
+    function loadContracts() {
+      const contracts = loadContractsFromStorage();
+      const tbody = document.getElementById('contractsTableBody');
+      const contractsCountBadge = document.getElementById('contractsCountBadge');
+      
+      if (contractsCountBadge) {
+        contractsCountBadge.textContent = contracts.length + ' contract' + (contracts.length !== 1 ? 's' : '');
+      }
+      
+      if (contracts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-secondary">No contracts found. Create your first contract above.</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = contracts.slice(0, 10).map((contract, index) => `
+        <tr>
+          <td>${contract.contract_ref || contract.id || index + 1}</td>
+          <td>${formatContractPartner(contract)}</td>
+          <td>${contract.type_contrat || '-'}</td>
+          <td>${contract.date_debut || '-'}</td>
+          <td>${contract.date_fin || '-'}</td>
+          <td><span class="badge ${contract.statut === 'Actif' ? 'text-success-emphasis bg-success-subtle' : contract.statut === 'Expire' || contract.statut === 'Expiré' ? 'text-danger-emphasis bg-danger-subtle' : 'text-warning-emphasis bg-warning-subtle'}">${contract.statut || '-'}</span></td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-white view-contract" data-index="${index}">
+              <i class="ti ti-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-white delete-contract ms-1" data-index="${index}">
+              <i class="ti ti-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+      
+      // Add event listeners to view buttons
+      document.querySelectorAll('.view-contract').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const index = this.getAttribute('data-index');
+          const contracts = loadContractsFromStorage();
+          const contract = contracts[index];
+          const createdAt = contract.created_at ? new Date(contract.created_at).toLocaleString() : '-';
+          alert(`Contract Details:\n\nReference: ${contract.contract_ref || contract.id || '-'}\nCompany / Partner: ${formatContractPartner(contract)}\nType: ${contract.type_contrat || '-'}\nStart Date: ${contract.date_debut || '-'}\nEnd Date: ${contract.date_fin || '-'}\nSignature Date: ${contract.date_signature || '-'}\nStatus: ${contract.statut || '-'}\nAuto Renewal: ${contract.renouvellement_auto || '-'}\nPDF File: ${contract.pdf_file_name || contract.pdf_file || 'No file uploaded'}\n\nDetails: ${contract.details || '-'}\n\nCreated: ${createdAt}`);
+        });
+      });
+      
+      // Add event listeners to delete buttons
+      document.querySelectorAll('.delete-contract').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const index = this.getAttribute('data-index');
+          if (confirm('Are you sure you want to delete this contract?')) {
+            const contracts = loadContractsFromStorage();
+            contracts.splice(index, 1);
+            saveContractsToStorage(contracts);
+            loadContracts();
+            showToast('Contract deleted successfully!', 'success');
+          }
+        });
+      });
+    }
+
+    // Save contract to localStorage
+    function saveContract(formData) {
+      const contracts = loadContractsFromStorage();
+      
+      let pdfInfo = 'No file uploaded';
+      const fileInput = document.getElementById('document_pdf');
+      if (fileInput.files && fileInput.files[0]) {
+        pdfInfo = fileInput.files[0].name;
+      }
+
+      const partnerId = formData.get('id_partenaire');
+      const nextId = getNextContractId(contracts);
+      
+      const newContract = {
+        id: nextId,
+        contract_ref: 'CTR-' + String(nextId).padStart(4, '0'),
+        company_name: partnerId ? 'Partner #' + partnerId : '',
+        id_partenaire: formData.get('id_partenaire'),
+        date_debut: formData.get('date_debut'),
+        date_fin: formData.get('date_fin'),
+        details: formData.get('details'),
+        type_contrat: formData.get('type_contrat'),
+        statut: formData.get('statut'),
+        date_signature: formData.get('date_signature'),
+        renouvellement_auto: formData.get('renouvellement_auto'),
+        pdf_file_name: pdfInfo,
+        created_at: new Date().toISOString()
+      };
+      
+      contracts.unshift(newContract);
+      saveContractsToStorage(contracts);
+      return newContract;
+    }
+
+    async function bootContractsPage() {
+      await loadHtmlIncludes();
+
+      const scripts = [
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js',
+        'https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js',
+        '../../assets/js/main.js',
+        '../../assets/js/vendors/sidebarnav.js'
+      ];
+
+      for (const scriptPath of scripts) {
+        try {
+          await loadScript(scriptPath);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      
+      // Load existing contracts
+      loadContracts();
+      
+      // Setup form submission
+      const form = document.getElementById('contratForm');
+      if (form) {
+        form.querySelectorAll('.form-control, .form-select').forEach((field) => {
+          const eventName = field.tagName === 'SELECT' || field.type === 'file' ? 'change' : 'input';
+          field.addEventListener(eventName, () => {
+            validateContractForm();
+          });
+        });
+
+        form.addEventListener('reset', () => {
+          setTimeout(() => {
+            resetFormValidation(form);
+          }, 0);
+        });
+
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+
+          const customValidationOk = validateContractForm();
+          if (!form.checkValidity() || !customValidationOk) {
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            showToast('Veuillez corriger les champs en erreur avant de sauvegarder.', 'error');
+            return;
+          }
+          
+          const formData = new FormData(form);
+          saveContract(formData);
+          
+          showToast('Contract saved successfully!', 'success');
+          form.reset();
+          resetFormValidation(form);
+          loadContracts();
+        });
+      }
+      
+      // Clear form button handler
+      const clearFormBtn = document.getElementById('clearFormBtn');
+      if (clearFormBtn) {
+        clearFormBtn.addEventListener('click', function() {
+          if (form) {
+            form.reset();
+            resetFormValidation(form);
+            showToast('Form cleared', 'success');
+          }
+        });
+      }
+    }
+
+    // Start the page
+    bootContractsPage();
+  </script>
+</body>
+
+</html>
