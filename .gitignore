@@ -1,0 +1,14 @@
+# Uploads (user photos)
+uploads/photos/*.jpg
+uploads/photos/*.jpeg
+uploads/photos/*.png
+!uploads/photos/.gitkeep
+
+# Temp files
+*.txt
+*.log
+_test_*.php
+
+# OS files
+Thumbs.db
+.DS_Store
