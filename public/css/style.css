@@ -1,0 +1,110 @@
+body {
+    background-color: #f5f8ff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+}
+
+.edumatch-navbar {
+    background: linear-gradient(90deg, #143f8f 0%, #1f5db8 55%, #2d79df 100%);
+}
+
+.edumatch-admin-navbar {
+    background: linear-gradient(90deg, #122c6f 0%, #1b4d9e 100%);
+}
+
+.edumatch-navbar .nav-link,
+.edumatch-admin-navbar .nav-link {
+    color: #ffffff !important;
+    font-weight: 500;
+}
+
+.site-logo {
+    height: 44px;
+    width: auto;
+}
+
+.logo-wrap {
+    display: inline-flex;
+    align-items: center;
+}
+
+.logo-fallback {
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 1.35rem;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 14px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #1f5db8;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #174894;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.invalid-feedback {
+    font-size: 0.875rem;
+}
+
+footer {
+    background-color: #eef3ff;
+}
+
+.site-footer h5 {
+    color: #143f8f;
+}
+
+.footer-logo-lg {
+    max-width: 230px;
+    width: 100%;
+    height: auto;
+}
+
+.footer-fallback {
+    color: #143f8f;
+    font-size: 2.2rem;
+}
+
+.preset-color {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 2px solid #d9d9d9;
+    cursor: pointer;
+}
+
+input[type="radio"].color-choice:checked + .preset-color {
+    border-color: #143f8f;
+    box-shadow: 0 0 0 2px rgba(20, 63, 143, 0.25);
+}
+
+.color-choice-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 14px;
+}

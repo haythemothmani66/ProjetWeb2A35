@@ -1,0 +1,10 @@
+RewriteEngine On
+RewriteBase /event_module/
+
+# Si la ressource existe physiquement, on la sert telle quelle.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Toutes les autres routes passent par le front controller MVC.
+RewriteRule ^(.+)$ public/index.php?url=$1 [QSA,L]
