@@ -14,9 +14,15 @@
           </span>
         </a>
       </div>
+      <!-- Home button -->
+      <a href="/gestion_users/view/template/index.php" class="btn btn-ghost btn-sm d-none d-lg-inline-flex align-items-center gap-1" title="Retour au FrontOffice">
+        <i class="ti ti-home fs-5"></i>
+        <span>Home</span>
+      </a>
     </div>
 
     <ul class="list-unstyled d-flex align-items-center mb-0 gap-2">
+      <!-- Theme toggle -->
       <li>
         <div class="dropdown">
           <button class="btn btn-ghost btn-icon rounded-circle d-flex align-items-center" type="button" aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme">
@@ -29,21 +35,26 @@
           </ul>
         </div>
       </li>
+      <!-- User dropdown -->
       <li class="ms-3 dropdown">
-        <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($_SESSION['user_photo'] ?? 'default.png') ?>" alt="" class="avatar avatar-sm rounded-circle" style="object-fit:cover;" />
+        <a href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" class="d-flex align-items-center gap-2 text-decoration-none">
+          <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($_SESSION['user_photo'] ?? 'default.png') ?>" alt="" class="avatar avatar-sm rounded-circle" style="object-fit:cover;" onerror="this.src='/gestion_users/uploads/photos/default.png';" />
+          <span class="d-none d-lg-inline fw-semibold"><?= htmlspecialchars(($_SESSION['user_prenom'] ?? '') . ' ' . ($_SESSION['user_nom'] ?? '')) ?></span>
+          <i class="ti ti-chevron-down d-none d-lg-inline" style="font-size:12px;"></i>
         </a>
-        <div class="dropdown-menu dropdown-menu-end p-0">
+        <div class="dropdown-menu dropdown-menu-end p-0" style="min-width:220px;">
           <div class="d-flex gap-3 align-items-center border-bottom px-4 py-3">
-            <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($_SESSION['user_photo'] ?? 'default.png') ?>" alt="" class="avatar avatar-md rounded-circle" style="object-fit:cover;" />
+            <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($_SESSION['user_photo'] ?? 'default.png') ?>" alt="" class="avatar avatar-md rounded-circle" style="object-fit:cover;" onerror="this.src='/gestion_users/uploads/photos/default.png';" />
             <div>
-              <h5 class="mb-0 fs-6"><?= htmlspecialchars($_SESSION['user_nom'] ?? '') ?></h5>
-              <p class="mb-0 text-secondary small"><?= htmlspecialchars($_SESSION['user_role'] ?? '') ?></p>
+              <h5 class="mb-0 fs-6"><?= htmlspecialchars(($_SESSION['user_prenom'] ?? '') . ' ' . ($_SESSION['user_nom'] ?? '')) ?></h5>
+              <p class="mb-0 text-secondary small text-capitalize"><?= htmlspecialchars($_SESSION['user_role'] ?? '') ?></p>
             </div>
           </div>
-          <div class="p-3">
-            <a href="/gestion_users/view/template/profil.php" class="dropdown-item"><i class="ti ti-user me-2"></i>Mon Profil</a>
-            <a href="/gestion_users/auth/logout" class="dropdown-item text-danger"><i class="ti ti-logout me-2"></i>Déconnexion</a>
+          <div class="p-2">
+            <a href="/gestion_users/view/backoffice/src/pages/backoffice/profil-admin.php" class="dropdown-item rounded"><i class="ti ti-user me-2"></i>Mon Profil</a>
+            <a href="/gestion_users/view/template/index.php" class="dropdown-item rounded"><i class="ti ti-home me-2"></i>FrontOffice</a>
+            <hr class="my-1">
+            <a href="/gestion_users/auth/logout" class="dropdown-item rounded text-danger"><i class="ti ti-logout me-2"></i>Deconnexion</a>
           </div>
         </div>
       </li>

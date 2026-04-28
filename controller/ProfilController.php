@@ -44,6 +44,10 @@ class ProfilController {
         elseif (mb_strlen($prenom) > 30)         $errors[] = "Le prénom ne doit pas dépasser 30 caractères.";
         elseif (!preg_match('/^[A-Za-zÀ-ÿ\s\-\']+$/', $prenom)) $errors[] = "Le prénom ne doit contenir que des lettres.";
 
+        // --- Téléphone (optionnel, mais si rempli => 8 chiffres) ---
+        if (!empty($telephone) && !preg_match('/^[0-9]{8}$/', $telephone))
+            $errors[] = "Le numéro de téléphone doit contenir exactement 8 chiffres.";
+
         if (empty($errors)) {
             $stmt = $this->db->prepare("SELECT photo FROM user WHERE id = ? LIMIT 1");
             $stmt->execute([$id]);
@@ -82,15 +86,22 @@ class ProfilController {
             $stmt2 = $this->db->prepare("UPDATE profil SET bio_text=?, niveau=?, specialite=? WHERE user_id=?");
             $stmt2->execute([$profil->getBioText(), $profil->getNiveau(), $profil->getSpecialite(), $profil->getUserId()]);
 
-            $_SESSION['user_nom']   = $user->getNom();
-            $_SESSION['user_photo'] = $user->getPhoto();
-            $_SESSION['success']    = "Profil mis à jour avec succès.";
-            header('Location: /gestion_users/view/template/profil.php');
+            $_SESSION['user_nom']    = $user->getNom();
+            $_SESSION['user_prenom'] = $user->getPrenom();
+            $_SESSION['user_photo']  = $user->getPhoto();
+            $_SESSION['success'] = "Profil mis à jour avec succès.";
+            $redirect = ($_SESSION['user_role'] === 'admin')
+                ? '/gestion_users/view/backoffice/src/pages/backoffice/profil-admin.php'
+                : '/gestion_users/view/template/profil.php';
+            header('Location: ' . $redirect);
             exit;
         }
 
         $_SESSION['errors'] = $errors;
-        header('Location: /gestion_users/view/template/profil.php');
+        $redirect = ($_SESSION['user_role'] === 'admin')
+            ? '/gestion_users/view/backoffice/src/pages/backoffice/profil-admin.php'
+            : '/gestion_users/view/template/profil.php';
+        header('Location: ' . $redirect);
         exit;
     }
 
@@ -131,12 +142,18 @@ class ProfilController {
             $stmt->execute([$newHash, $id]);
 
             $_SESSION['success'] = "Mot de passe modifié avec succès.";
-            header('Location: /gestion_users/view/template/profil.php');
+            $redirect = ($_SESSION['user_role'] === 'admin')
+                ? '/gestion_users/view/backoffice/src/pages/backoffice/profil-admin.php'
+                : '/gestion_users/view/template/profil.php';
+            header('Location: ' . $redirect);
             exit;
         }
 
         $_SESSION['errors'] = $errors;
-        header('Location: /gestion_users/view/template/profil.php');
+        $redirect = ($_SESSION['user_role'] === 'admin')
+            ? '/gestion_users/view/backoffice/src/pages/backoffice/profil-admin.php'
+            : '/gestion_users/view/template/profil.php';
+        header('Location: ' . $redirect);
         exit;
     }
 

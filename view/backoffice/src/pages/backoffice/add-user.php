@@ -56,22 +56,23 @@ $BO = '/gestion_users/view/backoffice/src';
               <div class="row g-4">
                 <div class="col-md-6">
                   <label class="form-label">Nom <span class="text-danger">*</span></label>
-                  <input type="text" name="nom" id="addNom" class="form-control" value="<?= htmlspecialchars($formData['nom'] ?? '') ?>">
+                  <input type="text" name="nom" id="addNom" class="form-control" value="<?= htmlspecialchars($formData['nom'] ?? '') ?>" placeholder="Ex: Ben Ali">
                   <div class="text-danger small mt-1" id="err-nom"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Prenom <span class="text-danger">*</span></label>
-                  <input type="text" name="prenom" id="addPrenom" class="form-control" value="<?= htmlspecialchars($formData['prenom'] ?? '') ?>">
+                  <input type="text" name="prenom" id="addPrenom" class="form-control" value="<?= htmlspecialchars($formData['prenom'] ?? '') ?>" placeholder="Ex: Ahmed">
                   <div class="text-danger small mt-1" id="err-prenom"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Email <span class="text-danger">*</span></label>
-                  <input type="text" name="email" id="addEmail" class="form-control" value="<?= htmlspecialchars($formData['email'] ?? '') ?>">
+                  <input type="text" name="email" id="addEmail" class="form-control" value="<?= htmlspecialchars($formData['email'] ?? '') ?>" placeholder="exemple@email.com">
                   <div class="text-danger small mt-1" id="err-email"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Telephone</label>
-                  <input type="text" name="telephone" class="form-control" value="<?= htmlspecialchars($formData['telephone'] ?? '') ?>">
+                  <input type="text" name="telephone" id="addTel" class="form-control" value="<?= htmlspecialchars($formData['telephone'] ?? '') ?>" placeholder="Ex: 12345678">
+                  <div class="text-danger small mt-1" id="err-tel"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Role <span class="text-danger">*</span></label>
@@ -88,9 +89,10 @@ $BO = '/gestion_users/view/backoffice/src';
                 <div class="col-md-6">
                   <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
                   <div class="position-relative">
-                    <input type="password" name="password" id="addPassword" class="form-control pe-5">
+                    <input type="password" name="password" id="addPassword" class="form-control pe-5" placeholder="Mot de passe">
                     <span class="toggle-password" data-target="addPassword"><i class="ti ti-eye"></i></span>
                   </div>
+                  <small class="text-muted d-block mt-1">Min. 8 caracteres, 1 majuscule, 1 minuscule, 1 chiffre, 1 special</small>
                   <div class="text-danger small mt-1" id="err-password"></div>
                 </div>
               </div>

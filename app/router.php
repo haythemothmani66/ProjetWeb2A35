@@ -36,9 +36,9 @@ class Router {
     }
 
     public function dispatch(): void {
-        // Home page: redirect to FrontOffice index.html (keeps relative asset paths intact)
+        // Home page: redirect to FrontOffice index.php
         if ($this->controller === 'auth' && $this->action === 'index') {
-            header('Location: /gestion_users/view/template/index.html');
+            header('Location: /gestion_users/view/template/index.php');
             exit;
         }
 

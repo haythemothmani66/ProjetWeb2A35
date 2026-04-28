@@ -49,13 +49,13 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
         <div class="row">
           <div class="col-20 align-self-center">
             <div class="site-logo">
-              <a href="index.html"><img src="../../assets/img/logo.png" alt="EduMatch" style="height:50px;" /></a>
+              <a href="index.php"><img src="../../assets/img/logo.png" alt="EduMatch" style="height:50px;" /></a>
             </div>
           </div>
           <div class="col-60 d-flex">
             <nav id="main-menu">
               <ul>
-                <li><a href="index.html">Home</a></li>
+                <li><a href="index.php">Home</a></li>
                 <li><a href="#">About</a></li>
                 <li class="menu-item-has-children">
                   <a href="#">Edufeed</a>
@@ -78,7 +78,7 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
             </div>
           </div>
           <ul class="mobile_menu">
-            <li><a href="index.html">Home</a></li>
+            <li><a href="index.php">Home</a></li>
             <li><a href="#">About</a></li>
             <li>
               <a href="#">Edufeed</a>
@@ -149,15 +149,16 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
               <div class="col-md-6 mb-3">
                 <label class="form-label fw-semibold">Mot de passe <span class="text-danger">*</span></label>
                 <div class="position-relative">
-                  <input type="password" class="form-control pe-5" id="signupPassword" name="password" placeholder="Min. 8, Maj+min+chiffre+special">
+                  <input type="password" class="form-control pe-5" id="signupPassword" name="password" placeholder="Votre mot de passe">
                   <span class="toggle-password" data-target="signupPassword"><i class="fas fa-eye"></i></span>
                 </div>
+                <small class="text-muted d-block mt-1">Min. 8 caractères, 1 majuscule, 1 minuscule, 1 chiffre, 1 spécial</small>
                 <div class="text-danger small mt-1" id="err-password"></div>
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label fw-semibold">Confirmer <span class="text-danger">*</span></label>
+                <label class="form-label fw-semibold">Confirmer le mot de passe <span class="text-danger">*</span></label>
                 <div class="position-relative">
-                  <input type="password" class="form-control pe-5" id="signupConfirm" name="confirm" placeholder="Répéter">
+                  <input type="password" class="form-control pe-5" id="signupConfirm" name="confirm" placeholder="Répéter le mot de passe">
                   <span class="toggle-password" data-target="signupConfirm"><i class="fas fa-eye"></i></span>
                 </div>
                 <div class="text-danger small mt-1" id="err-confirm"></div>
@@ -176,13 +177,13 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
       <div class="container">
         <div class="row">
           <div class="col-lg-4 col-md-6 mb-4">
-            <a href="index.html" class="text-decoration-none"><img src="../../assets/img/logo.png" alt="EduMatch" class="mb-3" style="height: 50px;"></a>
+            <a href="index.php" class="text-decoration-none"><img src="../../assets/img/logo.png" alt="EduMatch" class="mb-3" style="height: 50px;"></a>
             <p class="mt-3 text-light opacity-75">Smart matching platform connecting students with expert professors for personalized learning.</p>
           </div>
           <div class="col-lg-4 col-md-6 mb-4">
             <h5 class="fw-bold mb-3">Navigation</h5>
             <ul class="list-unstyled">
-              <li class="mb-2"><a href="index.html" class="text-light text-decoration-none">Home</a></li>
+              <li class="mb-2"><a href="index.php" class="text-light text-decoration-none">Home</a></li>
               <li class="mb-2"><a href="sign-in.php" class="text-light text-decoration-none">Connexion</a></li>
               <li class="mb-2"><a href="sign-up.php" class="text-light text-decoration-none">Inscription</a></li>
             </ul>

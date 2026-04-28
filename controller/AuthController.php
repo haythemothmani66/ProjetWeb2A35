@@ -3,6 +3,12 @@
 require_once __DIR__ . '/../model/User.php';
 require_once __DIR__ . '/../model/Profil.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../lib/PHPMailer/PHPMailer.php';
+require_once __DIR__ . '/../lib/PHPMailer/SMTP.php';
+require_once __DIR__ . '/../lib/PHPMailer/Exception.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as MailException;
 
 class AuthController {
 
@@ -42,19 +48,20 @@ class AuthController {
             } elseif (!password_verify($password, $row['password'])) {
                 $errors[] = "Email ou mot de passe incorrect.";
             } elseif ($row['statut'] == 0) {
-                $errors[] = "Votre compte est bloqué. Contactez l'administrateur.";
+                $errors[] = "Votre compte a été bloqué. Veuillez contacter l'administrateur pour plus d'informations.";
             } elseif ($row['token_verif'] !== null) {
                 $errors[] = "Veuillez vérifier votre email avant de vous connecter.";
             } else {
-                $_SESSION['user_id']   = $row['id'];
-                $_SESSION['user_nom']  = $row['nom'];
-                $_SESSION['user_role'] = $row['role'];
-                $_SESSION['user_photo']= $row['photo'];
+                $_SESSION['user_id']    = $row['id'];
+                $_SESSION['user_nom']   = $row['nom'];
+                $_SESSION['user_prenom']= $row['prenom'];
+                $_SESSION['user_role']  = $row['role'];
+                $_SESSION['user_photo'] = $row['photo'];
 
                 if ($row['role'] === 'admin') {
-                    header('Location: /gestion_users/view/backoffice/src/pages/backoffice/users.php');
+                    header('Location: /gestion_users/view/backoffice/src/pages/backoffice/dashboard.php');
                 } else {
-                    header('Location: /gestion_users/view/template/profil.php');
+                    header('Location: /gestion_users/view/template/index.php');
                 }
                 exit;
             }
@@ -347,13 +354,30 @@ class AuthController {
     }
 
     // =========================================================
-    // PRIVATE — Envoi email via SMTP
+    // PRIVATE — Envoi email via SMTP Gmail (PHPMailer)
     // =========================================================
     private function sendMail(string $to, string $subject, string $body): void {
-        $smtpUser = 'benouiraneminyar84@gmail.com';
-        $headers  = "From: EduMatch <{$smtpUser}>\r\n";
-        $headers .= "Reply-To: {$smtpUser}\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        @mail($to, $subject, $body, $headers);
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'benouiraneminyar84@gmail.com';
+            $mail->Password   = 'wxfj ydxh kmlm ekjl';
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+            $mail->CharSet    = 'UTF-8';
+
+            $mail->setFrom('benouiraneminyar84@gmail.com', 'EduMatch');
+            $mail->addAddress($to);
+
+            $mail->isHTML(false);
+            $mail->Subject = $subject;
+            $mail->Body    = $body;
+
+            $mail->send();
+        } catch (MailException $e) {
+            error_log('Erreur envoi email: ' . $mail->ErrorInfo);
+        }
     }
 }

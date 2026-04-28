@@ -48,13 +48,13 @@ if (empty($resetEmail)) { header('Location: /gestion_users/view/template/forget-
         <div class="row">
           <div class="col-20 align-self-center">
             <div class="site-logo">
-              <a href="index.html"><img src="../../assets/img/logo.png" alt="EduMatch" style="height:50px;" /></a>
+              <a href="index.php"><img src="../../assets/img/logo.png" alt="EduMatch" style="height:50px;" /></a>
             </div>
           </div>
           <div class="col-60 d-flex">
             <nav id="main-menu">
               <ul>
-                <li><a href="index.html">Home</a></li>
+                <li><a href="index.php">Home</a></li>
                 <li><a href="#">About</a></li>
                 <li class="menu-item-has-children">
                   <a href="#">Edufeed</a>
@@ -77,7 +77,7 @@ if (empty($resetEmail)) { header('Location: /gestion_users/view/template/forget-
             </div>
           </div>
           <ul class="mobile_menu">
-            <li><a href="index.html">Home</a></li>
+            <li><a href="index.php">Home</a></li>
             <li><a href="#">About</a></li>
             <li>
               <a href="#">Edufeed</a>
@@ -127,13 +127,13 @@ if (empty($resetEmail)) { header('Location: /gestion_users/view/template/forget-
       <div class="container">
         <div class="row">
           <div class="col-lg-4 col-md-6 mb-4">
-            <a href="index.html" class="text-decoration-none"><img src="../../assets/img/logo.png" alt="EduMatch" class="mb-3" style="height: 50px;"></a>
+            <a href="index.php" class="text-decoration-none"><img src="../../assets/img/logo.png" alt="EduMatch" class="mb-3" style="height: 50px;"></a>
             <p class="mt-3 text-light opacity-75">Smart matching platform connecting students with expert professors for personalized learning.</p>
           </div>
           <div class="col-lg-4 col-md-6 mb-4">
             <h5 class="fw-bold mb-3">Navigation</h5>
             <ul class="list-unstyled">
-              <li class="mb-2"><a href="index.html" class="text-light text-decoration-none">Home</a></li>
+              <li class="mb-2"><a href="index.php" class="text-light text-decoration-none">Home</a></li>
               <li class="mb-2"><a href="sign-in.php" class="text-light text-decoration-none">Connexion</a></li>
               <li class="mb-2"><a href="sign-up.php" class="text-light text-decoration-none">Inscription</a></li>
             </ul>

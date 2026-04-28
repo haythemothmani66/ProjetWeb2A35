@@ -33,6 +33,11 @@ $BO = '/gestion_users/view/backoffice/src';
   <link rel="stylesheet" href="<?= $BO ?>/assets/css/theme.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <style>
+    [data-bs-theme="light"] .form-control, [data-bs-theme="light"] .form-select { color: #000 !important; }
+    .toggle-password { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); cursor: pointer; color: #6c757d; z-index: 5; line-height: 1; }
+    .toggle-password:hover { color: #6366f1; }
+  </style>
   <script src="<?= $BO ?>/assets/js/vendors/color-modes.js"></script>
   <script>
     if (localStorage.getItem('sidebarExpanded') === 'false') { document.documentElement.classList.add('collapsed'); document.documentElement.classList.remove('expanded'); }
@@ -72,22 +77,23 @@ $BO = '/gestion_users/view/backoffice/src';
               <div class="row g-4">
                 <div class="col-md-6">
                   <label class="form-label">Nom <span class="text-danger">*</span></label>
-                  <input type="text" name="nom" id="editNom" class="form-control" value="<?= htmlspecialchars($nom) ?>">
+                  <input type="text" name="nom" id="editNom" class="form-control" value="<?= htmlspecialchars($nom) ?>" placeholder="Ex: Ben Ali">
                   <div class="text-danger small mt-1" id="err-nom"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Prenom <span class="text-danger">*</span></label>
-                  <input type="text" name="prenom" id="editPrenom" class="form-control" value="<?= htmlspecialchars($prenom) ?>">
+                  <input type="text" name="prenom" id="editPrenom" class="form-control" value="<?= htmlspecialchars($prenom) ?>" placeholder="Ex: Ahmed">
                   <div class="text-danger small mt-1" id="err-prenom"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Email <span class="text-danger">*</span></label>
-                  <input type="text" name="email" id="editEmail" class="form-control" value="<?= htmlspecialchars($email) ?>">
+                  <input type="text" name="email" id="editEmail" class="form-control" value="<?= htmlspecialchars($email) ?>" placeholder="exemple@email.com">
                   <div class="text-danger small mt-1" id="err-email"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Telephone</label>
-                  <input type="text" name="telephone" class="form-control" value="<?= htmlspecialchars($telephone) ?>">
+                  <input type="text" name="telephone" id="editTel" class="form-control" value="<?= htmlspecialchars($telephone) ?>" placeholder="Ex: 12345678">
+                  <div class="text-danger small mt-1" id="err-tel"></div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Role <span class="text-danger">*</span></label>

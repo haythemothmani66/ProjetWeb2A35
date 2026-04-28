@@ -185,6 +185,8 @@
       if (m) { err('err-nom', m); ok = false; }
       m = checkName(val('profilPrenom'), 'Le prénom');
       if (m) { err('err-prenom', m); ok = false; }
+      m = checkTel(val('profilTel'));
+      if (m) { err('err-tel', m); ok = false; }
       if (!ok) e.preventDefault();
     });
   }
@@ -216,6 +218,8 @@
       if (m) { err('err-prenom', m); ok = false; }
       m = checkEmail(val('addEmail'));
       if (m) { err('err-email', m); ok = false; }
+      m = checkTel(val('addTel'));
+      if (m) { err('err-tel', m); ok = false; }
       m = checkPassword(val('addPassword'));
       if (m) { err('err-password', m); ok = false; }
       if (!ok) e.preventDefault();
@@ -234,6 +238,8 @@
       if (m) { err('err-prenom', m); ok = false; }
       m = checkEmail(val('editEmail'));
       if (m) { err('err-email', m); ok = false; }
+      m = checkTel(val('editTel'));
+      if (m) { err('err-tel', m); ok = false; }
       if (!ok) e.preventDefault();
     });
   }
