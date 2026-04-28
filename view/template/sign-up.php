@@ -35,6 +35,8 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
       .auth-card .form-control, .auth-card .form-select { border-radius: 10px; padding: 12px 16px; }
       .auth-card .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 10px; padding: 12px; font-weight: 600; width: 100%; }
       .auth-card .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+      .auth-card a { color: #525fe1; }
+      .auth-card a:hover { color: #764ba2; }
     </style>
   </head>
 
@@ -133,7 +135,8 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold">Téléphone</label>
-              <input type="text" class="form-control" id="signupTel" name="telephone" value="<?= htmlspecialchars($formData['telephone'] ?? '') ?>" placeholder="+216 XX XXX XXX">
+              <input type="text" class="form-control" id="signupTel" name="telephone" value="<?= htmlspecialchars($formData['telephone'] ?? '') ?>" placeholder="Ex: 12345678">
+              <div class="text-danger small mt-1" id="err-tel"></div>
             </div>
             <div class="mb-3">
               <label class="form-label fw-semibold">Rôle <span class="text-danger">*</span></label>
@@ -146,7 +149,7 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
               <div class="col-md-6 mb-3">
                 <label class="form-label fw-semibold">Mot de passe <span class="text-danger">*</span></label>
                 <div class="position-relative">
-                  <input type="password" class="form-control pe-5" id="signupPassword" name="password" placeholder="Min. 6 caractères">
+                  <input type="password" class="form-control pe-5" id="signupPassword" name="password" placeholder="Min. 8, Maj+min+chiffre+special">
                   <span class="toggle-password" data-target="signupPassword"><i class="fas fa-eye"></i></span>
                 </div>
                 <div class="text-danger small mt-1" id="err-password"></div>

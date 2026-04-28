@@ -32,6 +32,8 @@ if (empty($_SESSION['reset_user_id'])) { header('Location: /gestion_users/view/t
       .auth-card .form-control { border-radius: 10px; padding: 12px 16px; }
       .auth-card .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 10px; padding: 12px; font-weight: 600; width: 100%; }
       .auth-card .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+      .auth-card a { color: #525fe1; }
+      .auth-card a:hover { color: #764ba2; }
     </style>
   </head>
 
@@ -110,7 +112,7 @@ if (empty($_SESSION['reset_user_id'])) { header('Location: /gestion_users/view/t
             <div class="mb-3">
               <label class="form-label fw-semibold">Nouveau mot de passe</label>
               <div class="position-relative">
-                <input type="password" class="form-control pe-5" id="resetPassword" name="password" placeholder="Min. 6 caractères">
+                <input type="password" class="form-control pe-5" id="resetPassword" name="password" placeholder="Min. 8, Maj+min+chiffre+special">
                 <span class="toggle-password" data-target="resetPassword"><i class="fas fa-eye"></i></span>
               </div>
               <div class="text-danger small mt-1" id="err-password"></div>

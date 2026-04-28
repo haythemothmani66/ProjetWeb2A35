@@ -34,6 +34,8 @@ if (empty($resetEmail)) { header('Location: /gestion_users/view/template/forget-
       .auth-card .form-control { border-radius: 10px; padding: 12px 16px; text-align: center; font-size: 1.5rem; letter-spacing: 10px; font-weight: 700; }
       .auth-card .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 10px; padding: 12px; font-weight: 600; width: 100%; }
       .auth-card .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+      .auth-card a { color: #525fe1; }
+      .auth-card a:hover { color: #764ba2; }
     </style>
   </head>
 

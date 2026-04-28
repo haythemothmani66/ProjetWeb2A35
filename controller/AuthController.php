@@ -88,13 +88,40 @@ class AuthController {
         $telephone = trim($_POST['telephone']  ?? '');
         $role      = trim($_POST['role']       ?? 'etudiant');
 
-        if (empty($nom))      $errors[] = "Le nom est obligatoire.";
-        if (empty($prenom))   $errors[] = "Le prénom est obligatoire.";
-        if (empty($email))    $errors[] = "L'email est obligatoire.";
-        elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Email invalide.";
-        if (strlen($password) < 6) $errors[] = "Le mot de passe doit contenir au moins 6 caractères.";
-        if ($password !== $confirm) $errors[] = "Les mots de passe ne correspondent pas.";
-        if (!in_array($role, ['admin', 'encadrant', 'etudiant'])) $errors[] = "Rôle invalide.";
+        // --- Nom ---
+        if (empty($nom))                         $errors[] = "Le nom est obligatoire.";
+        elseif (mb_strlen($nom) < 2)             $errors[] = "Le nom doit contenir au moins 2 caractères.";
+        elseif (mb_strlen($nom) > 30)            $errors[] = "Le nom ne doit pas dépasser 30 caractères.";
+        elseif (!preg_match('/^[A-Za-zÀ-ÿ\s\-\']+$/', $nom)) $errors[] = "Le nom ne doit contenir que des lettres.";
+
+        // --- Prénom ---
+        if (empty($prenom))                      $errors[] = "Le prénom est obligatoire.";
+        elseif (mb_strlen($prenom) < 2)          $errors[] = "Le prénom doit contenir au moins 2 caractères.";
+        elseif (mb_strlen($prenom) > 30)         $errors[] = "Le prénom ne doit pas dépasser 30 caractères.";
+        elseif (!preg_match('/^[A-Za-zÀ-ÿ\s\-\']+$/', $prenom)) $errors[] = "Le prénom ne doit contenir que des lettres.";
+
+        // --- Email ---
+        if (empty($email))                       $errors[] = "L'email est obligatoire.";
+        elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Format d'email invalide.";
+
+        // --- Téléphone (optionnel, mais si rempli => 8 chiffres) ---
+        if (!empty($telephone) && !preg_match('/^[0-9]{8}$/', $telephone))
+            $errors[] = "Le numéro de téléphone doit contenir exactement 8 chiffres.";
+
+        // --- Mot de passe sécurisé ---
+        if (empty($password))                    $errors[] = "Le mot de passe est obligatoire.";
+        elseif (strlen($password) < 8)           $errors[] = "Le mot de passe doit contenir au moins 8 caractères.";
+        elseif (strlen($password) > 50)          $errors[] = "Le mot de passe ne doit pas dépasser 50 caractères.";
+        elseif (!preg_match('/[A-Z]/', $password)) $errors[] = "Le mot de passe doit contenir au moins une majuscule.";
+        elseif (!preg_match('/[a-z]/', $password)) $errors[] = "Le mot de passe doit contenir au moins une minuscule.";
+        elseif (!preg_match('/[0-9]/', $password)) $errors[] = "Le mot de passe doit contenir au moins un chiffre.";
+        elseif (!preg_match('/[^A-Za-z0-9]/', $password)) $errors[] = "Le mot de passe doit contenir au moins un caractère spécial.";
+
+        // --- Confirmation ---
+        if ($password !== $confirm)              $errors[] = "Les mots de passe ne correspondent pas.";
+
+        // --- Rôle ---
+        if (!in_array($role, ['encadrant', 'etudiant'])) $errors[] = "Rôle invalide.";
 
         if (empty($errors)) {
             $stmt = $this->db->prepare("SELECT id FROM user WHERE email = ? LIMIT 1");
@@ -263,7 +290,16 @@ class AuthController {
         $userId   = $_SESSION['reset_user_id'] ?? null;
 
         if (empty($userId)) { header('Location: /gestion_users/view/template/forget-password.php'); exit; }
-        if (strlen($password) < 6) $errors[] = "Le mot de passe doit contenir au moins 6 caractères.";
+
+        // --- Mot de passe sécurisé ---
+        if (empty($password))                    $errors[] = "Le mot de passe est obligatoire.";
+        elseif (strlen($password) < 8)           $errors[] = "Le mot de passe doit contenir au moins 8 caractères.";
+        elseif (strlen($password) > 50)          $errors[] = "Le mot de passe ne doit pas dépasser 50 caractères.";
+        elseif (!preg_match('/[A-Z]/', $password)) $errors[] = "Le mot de passe doit contenir au moins une majuscule.";
+        elseif (!preg_match('/[a-z]/', $password)) $errors[] = "Le mot de passe doit contenir au moins une minuscule.";
+        elseif (!preg_match('/[0-9]/', $password)) $errors[] = "Le mot de passe doit contenir au moins un chiffre.";
+        elseif (!preg_match('/[^A-Za-z0-9]/', $password)) $errors[] = "Le mot de passe doit contenir au moins un caractère spécial.";
+
         if ($password !== $confirm) $errors[] = "Les mots de passe ne correspondent pas.";
 
         if (empty($errors)) {

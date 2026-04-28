@@ -54,14 +54,14 @@ CREATE TABLE IF NOT EXISTS profil (
 -- ------------------------------------------------------------
 -- Données initiales — Admin par défaut
 -- Email    : admin@edumatch.tn
--- Password : Admin123
+-- Password : Admin123!
 -- ------------------------------------------------------------
 INSERT INTO user (nom, prenom, email, password, role, statut, photo, token_verif, created_at)
 VALUES (
     'Admin',
     'EduMatch',
     'admin@edumatch.tn',
-    '$2y$10$hlLst42qhw.Q3veNqSHlbeRqYDhDVmaDRHQoSxeFDlTh4u15o2iXq',
+    '$2y$10$G9X6/QiU/4I6dpUiI40By.OP7PdA72EfqEluCtD.By27SfxqzPTEO',
     'admin',
     1,
     'default.png',

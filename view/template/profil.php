@@ -206,7 +206,7 @@ $userData = $stmt->fetch();
                   <div class="mb-3">
                     <label class="form-label fw-semibold">Nouveau mot de passe</label>
                     <div class="position-relative">
-                      <input type="password" name="new_password" id="newPwd" class="form-control pe-5" placeholder="Min. 6 caracteres">
+                      <input type="password" name="new_password" id="newPwd" class="form-control pe-5" placeholder="Min. 8, Maj+min+chiffre+special">
                       <span class="toggle-password" data-target="newPwd"><i class="fas fa-eye"></i></span>
                     </div>
                     <div class="text-danger small mt-1" id="err-new"></div>

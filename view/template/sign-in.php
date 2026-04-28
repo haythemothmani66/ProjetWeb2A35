@@ -36,6 +36,8 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
       .auth-card .form-control { border-radius: 10px; padding: 12px 16px; }
       .auth-card .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); border: none; border-radius: 10px; padding: 12px; font-weight: 600; width: 100%; }
       .auth-card .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+      .auth-card a { color: #525fe1; }
+      .auth-card a:hover { color: #764ba2; }
     </style>
   </head>
 

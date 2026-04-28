@@ -18,8 +18,51 @@
     var divs = document.querySelectorAll('[id^="err-"]');
     for (var i = 0; i < divs.length; i++) divs[i].textContent = '';
   }
-  function isEmail(s) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+
+  /* --- Regex patterns --- */
+  var RE_NAME   = /^[A-Za-zÀ-ÿ\s\-']+$/;          /* lettres, espaces, tirets, apostrophes */
+  var RE_EMAIL  = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+  var RE_TEL_TN = /^[0-9]{8}$/;                     /* exactement 8 chiffres (Tunisie) */
+  var RE_PWD_UP = /[A-Z]/;                           /* au moins 1 majuscule */
+  var RE_PWD_LO = /[a-z]/;                           /* au moins 1 minuscule */
+  var RE_PWD_DG = /[0-9]/;                           /* au moins 1 chiffre */
+  var RE_PWD_SP = /[^A-Za-z0-9]/;                    /* au moins 1 caractère spécial */
+
+  function isEmail(s) { return RE_EMAIL.test(s); }
+
+  /* --- Validation nom / prenom --- */
+  function checkName(value, fieldLabel) {
+    if (!value) return fieldLabel + ' est obligatoire.';
+    if (value.length < 2) return fieldLabel + ' doit contenir au moins 2 caractères.';
+    if (value.length > 30) return fieldLabel + ' ne doit pas dépasser 30 caractères.';
+    if (!RE_NAME.test(value)) return fieldLabel + ' ne doit contenir que des lettres.';
+    return '';
+  }
+
+  /* --- Validation mot de passe sécurisé --- */
+  function checkPassword(value) {
+    if (!value) return 'Le mot de passe est obligatoire.';
+    if (value.length < 8) return 'Minimum 8 caractères.';
+    if (value.length > 50) return 'Maximum 50 caractères.';
+    if (!RE_PWD_UP.test(value)) return 'Doit contenir au moins une majuscule (A-Z).';
+    if (!RE_PWD_LO.test(value)) return 'Doit contenir au moins une minuscule (a-z).';
+    if (!RE_PWD_DG.test(value)) return 'Doit contenir au moins un chiffre (0-9).';
+    if (!RE_PWD_SP.test(value)) return 'Doit contenir au moins un caractère spécial (!@#...).';
+    return '';
+  }
+
+  /* --- Validation téléphone tunisien (optionnel, mais si rempli => 8 chiffres) --- */
+  function checkTel(value) {
+    if (!value) return '';  /* optionnel */
+    if (!RE_TEL_TN.test(value)) return 'Le numéro doit contenir exactement 8 chiffres.';
+    return '';
+  }
+
+  /* --- Validation email --- */
+  function checkEmail(value) {
+    if (!value) return "L'email est obligatoire.";
+    if (!isEmail(value)) return "Format d'email invalide.";
+    return '';
   }
 
   /* ---------- Login form ---------- */
@@ -40,13 +83,32 @@
   if (formSignup) {
     formSignup.addEventListener('submit', function (e) {
       clear();
-      var ok = true;
-      if (!val('signupNom')) { err('err-nom', 'Nom obligatoire.'); ok = false; }
-      if (!val('signupPrenom')) { err('err-prenom', 'Prénom obligatoire.'); ok = false; }
-      if (!val('signupEmail')) { err('err-email', 'Email obligatoire.'); ok = false; }
-      else if (!isEmail(val('signupEmail'))) { err('err-email', 'Email invalide.'); ok = false; }
-      if (val('signupPassword').length < 6) { err('err-password', 'Minimum 6 caractères.'); ok = false; }
-      if (val('signupConfirm') !== val('signupPassword')) { err('err-confirm', 'Les mots de passe ne correspondent pas.'); ok = false; }
+      var ok = true, m;
+
+      /* Nom */
+      m = checkName(val('signupNom'), 'Le nom');
+      if (m) { err('err-nom', m); ok = false; }
+
+      /* Prénom */
+      m = checkName(val('signupPrenom'), 'Le prénom');
+      if (m) { err('err-prenom', m); ok = false; }
+
+      /* Email */
+      m = checkEmail(val('signupEmail'));
+      if (m) { err('err-email', m); ok = false; }
+
+      /* Téléphone (optionnel) */
+      m = checkTel(val('signupTel'));
+      if (m) { err('err-tel', m); ok = false; }
+
+      /* Mot de passe */
+      m = checkPassword(val('signupPassword'));
+      if (m) { err('err-password', m); ok = false; }
+
+      /* Confirmation */
+      if (!val('signupConfirm')) { err('err-confirm', 'La confirmation est obligatoire.'); ok = false; }
+      else if (val('signupConfirm') !== val('signupPassword')) { err('err-confirm', 'Les mots de passe ne correspondent pas.'); ok = false; }
+
       if (!ok) e.preventDefault();
     });
   }
@@ -104,9 +166,11 @@
   if (formReset) {
     formReset.addEventListener('submit', function (e) {
       clear();
-      var ok = true;
-      if (val('resetPassword').length < 6) { err('err-password', 'Minimum 6 caractères.'); ok = false; }
-      if (val('resetConfirm') !== val('resetPassword')) { err('err-confirm', 'Les mots de passe ne correspondent pas.'); ok = false; }
+      var ok = true, m;
+      m = checkPassword(val('resetPassword'));
+      if (m) { err('err-password', m); ok = false; }
+      if (!val('resetConfirm')) { err('err-confirm', 'La confirmation est obligatoire.'); ok = false; }
+      else if (val('resetConfirm') !== val('resetPassword')) { err('err-confirm', 'Les mots de passe ne correspondent pas.'); ok = false; }
       if (!ok) e.preventDefault();
     });
   }
@@ -116,9 +180,11 @@
   if (formProfil) {
     formProfil.addEventListener('submit', function (e) {
       clear();
-      var ok = true;
-      if (!val('profilNom')) { err('err-nom', 'Nom obligatoire.'); ok = false; }
-      if (!val('profilPrenom')) { err('err-prenom', 'Prénom obligatoire.'); ok = false; }
+      var ok = true, m;
+      m = checkName(val('profilNom'), 'Le nom');
+      if (m) { err('err-nom', m); ok = false; }
+      m = checkName(val('profilPrenom'), 'Le prénom');
+      if (m) { err('err-prenom', m); ok = false; }
       if (!ok) e.preventDefault();
     });
   }
@@ -128,10 +194,12 @@
   if (formChangePwd) {
     formChangePwd.addEventListener('submit', function (e) {
       clear();
-      var ok = true;
+      var ok = true, m;
       if (!val('currentPwd')) { err('err-current', 'Mot de passe actuel obligatoire.'); ok = false; }
-      if (val('newPwd').length < 6) { err('err-new', 'Minimum 6 caractères.'); ok = false; }
-      if (val('confirmPwd') !== val('newPwd')) { err('err-confirm', 'Les mots de passe ne correspondent pas.'); ok = false; }
+      m = checkPassword(val('newPwd'));
+      if (m) { err('err-new', m); ok = false; }
+      if (!val('confirmPwd')) { err('err-confirm', 'La confirmation est obligatoire.'); ok = false; }
+      else if (val('confirmPwd') !== val('newPwd')) { err('err-confirm', 'Les mots de passe ne correspondent pas.'); ok = false; }
       if (!ok) e.preventDefault();
     });
   }
@@ -141,12 +209,15 @@
   if (formAddUser) {
     formAddUser.addEventListener('submit', function (e) {
       clear();
-      var ok = true;
-      if (!val('addNom')) { err('err-nom', 'Nom obligatoire.'); ok = false; }
-      if (!val('addPrenom')) { err('err-prenom', 'Prénom obligatoire.'); ok = false; }
-      if (!val('addEmail')) { err('err-email', 'Email obligatoire.'); ok = false; }
-      else if (!isEmail(val('addEmail'))) { err('err-email', 'Email invalide.'); ok = false; }
-      if (val('addPassword').length < 6) { err('err-password', 'Minimum 6 caractères.'); ok = false; }
+      var ok = true, m;
+      m = checkName(val('addNom'), 'Le nom');
+      if (m) { err('err-nom', m); ok = false; }
+      m = checkName(val('addPrenom'), 'Le prénom');
+      if (m) { err('err-prenom', m); ok = false; }
+      m = checkEmail(val('addEmail'));
+      if (m) { err('err-email', m); ok = false; }
+      m = checkPassword(val('addPassword'));
+      if (m) { err('err-password', m); ok = false; }
       if (!ok) e.preventDefault();
     });
   }
@@ -156,11 +227,13 @@
   if (formEditUser) {
     formEditUser.addEventListener('submit', function (e) {
       clear();
-      var ok = true;
-      if (!val('editNom')) { err('err-nom', 'Nom obligatoire.'); ok = false; }
-      if (!val('editPrenom')) { err('err-prenom', 'Prénom obligatoire.'); ok = false; }
-      if (!val('editEmail')) { err('err-email', 'Email obligatoire.'); ok = false; }
-      else if (!isEmail(val('editEmail'))) { err('err-email', 'Email invalide.'); ok = false; }
+      var ok = true, m;
+      m = checkName(val('editNom'), 'Le nom');
+      if (m) { err('err-nom', m); ok = false; }
+      m = checkName(val('editPrenom'), 'Le prénom');
+      if (m) { err('err-prenom', m); ok = false; }
+      m = checkEmail(val('editEmail'));
+      if (m) { err('err-email', m); ok = false; }
       if (!ok) e.preventDefault();
     });
   }

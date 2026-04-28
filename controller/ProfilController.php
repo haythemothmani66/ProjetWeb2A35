@@ -32,8 +32,17 @@ class ProfilController {
         $niveau    = trim($_POST['niveau']     ?? '');
         $specialite= trim($_POST['specialite'] ?? '');
 
-        if (empty($nom))    $errors[] = "Le nom est obligatoire.";
-        if (empty($prenom)) $errors[] = "Le prénom est obligatoire.";
+        // --- Nom ---
+        if (empty($nom))                         $errors[] = "Le nom est obligatoire.";
+        elseif (mb_strlen($nom) < 2)             $errors[] = "Le nom doit contenir au moins 2 caractères.";
+        elseif (mb_strlen($nom) > 30)            $errors[] = "Le nom ne doit pas dépasser 30 caractères.";
+        elseif (!preg_match('/^[A-Za-zÀ-ÿ\s\-\']+$/', $nom)) $errors[] = "Le nom ne doit contenir que des lettres.";
+
+        // --- Prénom ---
+        if (empty($prenom))                      $errors[] = "Le prénom est obligatoire.";
+        elseif (mb_strlen($prenom) < 2)          $errors[] = "Le prénom doit contenir au moins 2 caractères.";
+        elseif (mb_strlen($prenom) > 30)         $errors[] = "Le prénom ne doit pas dépasser 30 caractères.";
+        elseif (!preg_match('/^[A-Za-zÀ-ÿ\s\-\']+$/', $prenom)) $errors[] = "Le prénom ne doit contenir que des lettres.";
 
         if (empty($errors)) {
             $stmt = $this->db->prepare("SELECT photo FROM user WHERE id = ? LIMIT 1");
@@ -94,7 +103,16 @@ class ProfilController {
         $confirm  = trim($_POST['confirm_password'] ?? '');
 
         if (empty($current)) $errors[] = "Le mot de passe actuel est obligatoire.";
-        if (strlen($new) < 6) $errors[] = "Le nouveau mot de passe doit contenir au moins 6 caractères.";
+
+        // --- Nouveau mot de passe sécurisé ---
+        if (empty($new))                        $errors[] = "Le nouveau mot de passe est obligatoire.";
+        elseif (strlen($new) < 8)               $errors[] = "Le nouveau mot de passe doit contenir au moins 8 caractères.";
+        elseif (strlen($new) > 50)              $errors[] = "Le nouveau mot de passe ne doit pas dépasser 50 caractères.";
+        elseif (!preg_match('/[A-Z]/', $new))   $errors[] = "Le mot de passe doit contenir au moins une majuscule.";
+        elseif (!preg_match('/[a-z]/', $new))   $errors[] = "Le mot de passe doit contenir au moins une minuscule.";
+        elseif (!preg_match('/[0-9]/', $new))   $errors[] = "Le mot de passe doit contenir au moins un chiffre.";
+        elseif (!preg_match('/[^A-Za-z0-9]/', $new)) $errors[] = "Le mot de passe doit contenir au moins un caractère spécial.";
+
         if ($new !== $confirm) $errors[] = "Les nouveaux mots de passe ne correspondent pas.";
 
         if (empty($errors)) {
