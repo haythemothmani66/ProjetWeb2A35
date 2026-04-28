@@ -777,12 +777,12 @@ $successType = $_GET['success'] ?? '';
                                     </span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <a href="/eduleb/submit_back.php?add_correction_for=<?= $d['id_devoir'] ?>&title=<?= urlencode($d['titre']) ?>" 
+                                    <a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php?add_correction_for=<?= (int)$d['id_devoir'] ?>&title=<?= urlencode($d['titre']) ?>" 
                                class="btn-add-correction btn-sm">
                                 <i class="fas fa-plus-circle"></i> Ajouter une correction
                             </a>
 
-                                    <a href="/eduleb/submit_back.php?edit=devoir&id=<?= $d['id_devoir'] ?>" class="btn-edit btn-sm">
+                                    <a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php?edit=devoir&id=<?= (int)$d['id_devoir'] ?>" class="btn-edit btn-sm">
                                 <i class="fas fa-edit"></i> Modifier </a>
 
                                     <button class="btn-delete" data-id="<?= $d['id_devoir'] ?>" data-type="devoir">
@@ -882,9 +882,14 @@ $successType = $_GET['success'] ?? '';
                                             </span>
                                         </div>
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <a href="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php?edit=correction&id=<?= $c['id_correction'] ?>" class="btn-edit">
-                                                <i class="fas fa-edit"></i> Modifier
-                                            </a>
+                                            <form action="<?= htmlspecialchars($backofficePageBaseUrl) ?>/submit_back.php" method="post" class="m-0 d-inline">
+                                                <input type="hidden" name="edit" value="correction">
+                                                <input type="hidden" name="id_correction" value="<?= (int)$c['id_correction'] ?>">
+                                                <input type="hidden" name="devoir_titre" value="<?= htmlspecialchars($d['titre'], ENT_QUOTES) ?>">
+                                                <button type="submit" class="btn-edit">
+                                                    <i class="fas fa-edit"></i> Modifier
+                                                </button>
+                                            </form>
                                             <button class="btn-delete" data-id="<?= $c['id_correction'] ?>" data-type="correction">
                                                 <i class="fas fa-trash-alt"></i> Supprimer
                                             </button>

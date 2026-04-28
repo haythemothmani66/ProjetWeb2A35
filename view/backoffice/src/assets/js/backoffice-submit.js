@@ -178,14 +178,17 @@
     const key = getFieldKey(field);
     const rules = FIELD_RULES[key] || {};
     const value = String(field.value || '').trim();
-    const required = field.required || Boolean(rules.required);
+    const hasRequiredOverride = Object.prototype.hasOwnProperty.call(field.dataset, 'required');
+    const required = hasRequiredOverride
+      ? ['1', 'true', 'yes'].includes(String(field.dataset.required || '').toLowerCase())
+      : Boolean(rules.required);
 
     if (required && isFieldEmpty(field)) {
       return rules.required || 'Ce champ est requis.';
     }
 
     if (!isFieldEmpty(field)) {
-      const minLength = Number(rules.minLength || field.minLength || 0);
+      const minLength = Number(rules.minLength || 0);
 
       if (minLength > 0 && value.length < minLength) {
         return rules.minLengthMessage || `Minimum ${minLength} caracteres.`;
@@ -199,13 +202,8 @@
         return 'Valeur numerique invalide.';
       }
 
-      const min = rules.min !== undefined
-        ? Number(rules.min)
-        : (field.min !== '' ? Number(field.min) : Number.NEGATIVE_INFINITY);
-
-      const max = rules.max !== undefined
-        ? Number(rules.max)
-        : (field.max !== '' ? Number(field.max) : Number.POSITIVE_INFINITY);
+      const min = rules.min !== undefined ? Number(rules.min) : Number.NEGATIVE_INFINITY;
+      const max = rules.max !== undefined ? Number(rules.max) : Number.POSITIVE_INFINITY;
 
       if (numericValue < min || numericValue > max) {
         return rules.rangeMessage || `Valeur attendue entre ${min} et ${max}.`;
@@ -428,6 +426,10 @@
   }
 
   function renderDevoirSelectOptions() {
+    const selectedValue = String(
+      elements.idDevoirSelect.value || elements.idDevoirSelect.dataset.selectedId || '',
+    ).trim();
+
     if (!state.devoirs.length) {
       elements.idDevoirSelect.innerHTML = '<option value="">No devoir available</option>';
       if (elements.idDevoirSelect.dataset.touched === '1') {
@@ -437,10 +439,21 @@
     }
 
     const options = state.devoirs
-      .map((devoir) => `<option value="${devoir.id_devoir}">#${devoir.id_devoir} - ${escapeHtml(devoir.titre)}</option>`)
+      .map((devoir) => `<option value="${devoir.id_devoir}">${escapeHtml(devoir.titre)}</option>`)
       .join('');
 
     elements.idDevoirSelect.innerHTML = `<option value="">Select devoir</option>${options}`;
+
+    if (selectedValue !== '') {
+      const hasMatchingOption = state.devoirs.some(
+        (devoir) => String(devoir.id_devoir) === selectedValue,
+      );
+
+      if (hasMatchingOption) {
+        elements.idDevoirSelect.value = selectedValue;
+        elements.idDevoirSelect.dataset.selectedId = '';
+      }
+    }
 
     if (elements.idDevoirSelect.dataset.touched === '1') {
       validateField(elements.idDevoirSelect, { force: true });
@@ -502,6 +515,38 @@
     }
   }
 
+  function resolveFormAction(formElement, fallbackAction) {
+    if (!formElement) {
+      return fallbackAction;
+    }
+
+    const actionAttr = String(formElement.getAttribute('action') || '').trim();
+    if (!actionAttr) {
+      return fallbackAction;
+    }
+
+    try {
+      const parsed = new URL(actionAttr, window.location.href);
+      const actionParam = String(parsed.searchParams.get('action') || '').trim();
+      if (actionParam) {
+        return actionParam.toLowerCase();
+      }
+    } catch (error) {
+      // Fallback regex parsing for unusual or malformed action URLs.
+    }
+
+    const match = actionAttr.match(/[?&]action=([^&]+)/i);
+    if (match && match[1]) {
+      try {
+        return decodeURIComponent(match[1]).trim().toLowerCase() || fallbackAction;
+      } catch (error) {
+        return match[1].trim().toLowerCase() || fallbackAction;
+      }
+    }
+
+    return fallbackAction;
+  }
+
   function setTodayAsDefaultDate() {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -524,12 +569,14 @@
 
     elements.devoirForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      await submitForm(elements.devoirForm, 'submit', elements.submitDevoirBtn);
+      const action = resolveFormAction(elements.devoirForm, 'submit');
+      await submitForm(elements.devoirForm, action, elements.submitDevoirBtn);
     });
 
     elements.correctionForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      await submitForm(elements.correctionForm, 'correct', elements.submitCorrectionBtn);
+      const action = resolveFormAction(elements.correctionForm, 'correct');
+      await submitForm(elements.correctionForm, action, elements.submitCorrectionBtn);
     });
   }
 

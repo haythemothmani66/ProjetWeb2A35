@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 session_start();
 
@@ -576,10 +576,10 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="titre"
                                        class="form-control"
                                        placeholder="Ex: Algorithme de tri à bulles"
-                                       minlength="3"
-                                       maxlength="150"
+                                      
+                                      
                                         value="<?= htmlspecialchars(oldOrEdit('titre', $oldData, $editDevoir)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-titre"></span>
                                 <small class="hint">Donnez un titre descriptif (3 à 150 caractères)</small>
                             </div>
@@ -594,9 +594,9 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                           id="description"
                                           class="form-control"
                                           placeholder="Décrivez le contexte et les défis du devoir..."
-                                          minlength="10"
-                                          maxlength="1000"
-                                          required><?= htmlspecialchars(oldOrEdit('description', $oldData, $editDevoir)) ?></textarea>
+                                         
+                                         
+                                         ><?= htmlspecialchars(oldOrEdit('description', $oldData, $editDevoir)) ?></textarea>
                                 <span class="char-counter" id="counter-description">0 / 1000</span>
                                 <span class="field-feedback" id="fb-description"></span>
                             </div>
@@ -612,7 +612,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="file1"
                                        class="form-control"
                                        accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
-                                       <?php if (!$isEditDevoir): ?>required<?php endif; ?>>
+                                       >
                                 <div class="file-preview" id="preview-file1">
                                     <i class="fas fa-check-circle"></i>
                                     <span id="preview-file1-name"></span>
@@ -635,7 +635,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="date_soumission"
                                        class="form-control"
                                         value="<?= htmlspecialchars(oldOrEdit('date_soumission', $oldData, $editDevoir)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-date_soumission"></span>
                             </div>
 
@@ -647,7 +647,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                 </label>
                                 <select name="niveau_difficulte" id="niveau_difficulte" class="form-control" 
 
-                                required>
+                               >
                                     <option value="">-- Sélectionnez un niveau --</option>
                                     <option value="facile" <?= oldOrEdit('niveau_difficulte', $oldData, $editDevoir) === 'facile' ? 'selected' : '' ?>>🟢 Facile</option>
                                     <option value="moyen" <?= oldOrEdit('niveau_difficulte', $oldData, $editDevoir) === 'moyen' ? 'selected' : '' ?>>🟡 Moyen</option>
@@ -662,7 +662,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                     <i class="fas fa-exclamation-triangle"></i> Type d'erreur prédominant
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="type_erreur_predominant" id="type_erreur_predominant" class="form-control" required>
+                                <select name="type_erreur_predominant" id="type_erreur_predominant" class="form-control">
                                     <option value="">-- Sélectionnez un type --</option>
                                     <option value="logique" <?= oldOrEdit('type_erreur_predominant', $oldData, $editDevoir) === 'logique' ? 'selected' : '' ?>>⚙️ Logique</option>
                                     <option value="syntaxe" <?= oldOrEdit('type_erreur_predominant', $oldData, $editDevoir) === 'syntaxe' ? 'selected' : '' ?>>📝 Syntaxe</option>
@@ -682,10 +682,10 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="temps_estime_resolution"
                                        class="form-control"
                                        placeholder="Ex: 45"
-                                       min="1"
-                                       max="480"
+                                      
+                                      
                                     value="<?= htmlspecialchars(oldOrEdit('temps_estime_resolution', $oldData, $editDevoir)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-temps_estime_resolution"></span>
                                 <small class="hint">Entre 1 et 480 minutes</small>
                             </div>
@@ -701,10 +701,10 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="progression_eleve"
                                        class="form-control"
                                        placeholder="Ex: 75"
-                                       min="0"
-                                       max="100"
+                                      
+                                      
                                     value="<?= htmlspecialchars(oldOrEdit('progression_eleve', $oldData, $editDevoir)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-progression_eleve"></span>
                                 <small class="hint">Pourcentage entre 0 et 100</small>
                             </div>
@@ -721,7 +721,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        class="form-control"
                                        placeholder="Ex: SQL, jointures, récursion, pointeurs"
                                         value="<?= htmlspecialchars(oldOrEdit('mots_cles', $oldData, $editDevoir)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-mots_cles"></span>
                                 <small class="hint">Séparez les mots clés par des virgules</small>
                             </div>
@@ -732,7 +732,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                     <i class="fas fa-exclamation-circle"></i> Niveau d'urgence
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="urgence" id="urgence" class="form-control" required>
+                                <select name="urgence" id="urgence" class="form-control">
                                     <option value="">-- Sélectionnez l'urgence --</option>
                                     <option value="faible" <?= oldOrEdit('urgence', $oldData, $editDevoir) === 'faible' ? 'selected' : '' ?>>🟢 Faible</option>
                                     <option value="moyenne" <?= oldOrEdit('urgence', $oldData, $editDevoir) === 'moyenne' ? 'selected' : '' ?>>🟡 Moyenne</option>
@@ -791,7 +791,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                     <i class="fas fa-link"></i> Quel devoir voulez-vous corriger ? 
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="id_devoir" id="id_devoir" class="form-control" required>
+                                <select name="id_devoir" id="id_devoir" class="form-control">
                                     <option value="">-- Sélectionnez un devoir --</option>
                                     <?php foreach ($devoirs as $d): ?>
                                         <option value="<?= htmlspecialchars($d['id_devoir']) ?>" <?= (oldOrEdit('id_devoir', $oldData, $editCorrection) === (string)$d['id_devoir']) 
@@ -814,9 +814,9 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                           id="commentaire"
                                           class="form-control"
                                           placeholder="Donnez votre feedback détaillé..."
-                                          minlength="10"
-                                          maxlength="1000"
-                                          required><?= htmlspecialchars(oldOrEdit('commentaire', $oldData, $editCorrection)) ?></textarea>
+                                         
+                                         
+                                         ><?= htmlspecialchars(oldOrEdit('commentaire', $oldData, $editCorrection)) ?></textarea>
                                 <span class="char-counter" id="counter-commentaire">0 / 1000</span>
                                 <span class="field-feedback" id="fb-commentaire"></span>
                             </div>
@@ -832,7 +832,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="file2"
                                        class="form-control"
                                        accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
-                                       <?php if (!$isEditCorrection): ?>required<?php endif; ?>>
+                                       >
                                 <div class="file-preview" id="preview-file2">
                                     <i class="fas fa-check-circle"></i>
                                     <span id="preview-file2-name"></span>
@@ -855,7 +855,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="date_correction"
                                        class="form-control"
                                     value="<?= htmlspecialchars(oldOrEdit('date_correction', $oldData, $editCorrection)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-date_correction"></span>
                             </div>
 
@@ -867,7 +867,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                 </label>
                                 <select name="type_feedback" id="type_feedback" class="form-control" 
 
-                                required>
+                               >
                                     <option value="">-- Sélectionnez un type --</option>
                                     <option value="explicatif" <?= oldOrEdit('type_feedback', $oldData, $editCorrection) === 'explicatif' ? 'selected' : '' ?>>📖 Explicatif</option>
                                     <option value="direct" <?= oldOrEdit('type_feedback', $oldData, $editCorrection) === 'direct' ? 'selected' : '' ?>>⚡ Direct</option>
@@ -887,11 +887,11 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="note_estimee"
                                        class="form-control"
                                        placeholder="Ex: 15"
-                                       min="0"
-                                       max="20"
-                                       step="0.5"
+                                      
+                                      
+                                      
                                     value="<?= htmlspecialchars(oldOrEdit('note_estimee', $oldData, $editCorrection)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-note_estimee"></span>
                                 <small class="hint">Valeur entre 0 et 20 (pas de 0.5)</small>
                             </div>
@@ -908,7 +908,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        class="form-control"
                                        placeholder="Ex: Algorithmique, Français, Physique"
                                     value="<?= htmlspecialchars(oldOrEdit('competences_evaluees', $oldData, $editCorrection)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-competences_evaluees"></span>
                                 <small class="hint">Séparez les compétences par des virgules</small>
                             </div>
@@ -924,10 +924,10 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="nombre_iterations"
                                        class="form-control"
                                        placeholder="Ex: 2"
-                                       min="1"
-                                       max="10"
+                                      
+                                      
                                     value="<?= htmlspecialchars(oldOrEdit('nombre_iterations', $oldData, $editCorrection)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-nombre_iterations"></span>
                                 <small class="hint">Entre 1 et 10 itérations</small>
                             </div>
@@ -941,7 +941,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                           id="suggestions_personnalisees"
                                           class="form-control"
                                           placeholder="Suggérez des améliorations et ressources..."
-                                          maxlength="800"><?= htmlspecialchars(oldOrEdit('suggestions_personnalisees', $oldData, $editCorrection)) ?></textarea>
+                                         ><?= htmlspecialchars(oldOrEdit('suggestions_personnalisees', $oldData, $editCorrection)) ?></textarea>
                                 <span class="char-counter" id="counter-suggestions">0 / 800</span>
                             </div>
 
@@ -970,10 +970,10 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                        id="rapidite_correction"
                                        class="form-control"
                                        placeholder="Ex: 30"
-                                       min="1"
-                                       max="480"
+                                      
+                                      
                                     value="<?= htmlspecialchars(oldOrEdit('rapidite_correction', $oldData, $editCorrection)) ?>"
-                                       required>
+                                      >
                                 <span class="field-feedback" id="fb-rapidite_correction"></span>
                                 <small class="hint">Entre 1 et 480 minutes</small>
                             </div>
@@ -984,7 +984,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                     <i class="fas fa-smile"></i> Ton du feedback
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="ton_feedback" id="ton_feedback" class="form-control" required>
+                                <select name="ton_feedback" id="ton_feedback" class="form-control">
                                     <option value="">-- Sélectionnez un ton --</option>
                                     <option value="encourageant" <?= oldOrEdit('ton_feedback', $oldData, $editCorrection) === 'encourageant' ? 'selected' : '' ?>>😊 Encourageant</option>
                                     <option value="strict" <?= oldOrEdit('ton_feedback', $oldData, $editCorrection) === 'strict' ? 'selected' : '' ?>>😤 Strict</option>
@@ -1122,6 +1122,43 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
     const isEditDevoir = <?= $isEditDevoir ? 'true' : 'false' ?>;
     const isEditCorrection = <?= $isEditCorrection ? 'true' : 'false' ?>;
 
+    const VALIDATION_RULES = {
+        titre:                   { required: true, minLength: 3, maxLength: 150 },
+        description:             { required: true, minLength: 10, maxLength: 1000 },
+        file1:                   { required: !isEditDevoir },
+        date_soumission:         { required: true },
+        niveau_difficulte:       { required: true },
+        type_erreur_predominant: { required: true },
+        temps_estime_resolution: { required: true, min: 1, max: 480 },
+        progression_eleve:       { required: true, min: 0, max: 100 },
+        mots_cles:               { required: true },
+        urgence:                 { required: true },
+        id_devoir:               { required: true },
+        commentaire:             { required: true, minLength: 10, maxLength: 1000 },
+        file2:                   { required: !isEditCorrection },
+        date_correction:         { required: true },
+        type_feedback:           { required: true },
+        note_estimee:            { required: true, min: 0, max: 20 },
+        competences_evaluees:    { required: true },
+        nombre_iterations:       { required: true, min: 1, max: 10 },
+        suggestions_personnalisees: { required: false, maxLength: 800 },
+        ressources_recommandees: { required: false },
+        rapidite_correction:     { required: true, min: 1, max: 480 },
+        ton_feedback:            { required: true },
+    };
+
+    function getRuleForField(field) {
+        const key = field.id || field.name || '';
+        return VALIDATION_RULES[key] || null;
+    }
+
+    function getRequiredFields(form) {
+        return Array.from(form.querySelectorAll('input, select, textarea')).filter(function(field) {
+            const rule = getRuleForField(field);
+            return !!(rule && rule.required);
+        });
+    }
+
     // ============================================================
     //   AFFICHER FEEDBACK SOUS UN CHAMP
     // ============================================================
@@ -1143,6 +1180,9 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
     // ============================================================
     function validateField(field, mode = 'live') {
         const id   = field.id || field.name;
+        const rule = VALIDATION_RULES[id] || null;
+        if (!rule) return true;
+
         const msgs = MESSAGES[id] || {};
         const isSubmitValidation = mode === 'submit';
         const isTouched = field.dataset.touched === '1';
@@ -1153,11 +1193,12 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
         const hasValue = isFile
             ? (field.files && field.files.length > 0)
             : value.length > 0;
+        const isRequired = !!rule.required;
 
         field.classList.remove('is-valid', 'is-invalid');
 
         // Champ requis vide
-        if (field.hasAttribute('required') && !hasValue) {
+        if (isRequired && !hasValue) {
             if (isSubmitValidation || isTouched) {
                 showFeedback(id, 'error', msgs.empty || 'Ce champ est requis.');
                 field.classList.add('is-invalid');
@@ -1169,14 +1210,21 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
         }
 
         // Champs optionnels vides : pas de message permanent
-        if (!field.hasAttribute('required') && !hasValue) {
+        if (!isRequired && !hasValue) {
             clearFeedback(id);
             return true;
         }
 
         // Longueur minimale
-        if (!isFile && field.minLength && value.length < field.minLength) {
-            showFeedback(id, 'error', msgs.short || `Minimum ${field.minLength} caractères.`);
+        if (!isFile && rule.minLength && value.length < rule.minLength) {
+            showFeedback(id, 'error', msgs.short || `Minimum ${rule.minLength} caractères.`);
+            field.classList.add('is-invalid');
+            return false;
+        }
+
+        // Longueur maximale
+        if (!isFile && rule.maxLength && value.length > rule.maxLength) {
+            showFeedback(id, 'error', msgs.long || `Maximum ${rule.maxLength} caractères.`);
             field.classList.add('is-invalid');
             return false;
         }
@@ -1184,10 +1232,10 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
         // Plage numérique
         if (field.type === 'number' && value !== '') {
             const val = parseFloat(value);
-            const min = field.min !== '' ? parseFloat(field.min) : -Infinity;
-            const max = field.max !== '' ? parseFloat(field.max) : Infinity;
+            const min = (typeof rule.min === 'number') ? rule.min : -Infinity;
+            const max = (typeof rule.max === 'number') ? rule.max : Infinity;
             if (val < min || val > max) {
-                showFeedback(id, 'error', msgs.range || `Valeur entre ${field.min} et ${field.max}.`);
+                showFeedback(id, 'error', msgs.range || `Valeur entre ${min} et ${max}.`);
                 field.classList.add('is-invalid');
                 return false;
             }
@@ -1213,13 +1261,13 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
         const label  = document.getElementById(labelId);
         if (!form || !bar || !label) return;
 
-        const required = form.querySelectorAll('[required]');
+        const required = getRequiredFields(form);
         let filled = 0;
         required.forEach(f => {
             if (f.type === 'file') { if (f.files && f.files.length > 0) filled++; }
             else if (f.value.trim()) filled++;
         });
-        const pct = Math.round((filled / required.length) * 100);
+        const pct = required.length > 0 ? Math.round((filled / required.length) * 100) : 0;
         bar.style.width = pct + '%';
         label.textContent = `Progression : ${filled} / ${required.length} champs remplis`;
     }
@@ -1347,7 +1395,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
         //   SOUMISSION FORMULAIRE DEVOIR
         // ======================================================
         document.getElementById('form-devoir').addEventListener('submit', async function(e) {
-            const requiredFields = this.querySelectorAll('[required]');
+            const requiredFields = getRequiredFields(this);
             let allValid = true;
 
             requiredFields.forEach(function(field) {
@@ -1384,7 +1432,7 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
         //   SOUMISSION FORMULAIRE CORRECTION
         // ======================================================
         document.getElementById('form-correction').addEventListener('submit', async function(e) {
-            const requiredFields = this.querySelectorAll('[required]');
+            const requiredFields = getRequiredFields(this);
             let allValid = true;
 
             requiredFields.forEach(function(field) {
@@ -1419,3 +1467,4 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
     </script>
 </body>
 </html>
+

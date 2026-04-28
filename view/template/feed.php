@@ -126,7 +126,126 @@ $successType = $_GET['success'] ?? '';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<!-- Ajouter Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
     <style>
+
+        /* Styles pour les statistiques */
+.stats-dashboard {
+    margin-bottom: 1rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    transition: all 0.3s ease;
+    border: 1px solid var(--border);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.13);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: white;
+}
+
+.stat-info h3 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text);
+}
+
+.stat-info p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.13);
+}
+
+.chart-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.chart-header h5 {
+    margin: 0;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.chart-body {
+    padding: 1.5rem;
+}
+
+.form-select-sm {
+    border-radius: 12px;
+    border-color: var(--border);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.form-select-sm:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(108, 99, 255, 0.25);
+}
+
+.badge {
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+/* Responsive stats */
+@media (max-width: 768px) {
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.4rem;
+    }
+    
+    .stat-info h3 {
+        font-size: 1.4rem;
+    }
+    
+    .chart-header, .chart-body {
+        padding: 1rem;
+    }
+}
 
               /* Bouton PDF */
       .btn-pdf {
@@ -786,7 +905,111 @@ $successType = $_GET['success'] ?? '';
             </button>
         </div>
             </div>
+            
         </form>
+    </div>
+</div>
+
+<!-- DASHBOARD STATISTIQUES -->
+<div class="container mt-4">
+    <div class="stats-dashboard">
+        <div class="row g-4 mb-5">
+            <!-- Carte 1: Total Devoirs -->
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #06b6d4);">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="statTotalDevoirs"><?= count($devoirs) ?></h3>
+                        <p>Total Devoirs</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Carte 2: Total Corrections -->
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="statTotalCorrections"><?= count($corrections) ?></h3>
+                        <p>Total Corrections</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Carte 3: Devoirs par mois (Camembert) -->
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="statMoisActif">-</h3>
+                        <p>Mois le plus actif</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Carte 4: Moyenne devoirs/mois -->
+            <div class="col-md-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #ec489a);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="statMoyenneMois">0</h3>
+                        <p>Moyenne devoirs/mois</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="row g-4 mb-5">
+            <!-- Camembert: Répartition par mois -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5><i class="fas fa-calendar-alt me-2 text-primary"></i> Devoirs par mois</h5>
+                        <p class="text-muted small mb-0">Répartition mensuelle des soumissions</p>
+                    </div>
+                    <div class="chart-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <select id="chartPeriodSelect" class="form-select form-select-sm w-auto">
+                                <option value="month">Par mois</option>
+                                <option value="week">Par semaine</option>
+                            </select>
+                            <span class="badge bg-primary" id="chartTotalLabel">Total: 0 devoirs</span>
+                        </div>
+                        <canvas id="devoirsPieChart" style="max-height: 280px; width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courbe d'activité -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h5><i class="fas fa-chart-line me-2 text-success"></i> Activité des élèves</h5>
+                        <p class="text-muted small mb-0">Évolution du nombre de devoirs soumis</p>
+                    </div>
+                    <div class="chart-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <select id="activityPeriodSelect" class="form-select form-select-sm w-auto">
+                                <option value="6months">6 derniers mois</option>
+                                <option value="12months">12 derniers mois</option>
+                                <option value="all">Toute la période</option>
+                            </select>
+                            <span class="badge bg-success" id="activityTotalLabel">Total: 0 devoirs</span>
+                        </div>
+                        <canvas id="activityLineChart" style="max-height: 280px; width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
     
@@ -1002,6 +1225,8 @@ $successType = $_GET['success'] ?? '';
                 </div>
                 <?php endforeach; ?>
             <?php endif; ?>
+
+            
 
         </div><!-- /container -->
     </section>
@@ -1249,6 +1474,227 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+
 </script>
+
+<script>
+// Variables globales pour les graphiques
+let devoirsPieChart = null;
+let activityLineChart = null;
+
+// Données PHP passées à JavaScript
+const devoirsData = <?php 
+    $devoirsJson = [];
+    foreach ($devoirs as $d) {
+        $devoirsJson[] = [
+            'id_devoir' => $d['id_devoir'],
+            'date_soumission' => $d['date_soumission']
+        ];
+    }
+    echo json_encode($devoirsJson);
+?>;
+
+// Fonction utilitaire pour obtenir le numéro de semaine
+function getWeekNumber(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+}
+
+// Compter les devoirs par mois
+function countDevoirsByMonth(devoirs) {
+    const counts = {};
+    devoirs.forEach(devoir => {
+        const date = new Date(devoir.date_soumission);
+        const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+        const label = date.toLocaleString('fr-FR', { month: 'short', year: 'numeric' });
+        if (!counts[key]) {
+            counts[key] = { count: 0, label: label, date: date };
+        }
+        counts[key].count++;
+    });
+    return Object.values(counts).sort((a, b) => a.date - b.date);
+}
+
+// Compter les devoirs par semaine
+function countDevoirsByWeek(devoirs) {
+    const counts = {};
+    devoirs.forEach(devoir => {
+        const date = new Date(devoir.date_soumission);
+        const weekNumber = getWeekNumber(date);
+        const key = `${date.getFullYear()}-S${weekNumber}`;
+        const label = `S${weekNumber} ${date.getFullYear()}`;
+        if (!counts[key]) {
+            counts[key] = { count: 0, label: label, date: date };
+        }
+        counts[key].count++;
+    });
+    return Object.values(counts).sort((a, b) => a.date - b.date);
+}
+
+// Compter les devoirs par période pour la courbe
+function countDevoirsByPeriod(devoirs, periodRange = '6months') {
+    let filteredDevoirs = [...devoirs];
+    
+    if (periodRange !== 'all') {
+        const monthsToShow = periodRange === '6months' ? 6 : 12;
+        const cutoffDate = new Date();
+        cutoffDate.setMonth(cutoffDate.getMonth() - monthsToShow);
+        filteredDevoirs = devoirs.filter(d => new Date(d.date_soumission) >= cutoffDate);
+    }
+    
+    const counts = {};
+    filteredDevoirs.forEach(devoir => {
+        const date = new Date(devoir.date_soumission);
+        const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+        const label = date.toLocaleString('fr-FR', { month: 'short', year: 'numeric' });
+        if (!counts[key]) {
+            counts[key] = { count: 0, label: label, date: date };
+        }
+        counts[key].count++;
+    });
+    
+    const sorted = Object.values(counts).sort((a, b) => a.date - b.date);
+    return {
+        labels: sorted.map(item => item.label),
+        data: sorted.map(item => item.count)
+    };
+}
+
+// Mettre à jour le graphique en camembert
+function updatePieChart(devoirs, period = 'month') {
+    let data = period === 'month' ? countDevoirsByMonth(devoirs) : countDevoirsByWeek(devoirs);
+    
+    const labels = data.map(item => item.label);
+    const counts = data.map(item => item.count);
+    const total = counts.reduce((a, b) => a + b, 0);
+    
+    // Trouver le mois le plus actif
+    if (data.length > 0) {
+        const maxMonth = data.reduce((max, item) => item.count > max.count ? item : max, data[0]);
+        document.getElementById('statMoisActif').textContent = maxMonth.label;
+    }
+    
+    document.getElementById('chartTotalLabel').textContent = `Total: ${total} devoirs`;
+    document.getElementById('statMoyenneMois').textContent = data.length > 0 ? Math.round(total / data.length) : 0;
+    
+    const ctx = document.getElementById('devoirsPieChart').getContext('2d');
+    if (devoirsPieChart) devoirsPieChart.destroy();
+    
+    const colors = ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec489a', '#14b8a6', '#f97316', '#84cc16'];
+    
+    devoirsPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: counts,
+                backgroundColor: colors.slice(0, labels.length),
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { 
+                    position: 'right', 
+                    labels: { font: { size: 11 }, boxWidth: 10 } 
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.raw / total) * 100).toFixed(1);
+                            return `${context.label}: ${context.raw} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Mettre à jour le graphique en courbe
+function updateLineChart(devoirs, periodRange = '6months') {
+    const { labels, data } = countDevoirsByPeriod(devoirs, periodRange);
+    const total = data.reduce((a, b) => a + b, 0);
+    
+    document.getElementById('activityTotalLabel').textContent = `Total: ${total} devoirs`;
+    
+    const ctx = document.getElementById('activityLineChart').getContext('2d');
+    if (activityLineChart) activityLineChart.destroy();
+    
+    activityLineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Devoirs soumis',
+                data: data,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#10b981',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: { 
+                    callbacks: { 
+                        label: (ctx) => `📘 ${ctx.raw} devoir(s)` 
+                    } 
+                }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true, 
+                    title: { display: true, text: 'Nombre de devoirs' }, 
+                    ticks: { stepSize: 1, precision: 0 } 
+                },
+                x: { title: { display: true, text: 'Période' } }
+            }
+        }
+    });
+}
+
+// Initialiser les graphiques au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    if (devoirsData.length > 0) {
+        updatePieChart(devoirsData, 'month');
+        updateLineChart(devoirsData, '6months');
+    }
+    
+    // Écouteur pour le camembert
+    const chartPeriodSelect = document.getElementById('chartPeriodSelect');
+    if (chartPeriodSelect) {
+        chartPeriodSelect.addEventListener('change', function() {
+            updatePieChart(devoirsData, this.value);
+        });
+    }
+    
+    // Écouteur pour la courbe d'activité
+    const activityPeriodSelect = document.getElementById('activityPeriodSelect');
+    if (activityPeriodSelect) {
+        activityPeriodSelect.addEventListener('change', function() {
+            updateLineChart(devoirsData, this.value);
+        });
+    }
+});
+</script>
+
 </body>
 </html>

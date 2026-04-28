@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -103,9 +103,9 @@
                         id="titre"
                         name="titre"
                         class="form-control"
-                        required
-                        minlength="3"
-                        maxlength="150"
+
+                       
+                       
                       />
                     </div>
 
@@ -118,9 +118,9 @@
                         name="description"
                         class="form-control"
                         rows="4"
-                        required
-                        minlength="10"
-                        maxlength="1000"
+
+                       
+                       
                       ></textarea>
                     </div>
 
@@ -131,8 +131,9 @@
                         id="file1"
                         name="file1"
                         class="form-control"
+                        data-required="1"
                         accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
-                        required
+
                       />
                     </div>
 
@@ -146,7 +147,7 @@
                           id="date_soumission"
                           name="date_soumission"
                           class="form-control"
-                          required
+
                         />
                       </div>
                       <div class="col-md-6">
@@ -157,7 +158,7 @@
                           id="niveau_difficulte"
                           name="niveau_difficulte"
                           class="form-select"
-                          required
+
                         >
                           <option value="">Select</option>
                           <option value="facile">Facile</option>
@@ -176,7 +177,7 @@
                           id="type_erreur_predominant"
                           name="type_erreur_predominant"
                           class="form-select"
-                          required
+
                         >
                           <option value="">Select</option>
                           <option value="logique">Logique</option>
@@ -190,7 +191,7 @@
                           id="urgence"
                           name="urgence"
                           class="form-select"
-                          required
+
                         >
                           <option value="">Select</option>
                           <option value="faible">Faible</option>
@@ -210,9 +211,9 @@
                           id="temps_estime_resolution"
                           name="temps_estime_resolution"
                           class="form-control"
-                          min="1"
-                          max="480"
-                          required
+                         
+                         
+
                         />
                       </div>
                       <div class="col-md-6">
@@ -224,9 +225,9 @@
                           id="progression_eleve"
                           name="progression_eleve"
                           class="form-control"
-                          min="0"
-                          max="100"
-                          required
+                         
+                         
+
                         />
                       </div>
                     </div>
@@ -241,7 +242,7 @@
                         name="mots_cles"
                         class="form-control"
                         placeholder="sql, joins, recursion"
-                        required
+
                       />
                     </div>
 
@@ -270,7 +271,7 @@
                   <form id="correctionForm" novalidate>
                    <div class="mb-3">
     <label for="id_devoir" class="form-label">Devoir concerné</label>
-    <select id="id_devoir" name="id_devoir" class="form-select" required>
+    <select id="id_devoir" name="id_devoir" class="form-select">
       <option value="">-- Sélectionnez un devoir --</option>
         <?php foreach ($devoirs as $d): ?>
             <option value="<?= $d['id_devoir'] ?>" 
@@ -290,9 +291,9 @@
                         name="commentaire"
                         class="form-control"
                         rows="4"
-                        required
-                        minlength="10"
-                        maxlength="1000"
+
+                       
+                       
                       ></textarea>
                     </div>
 
@@ -305,8 +306,9 @@
                         id="file2"
                         name="file2"
                         class="form-control"
+                        data-required="1"
                         accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
-                        required
+
                       />
                     </div>
 
@@ -320,7 +322,7 @@
                           id="date_correction"
                           name="date_correction"
                           class="form-control"
-                          required
+
                         />
                       </div>
                       <div class="col-md-6">
@@ -331,7 +333,7 @@
                           id="type_feedback"
                           name="type_feedback"
                           class="form-select"
-                          required
+
                         >
                           <option value="">Select</option>
                           <option value="explicatif">Explicatif</option>
@@ -351,10 +353,10 @@
                           id="note_estimee"
                           name="note_estimee"
                           class="form-control"
-                          min="0"
-                          max="20"
-                          step="0.5"
-                          required
+                         
+                         
+                         
+
                         />
                       </div>
                       <div class="col-md-6">
@@ -366,9 +368,9 @@
                           id="nombre_iterations"
                           name="nombre_iterations"
                           class="form-control"
-                          min="1"
-                          max="10"
-                          required
+                         
+                         
+
                         />
                       </div>
                     </div>
@@ -382,7 +384,7 @@
                         id="competences_evaluees"
                         name="competences_evaluees"
                         class="form-control"
-                        required
+
                       />
                     </div>
 
@@ -421,9 +423,9 @@
                           id="rapidite_correction"
                           name="rapidite_correction"
                           class="form-control"
-                          min="1"
-                          max="480"
-                          required
+                         
+                         
+
                         />
                       </div>
                       <div class="col-md-6">
@@ -434,7 +436,7 @@
                           id="ton_feedback"
                           name="ton_feedback"
                           class="form-select"
-                          required
+
                         >
                           <option value="">Select</option>
                           <option value="encourageant">Encourageant</option>
@@ -504,7 +506,7 @@
           "https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js",
           "../../assets/js/main.js",
           "../../assets/js/vendors/sidebarnav.js",
-          "../../assets/js/backoffice-submit.js",
+          "../../assets/js/backoffice-submit.js?v=20260427-5",
         ];
 
         for (const scriptPath of scripts) {
@@ -573,23 +575,7 @@
 
         // Fonction pour ajouter le message visuel
         function addVisualMessage() {
-          if (document.querySelector(".prefill-badge")) return;
-
-          const correctionCard = document
-            .querySelector("#form-correction")
-            ?.closest(".modern-form-container");
-          if (correctionCard) {
-            const badge = document.createElement("div");
-            badge.className = "prefill-badge alert alert-success";
-            badge.style.cssText =
-              "border-radius:0.75rem;padding:0.75rem 1rem;margin-bottom:1rem;background:#d1fae5;color:#065f46;border:1px solid #10b981;font-weight:500;";
-            badge.innerHTML = `
-                <i class="fas fa-check-circle"></i> 
-                <strong>Correction en cours :</strong> Vous êtes en train de corriger "${decodeURIComponent(devoirTitle || "")}" (ID: ${devoirId})
-                <button type="button" class="float-end btn-close-custom" style="float:right;background:none;border:none;cursor:pointer;color:#065f46;font-size:1.2rem;" onclick="this.parentElement.remove()">&times;</button>
-            `;
-            correctionCard.insertBefore(badge, correctionCard.firstChild);
-          }
+          return;
         }
 
         // Observer pour surveiller l'arrivée des options
@@ -657,3 +643,4 @@
     </script>
   </body>
 </html>
+

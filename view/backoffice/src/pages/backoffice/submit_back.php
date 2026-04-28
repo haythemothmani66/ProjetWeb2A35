@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 
 // Configuration de la base de données
@@ -27,6 +27,10 @@ if ($markerPos !== false) {
 $backofficeSrcBaseUrl = $appBaseUrl . '/view/backoffice/src';
 $backofficePageBaseUrl = $backofficeSrcBaseUrl . '/pages/backoffice';
 $controllerUrl = $appBaseUrl . '/controller/devoirs.php';
+$submitScriptVersion = @filemtime(__DIR__ . '/../../assets/js/backoffice-submit.js');
+if ($submitScriptVersion === false) {
+    $submitScriptVersion = time();
+}
 
 // Récupérer les devoirs pour le select
 $devoirs = $conn->query("SELECT * FROM devoirs ORDER BY id_devoir DESC")->fetchAll(PDO::FETCH_ASSOC);
@@ -35,23 +39,49 @@ $devoirs = $conn->query("SELECT * FROM devoirs ORDER BY id_devoir DESC")->fetchA
 $totalDevoirs = $conn->query("SELECT COUNT(*) FROM devoirs")->fetchColumn();
 $totalCorrections = $conn->query("SELECT COUNT(*) FROM correction")->fetchColumn();
 
-// Récupérer les paramètres d'édition
-$editType = $_GET['edit'] ?? '';
-$editId = (int)($_GET['id'] ?? 0);
+// Récupérer les paramètres d'édition (GET ou POST)
+$editType = $_POST['edit'] ?? $_GET['edit'] ?? '';
+$editType = in_array($editType, ['devoir', 'correction'], true) ? $editType : '';
+
+$devoirEditId = (int)($_POST['id_devoir'] ?? $_GET['id'] ?? 0);
+$correctionEditId = (int)($_POST['id_correction'] ?? $_POST['id'] ?? $_GET['id'] ?? 0);
+$editId = $editType === 'devoir' ? $devoirEditId : $correctionEditId;
+
+$requestedDevoirTitle = trim((string)($_POST['devoir_titre'] ?? $_GET['devoir_titre'] ?? ''));
+$requestedDevoirId = $_POST['add_correction_for'] ?? $_GET['add_correction_for'] ?? '';
+$selectedCorrectionDevoirId = $requestedDevoirId === '' ? '' : (string)((int)$requestedDevoirId);
+
 $editDevoir = null;
 $editCorrection = null;
 
-
-
 // Charger les données à modifier
-if ($editType === 'devoir' && $editId) {
+if ($editType === 'devoir' && $editId > 0) {
     $stmt = $conn->prepare("SELECT * FROM devoirs WHERE id_devoir = ?");
     $stmt->execute([$editId]);
     $editDevoir = $stmt->fetch(PDO::FETCH_ASSOC);
-} elseif ($editType === 'correction' && $editId) {
-    $stmt = $conn->prepare("SELECT * FROM correction WHERE id_correction = ?");
+} elseif ($editType === 'correction' && $editId > 0) {
+    $stmt = $conn->prepare("
+        SELECT c.*, d.titre AS devoir_titre
+        FROM correction c
+        LEFT JOIN devoirs d ON d.id_devoir = c.id_devoir
+        WHERE c.id_correction = ?
+    ");
     $stmt->execute([$editId]);
     $editCorrection = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (is_array($editCorrection)) {
+        $selectedCorrectionDevoirId = (string)($editCorrection['id_devoir'] ?? '');
+    }
+}
+
+if ($selectedCorrectionDevoirId === '' && $requestedDevoirTitle !== '') {
+    foreach ($devoirs as $devoirOption) {
+        $devoirOptionTitle = trim((string)($devoirOption['titre'] ?? ''));
+        if ($devoirOptionTitle === $requestedDevoirTitle) {
+            $selectedCorrectionDevoirId = (string)($devoirOption['id_devoir'] ?? '');
+            break;
+        }
+    }
 }
 
 
@@ -150,20 +180,21 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                     <label for="titre" class="form-label">Titre</label>
                     <input type="text" id="titre" name="titre" class="form-control" 
                            value="<?= htmlspecialchars($editDevoir['titre'] ?? '') ?>"
-                           required minlength="3" maxlength="150" />
+                           />
                 </div>
 
                 <div class="mb-3">
                     <label for="description" class="form-label">Description</label>
                     <textarea id="description" name="description" class="form-control" rows="4" 
-                              required minlength="10" maxlength="1000"><?= htmlspecialchars($editDevoir['description'] ?? '') ?></textarea>
+                             ><?= htmlspecialchars($editDevoir['description'] ?? '') ?></textarea>
                 </div>
 
                 <div class="mb-3">
                     <label for="file1" class="form-label">Fichier <?= $editDevoir ? '(laisser vide pour conserver l\'existant)' : '' ?></label>
                     <input type="file" id="file1" name="file1" class="form-control" 
+                           data-required="<?= $editDevoir ? '0' : '1' ?>"
                            accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg" 
-                           <?= !$editDevoir ? 'required' : '' ?> />
+                            />
                     <?php if ($editDevoir && !empty($editDevoir['fichier'])): ?>
                         <small class="text-muted">Fichier actuel : <?= htmlspecialchars($editDevoir['fichier']) ?></small>
                     <?php endif; ?>
@@ -174,11 +205,11 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                         <label for="date_soumission" class="form-label">Date de soumission</label>
                         <input type="date" id="date_soumission" name="date_soumission" class="form-control" 
                                value="<?= htmlspecialchars($editDevoir['date_soumission'] ?? '') ?>"
-                               required />
+                               />
                     </div>
                     <div class="col-md-6">
                         <label for="niveau_difficulte" class="form-label">Niveau</label>
-                        <select id="niveau_difficulte" name="niveau_difficulte" class="form-select" required>
+                        <select id="niveau_difficulte" name="niveau_difficulte" class="form-select">
                             <option value="">Select</option>
                             <option value="facile" <?= ($editDevoir['niveau_difficulte'] ?? '') == 'facile' ? 'selected' : '' ?>>Facile</option>
                             <option value="moyen" <?= ($editDevoir['niveau_difficulte'] ?? '') == 'moyen' ? 'selected' : '' ?>>Moyen</option>
@@ -190,7 +221,7 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                 <div class="row g-3 mt-0">
                     <div class="col-md-6">
                         <label for="type_erreur_predominant" class="form-label">Type erreur</label>
-                        <select id="type_erreur_predominant" name="type_erreur_predominant" class="form-select" required>
+                        <select id="type_erreur_predominant" name="type_erreur_predominant" class="form-select">
                             <option value="">Select</option>
                             <option value="logique" <?= ($editDevoir['type_erreur_predominant'] ?? '') == 'logique' ? 'selected' : '' ?>>Logique</option>
                             <option value="syntaxe" <?= ($editDevoir['type_erreur_predominant'] ?? '') == 'syntaxe' ? 'selected' : '' ?>>Syntaxe</option>
@@ -199,7 +230,7 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                     </div>
                     <div class="col-md-6">
                         <label for="urgence" class="form-label">Urgence</label>
-                        <select id="urgence" name="urgence" class="form-select" required>
+                        <select id="urgence" name="urgence" class="form-select">
                             <option value="">Select</option>
                             <option value="faible" <?= ($editDevoir['urgence'] ?? '') == 'faible' ? 'selected' : '' ?>>Faible</option>
                             <option value="moyenne" <?= ($editDevoir['urgence'] ?? '') == 'moyenne' ? 'selected' : '' ?>>Moyenne</option>
@@ -213,13 +244,13 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                         <label for="temps_estime_resolution" class="form-label">Temps estimé (min)</label>
                         <input type="number" id="temps_estime_resolution" name="temps_estime_resolution" class="form-control" 
                                value="<?= htmlspecialchars($editDevoir['temps_estime_resolution'] ?? '') ?>"
-                               min="1" max="480" required />
+                               />
                     </div>
                     <div class="col-md-6">
                         <label for="progression_eleve" class="form-label">Progression (%)</label>
                         <input type="number" id="progression_eleve" name="progression_eleve" class="form-control" 
                                value="<?= htmlspecialchars($editDevoir['progression_eleve'] ?? '') ?>"
-                               min="0" max="100" required />
+                               />
                     </div>
                 </div>
 
@@ -227,7 +258,7 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                     <label for="mots_cles" class="form-label">Mots clés</label>
                     <input type="text" id="mots_cles" name="mots_cles" class="form-control" 
                            value="<?= htmlspecialchars($editDevoir['mots_cles'] ?? '') ?>"
-                           placeholder="sql, joins, recursion" required />
+                           placeholder="sql, joins, recursion" />
                 </div>
 
                 <button type="submit" class="btn btn-dark w-100" id="submitDevoirBtn">
@@ -257,11 +288,11 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
 
                 <div class="mb-3">
                     <label for="id_devoir" class="form-label">Devoir concerné</label>
-                    <select id="id_devoir" name="id_devoir" class="form-select" required>
+                    <select id="id_devoir" name="id_devoir" class="form-select" data-selected-id="<?= htmlspecialchars($selectedCorrectionDevoirId, ENT_QUOTES) ?>">
                         <option value="">-- Sélectionnez un devoir --</option>
                         <?php foreach ($devoirs as $d): ?>
                             <option value="<?= $d['id_devoir'] ?>" 
-                                <?= (($editCorrection['id_devoir'] ?? '') == $d['id_devoir']) ? 'selected' : '' ?>>
+                                <?= ($selectedCorrectionDevoirId !== '' && $selectedCorrectionDevoirId === (string)$d['id_devoir']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($d['titre']) ?>
                             </option>
                         <?php endforeach; ?>
@@ -271,14 +302,15 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                 <div class="mb-3">
                     <label for="commentaire" class="form-label">Commentaire</label>
                     <textarea id="commentaire" name="commentaire" class="form-control" rows="4" 
-                              required minlength="10" maxlength="1000"><?= htmlspecialchars($editCorrection['commentaire'] ?? '') ?></textarea>
+                             ><?= htmlspecialchars($editCorrection['commentaire'] ?? '') ?></textarea>
                 </div>
 
                 <div class="mb-3">
                     <label for="file2" class="form-label">Fichier corrigé <?= $editCorrection ? '(laisser vide pour conserver l\'existant)' : '' ?></label>
                     <input type="file" id="file2" name="file2" class="form-control" 
+                           data-required="<?= $editCorrection ? '0' : '1' ?>"
                            accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg" 
-                           <?= !$editCorrection ? 'required' : '' ?> />
+                            />
                     <?php if ($editCorrection && !empty($editCorrection['fichier_corrige'])): ?>
                         <small class="text-muted">Fichier actuel : <?= htmlspecialchars($editCorrection['fichier_corrige']) ?></small>
                     <?php endif; ?>
@@ -289,11 +321,11 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                         <label for="date_correction" class="form-label">Date correction</label>
                         <input type="date" id="date_correction" name="date_correction" class="form-control" 
                                value="<?= htmlspecialchars($editCorrection['date_correction'] ?? '') ?>"
-                               required />
+                               />
                     </div>
                     <div class="col-md-6">
                         <label for="type_feedback" class="form-label">Type feedback</label>
-                        <select id="type_feedback" name="type_feedback" class="form-select" required>
+                        <select id="type_feedback" name="type_feedback" class="form-select">
                             <option value="">Select</option>
                             <option value="explicatif" <?= ($editCorrection['type_feedback'] ?? '') == 'explicatif' ? 'selected' : '' ?>>Explicatif</option>
                             <option value="direct" <?= ($editCorrection['type_feedback'] ?? '') == 'direct' ? 'selected' : '' ?>>Direct</option>
@@ -307,13 +339,13 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                         <label for="note_estimee" class="form-label">Note /20</label>
                         <input type="number" id="note_estimee" name="note_estimee" class="form-control" 
                                value="<?= htmlspecialchars($editCorrection['note_estimee'] ?? '') ?>"
-                               min="0" max="20" step="0.5" required />
+                               />
                     </div>
                     <div class="col-md-6">
                         <label for="nombre_iterations" class="form-label">Iterations</label>
                         <input type="number" id="nombre_iterations" name="nombre_iterations" class="form-control" 
                                value="<?= htmlspecialchars($editCorrection['nombre_iterations'] ?? '') ?>"
-                               min="1" max="10" required />
+                               />
                     </div>
                 </div>
 
@@ -321,7 +353,7 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                     <label for="competences_evaluees" class="form-label">Compétences évaluées</label>
                     <input type="text" id="competences_evaluees" name="competences_evaluees" class="form-control" 
                            value="<?= htmlspecialchars($editCorrection['competences_evaluees'] ?? '') ?>"
-                           required />
+                           />
                 </div>
 
                 <div class="mb-3">
@@ -341,11 +373,11 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                         <label for="rapidite_correction" class="form-label">Rapidité (min)</label>
                         <input type="number" id="rapidite_correction" name="rapidite_correction" class="form-control" 
                                value="<?= htmlspecialchars($editCorrection['rapidite_correction'] ?? '') ?>"
-                               min="1" max="480" required />
+                               />
                     </div>
                     <div class="col-md-6">
                         <label for="ton_feedback" class="form-label">Ton feedback</label>
-                        <select id="ton_feedback" name="ton_feedback" class="form-select" required>
+                        <select id="ton_feedback" name="ton_feedback" class="form-select">
                             <option value="">Select</option>
                             <option value="encourageant" <?= ($editCorrection['ton_feedback'] ?? '') == 'encourageant' ? 'selected' : '' ?>>Encourageant</option>
                             <option value="strict" <?= ($editCorrection['ton_feedback'] ?? '') == 'strict' ? 'selected' : '' ?>>Strict</option>
@@ -399,7 +431,7 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                 "https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js",
                 "../../assets/js/main.js",
                 "../../assets/js/vendors/sidebarnav.js",
-                "../../assets/js/backoffice-submit.js",
+                "../../assets/js/backoffice-submit.js?v=<?= (int)$submitScriptVersion ?>",
             ];
 
             for (const scriptPath of scripts) {
@@ -413,90 +445,66 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
 
         bootSubmitPage();
     </script>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$(document).ready(function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const devoirId = urlParams.get('add_correction_for');
-    const devoirTitle = urlParams.get('title');
-    
-    if (devoirId) {
-        // Attendre que le select soit chargé
-        const checkExist = setInterval(function() {
-            if ($('#id_devoir option').length > 1) {
-                $('#id_devoir').val(devoirId);
-                console.log('Devoir sélectionné:', $('#id_devoir').val());
-                
-                // Ajouter message
-                const cardBody = $('.col-xl-6:last-child .card-body');
-                if (cardBody.find('.prefill-msg').length === 0) {
-                    cardBody.prepend('<div class="prefill-msg alert alert-success mb-3"><i class="ti ti-check-circle"></i> 📝 Correction pour : <strong>' + decodeURIComponent(devoirTitle) + '</strong></div>');
-                }
-                clearInterval(checkExist);
-            }
-        }, 100);
-    }
-});
-</script>
-
-    <!-- Script pour la pré-sélection du devoir -->
-<script>
-(function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const devoirId = urlParams.get('add_correction_for');
-    const devoirTitle = urlParams.get('title');
-    
-    console.log('URL params:', devoirId, devoirTitle);
-    
-    if (!devoirId) return;
-    
-    function selectDevoir() {
+    <script>
+    (function () {
         const select = document.getElementById('id_devoir');
-        console.log('Select trouvé:', select);
-        console.log('Nombre d\'options:', select ? select.options.length : 0);
-        
-        if (select && select.options.length > 1) {
-            // Chercher l'option avec la bonne valeur
-            for (let i = 0; i < select.options.length; i++) {
-                if (select.options[i].value == devoirId) {
-                    select.selectedIndex = i;
-                    console.log('✅ Devoir sélectionné:', select.options[i].text);
-                    break;
-                }
-            }
-            
-            // Ajouter le message visuel
-            const correctionCard = document.querySelector('.col-xl-6:last-child .card-body');
-            if (correctionCard && !document.querySelector('.prefill-msg')) {
-                const msg = document.createElement('div');
-                msg.className = 'prefill-msg alert alert-success mb-3';
-                msg.style.cssText = 'background:#d1fae5;color:#065f46;padding:0.75rem;border-radius:0.5rem;margin-bottom:1rem;';
-                msg.innerHTML = '<i class="ti ti-check-circle"></i> 📝 Correction pour : <strong>' + decodeURIComponent(devoirTitle || '') + '</strong>';
-                correctionCard.insertBefore(msg, correctionCard.firstChild);
-            }
-            return true;
+        if (!select) {
+            return;
         }
-        return false;
-    }
-    
-    // Essayer immédiatement
-    if (!selectDevoir()) {
-        // Sinon attendre que le select soit chargé
-        let attempts = 0;
-        const interval = setInterval(() => {
-            attempts++;
-            console.log('Tentative', attempts);
-            if (selectDevoir()) {
-                clearInterval(interval);
+
+        const params = new URLSearchParams(window.location.search);
+        const urlDevoirId = String(params.get('add_correction_for') || '').trim();
+        const dataSelectedId = String(select.dataset.selectedId || '').trim();
+        const targetId = dataSelectedId || urlDevoirId;
+
+        function normalizeOptionLabels() {
+            const options = Array.from(select.options || []);
+            options.forEach((option, index) => {
+                if (index === 0) {
+                    return;
+                }
+                option.textContent = String(option.textContent || '')
+                    .replace(/^#\d+\s*-\s*/, '')
+                    .trim();
+            });
+        }
+
+        function applySelection() {
+            if (targetId === '') {
+                return;
             }
-            if (attempts >= 10) {
-                clearInterval(interval);
-                console.log('Abandon après 10 tentatives');
+
+            const hasOption = Array.from(select.options || []).some(
+                (option) => String(option.value) === targetId,
+            );
+
+            if (!hasOption) {
+                return;
             }
-        }, 500);
-    }
-})();
-</script>
+
+            select.value = targetId;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            select.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        const syncSelectState = () => {
+            normalizeOptionLabels();
+            applySelection();
+        };
+
+        syncSelectState();
+
+        const observer = new MutationObserver(() => {
+            syncSelectState();
+        });
+
+        observer.observe(select, { childList: true });
+
+        setTimeout(() => {
+            observer.disconnect();
+        }, 8000);
+    })();
+    </script>
 </body>
 </html>
+
