@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EduMatch — Admin Back-Office</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-sidebar { width: 260px; background: var(--navy); color: white; height: 100vh; position: fixed; left: 0; top: 0; padding: 30px 20px; }
+        .admin-main { margin-left: 260px; padding: 40px; background: #f8fafc; min-height: 100vh; }
+        .sidebar-logo { font-size: 24px; font-weight: 800; margin-bottom: 40px; color: white; }
+        .sidebar-logo span { color: var(--coral); }
+        .sidebar-nav { list-style: none; }
+        .sidebar-nav li { margin-bottom: 10px; }
+        .sidebar-nav a { color: rgba(255,255,255,0.7); text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; transition: all 0.2s; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background: rgba(255,255,255,0.1); color: white; }
+        
+        .admin-card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th { text-align: left; padding: 16px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .admin-table td { padding: 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.open { display: flex; }
+        .modal-content { background: white; width: 100%; max-width: 600px; border-radius: 20px; padding: 32px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--navy); }
+        .form-control { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 14px; }
+        .form-control:focus { border-color: var(--indigo); outline: none; }
+        .error-msg { color: #ef4444; font-size: 12px; margin-top: 4px; display: none; }
+        .is-invalid { border-color: #ef4444 !important; }
+        
+        .btn-primary { background: var(--indigo); color: white; padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
+        .btn-secondary { background: var(--border); color: var(--navy); padding: 12px 24px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="admin-sidebar">
+    <div class="sidebar-logo">Edu<span>Match</span> Admin</div>
+    <ul class="sidebar-nav">
+        <li><a href="#" class="active" onclick="switchTab('courses')"><i class="fas fa-book"></i> Gestion des Cours</a></li>
+        <li><a href="#" onclick="switchTab('quizzes')"><i class="fas fa-question-circle"></i> Gestion des Quizzes</a></li>
+        <li><a href="index.html"><i class="fas fa-external-link-alt"></i> Voir le site</a></li>
+    </ul>
+</div>
+
+<div class="admin-main">
+    <div id="courses-section">
+        <div class="admin-header">
+            <h2>Gestion des Cours</h2>
+            <button class="btn-primary" onclick="openModal('course')"><i class="fas fa-plus"></i> Ajouter un cours</button>
+        </div>
+        <div class="admin-card">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Catégorie</th>
+                        <th>Instructeur</th>
+                        <th>Prix</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="courses-table-body">
+                    <!-- Rempli par JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="quizzes-section" style="display:none;">
+        <div class="admin-header">
+            <h2>Gestion des Quizzes</h2>
+            <button class="btn-primary" onclick="openModal('quiz')"><i class="fas fa-plus"></i> Ajouter un quiz</button>
+        </div>
+        <div class="admin-card">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Titre</th>
+                        <th>Cours associé</th>
+                        <th>Durée (min)</th>
+                        <th>Score min</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="quizzes-table-body">
+                    <!-- Rempli par JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL COURS -->
+<div id="courseModal" class="modal">
+    <div class="modal-content">
+        <h3 id="courseModalTitle">Ajouter un cours</h3>
+        <form id="courseForm" novalidate>
+            <input type="hidden" id="courseId">
+            <div class="form-group">
+                <label>Titre du cours *</label>
+                <input type="text" id="courseTitle" class="form-control" required minlength="5">
+                <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Le titre doit contenir au moins 5 caractères.</div>
+            </div>
+            <div class="form-group">
+                <label>Description *</label>
+                <textarea id="courseDesc" class="form-control" required rows="3"></textarea>
+                <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">La description est obligatoire.</div>
+            </div>
+            <div class="form-group">
+                <label>Catégorie *</label>
+                <select id="courseCategory" class="form-control" required>
+                    <option value="">Choisir...</option>
+                    <option value="Python">Python</option>
+                    <option value="Microsoft">Microsoft</option>
+                    <option value="WEB">WEB</option>
+                    <option value="Design">Design</option>
+                </select>
+                <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Veuillez choisir une catégorie.</div>
+            </div>
+            <div class="form-group">
+                <label>Instructeur *</label>
+                <input type="text" id="courseInstructor" class="form-control" required>
+                <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Le nom de l'instructeur est obligatoire.</div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Durée (heures) *</label>
+                    <input type="number" id="courseDuration" class="form-control" required min="0.5" step="0.5">
+                    <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Minimum 0.5h.</div>
+                </div>
+                <div class="form-group">
+                    <label>Prix (€) *</label>
+                    <input type="number" id="coursePrice" class="form-control" required min="0">
+                    <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Prix invalide.</div>
+                </div>
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn-secondary" onclick="closeModal('course')">Annuler</button>
+                <button type="submit" class="btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL QUIZ -->
+<div id="quizModal" class="modal">
+    <div class="modal-content">
+        <h3 id="quizModalTitle">Ajouter un quiz</h3>
+        <form id="quizForm" novalidate>
+            <input type="hidden" id="quizId">
+            <div class="form-group">
+                <label>Titre du quiz *</label>
+                <input type="text" id="quizTitle" class="form-control" required minlength="5">
+                <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Le titre doit contenir au moins 5 caractères.</div>
+            </div>
+            <div class="form-group">
+                <label>Cours associé *</label>
+                <select id="quizCourseId" class="form-control" required>
+                    <option value="">Choisir un cours...</option>
+                </select>
+                <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Veuillez associer un cours.</div>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Durée (minutes) *</label>
+                    <input type="number" id="quizDuration" class="form-control" required min="5">
+                    <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Minimum 5 min.</div>
+                </div>
+                <div class="form-group">
+                    <label>Score de passage (%) *</label>
+                    <input type="number" id="quizPassScore" class="form-control" required min="1" max="100">
+                    <div class="error-msg" style="display:none; color:#ef4444; font-size:12px;">Entre 1 et 100.</div>
+                </div>
+            </div>
+            <div style="display:flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" class="btn-secondary" onclick="closeModal('quiz')">Annuler</button>
+                <button type="submit" class="btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
