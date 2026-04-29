@@ -255,4 +255,56 @@ class CandidatureController
         header('Location: index.php?espace=back&module=candidature&action=liste');
         exit;
     }
+
+    public function repondre(int $id): void
+    {
+        $candidature = $this->getCandidatureById($id);
+
+        if (!$candidature) {
+            http_response_code(404);
+            echo '<h1>Candidature non trouvee</h1>';
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo '<h1>Method Not Allowed</h1>';
+            return;
+        }
+
+        $statut = trim($_POST['statut'] ?? '');
+        $validStatuts = ['enattente', 'acceptee', 'refusee'];
+
+        if (!in_array($statut, $validStatuts, true)) {
+            http_response_code(400);
+            echo '<h1>Statut invalide</h1>';
+            return;
+        }
+
+        $dateReponse = date('Y-m-d');
+
+        $sql = 'UPDATE candidature
+                SET statut = :statut,
+                    datereponse = :datereponse
+                WHERE id = :id';
+
+        $statement = $this->pdo->prepare($sql);
+        $success = $statement->execute([
+            'statut' => $statut,
+            'datereponse' => $dateReponse,
+            'id' => $id,
+        ]);
+
+        if ($success) {
+            $statusMap = [
+                'acceptee' => 'acceptee',
+                'refusee' => 'refusee',
+                'enattente' => 'enattente'
+            ];
+            header('Location: index.php?espace=back&module=candidature&action=details&id=' . $id . '&reply=' . $statusMap[$statut]);
+        } else {
+            header('Location: index.php?espace=back&module=candidature&action=details&id=' . $id . '&error=update');
+        }
+        exit;
+    }
 }

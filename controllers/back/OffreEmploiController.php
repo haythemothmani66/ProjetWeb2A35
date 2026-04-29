@@ -210,6 +210,119 @@ class OffreEmploiController
         include __DIR__ . '/../../views/back/offreemploi/liste.php';
     }
 
+    public function stats(): void
+    {
+        $offerSummarySql = 'SELECT
+                COUNT(*) AS total_offres,
+                COALESCE(SUM(CASE WHEN statut = :ouverte THEN 1 ELSE 0 END), 0) AS offres_ouvertes,
+                COALESCE(SUM(CASE WHEN statut = :fermee THEN 1 ELSE 0 END), 0) AS offres_fermees
+            FROM offreemploi';
+        $offerSummaryStatement = $this->pdo->prepare($offerSummarySql);
+        $offerSummaryStatement->execute([
+            'ouverte' => 'ouverte',
+            'fermee' => 'fermee',
+        ]);
+        $offerSummary = $offerSummaryStatement->fetch(PDO::FETCH_ASSOC) ?: [
+            'total_offres' => 0,
+            'offres_ouvertes' => 0,
+            'offres_fermees' => 0,
+        ];
+
+        $candidatureSummarySql = 'SELECT
+                COUNT(*) AS total_candidatures,
+                COALESCE(SUM(CASE WHEN statut = :enattente THEN 1 ELSE 0 END), 0) AS candidatures_en_attente,
+                COALESCE(SUM(CASE WHEN statut = :acceptee THEN 1 ELSE 0 END), 0) AS candidatures_acceptees,
+                COALESCE(SUM(CASE WHEN statut = :refusee THEN 1 ELSE 0 END), 0) AS candidatures_refusees
+            FROM candidature';
+        $candidatureSummaryStatement = $this->pdo->prepare($candidatureSummarySql);
+        $candidatureSummaryStatement->execute([
+            'enattente' => 'enattente',
+            'acceptee' => 'acceptee',
+            'refusee' => 'refusee',
+        ]);
+        $candidatureSummary = $candidatureSummaryStatement->fetch(PDO::FETCH_ASSOC) ?: [
+            'total_candidatures' => 0,
+            'candidatures_en_attente' => 0,
+            'candidatures_acceptees' => 0,
+            'candidatures_refusees' => 0,
+        ];
+
+        $topOffersSql = 'SELECT
+                o.id,
+                o.titre,
+                o.lieu,
+                o.statut,
+                COUNT(c.id) AS candidatures_count
+            FROM offreemploi o
+            LEFT JOIN candidature c ON c.offreid = o.id
+            GROUP BY o.id, o.titre, o.lieu, o.statut, o.datecreation
+            ORDER BY candidatures_count DESC, o.datecreation DESC
+            LIMIT 8';
+        $topOffersStatement = $this->pdo->query($topOffersSql);
+        $topOffers = $topOffersStatement ? $topOffersStatement->fetchAll(PDO::FETCH_ASSOC) : [];
+
+        $expiringOffersSql = 'SELECT
+                id,
+                titre,
+                lieu,
+                datelimite,
+                DATEDIFF(datelimite, CURDATE()) AS days_left
+            FROM offreemploi
+            WHERE statut = :statut
+              AND datelimite BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 14 DAY)
+            ORDER BY datelimite ASC
+            LIMIT 6';
+        $expiringOffersStatement = $this->pdo->prepare($expiringOffersSql);
+        $expiringOffersStatement->execute(['statut' => 'ouverte']);
+        $expiringOffers = $expiringOffersStatement ? $expiringOffersStatement->fetchAll(PDO::FETCH_ASSOC) : [];
+
+        $pendingRepliesSql = 'SELECT
+                c.id,
+                c.nom,
+                c.prenom,
+                c.datecandidature,
+                o.titre AS offre_titre
+            FROM candidature c
+            LEFT JOIN offreemploi o ON o.id = c.offreid
+            WHERE c.statut = :statut
+            ORDER BY c.datecandidature DESC
+            LIMIT 6';
+        $pendingRepliesStatement = $this->pdo->prepare($pendingRepliesSql);
+        $pendingRepliesStatement->execute(['statut' => 'enattente']);
+        $pendingReplies = $pendingRepliesStatement ? $pendingRepliesStatement->fetchAll(PDO::FETCH_ASSOC) : [];
+
+        $stats = [
+            'offers' => [
+                'total' => (int) ($offerSummary['total_offres'] ?? 0),
+                'open' => (int) ($offerSummary['offres_ouvertes'] ?? 0),
+                'closed' => (int) ($offerSummary['offres_fermees'] ?? 0),
+            ],
+            'candidatures' => [
+                'total' => (int) ($candidatureSummary['total_candidatures'] ?? 0),
+                'pending' => (int) ($candidatureSummary['candidatures_en_attente'] ?? 0),
+                'accepted' => (int) ($candidatureSummary['candidatures_acceptees'] ?? 0),
+                'refused' => (int) ($candidatureSummary['candidatures_refusees'] ?? 0),
+            ],
+            'alerts' => [
+                'expiring_count' => count($expiringOffers),
+                'pending_count' => count($pendingReplies),
+            ],
+        ];
+
+        $chartData = [
+            'offer_labels' => array_map(static fn (array $offer): string => (string) $offer['titre'], $topOffers),
+            'offer_counts' => array_map(static fn (array $offer): int => (int) $offer['candidatures_count'], $topOffers),
+            'status_labels' => ['En attente', 'Acceptées', 'Refusées'],
+            'status_counts' => [
+                (int) ($candidatureSummary['candidatures_en_attente'] ?? 0),
+                (int) ($candidatureSummary['candidatures_acceptees'] ?? 0),
+                (int) ($candidatureSummary['candidatures_refusees'] ?? 0),
+            ],
+        ];
+
+        include __DIR__ . '/../../views/back/offreemploi/stats.php';
+    }
+
     public function details(int $id): void
     {
         $offre = $this->getOffreById($id);

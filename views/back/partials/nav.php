@@ -6,6 +6,10 @@ $tabs = [
         'label' => "Offres d'emploi",
         'href' => 'index.php?espace=back&module=offreemploi&action=liste',
     ],
+    'stats' => [
+        'label' => 'Statistiques',
+        'href' => 'index.php?espace=back&module=offreemploi&action=stats',
+    ],
     'candidatures' => [
         'label' => 'Candidatures',
         'href' => 'index.php?espace=back&module=candidature&action=liste',

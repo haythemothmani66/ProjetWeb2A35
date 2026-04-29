@@ -61,6 +61,7 @@ $filterState = $filterState ?? [
                     <h1 class="h4 mb-0">Gestion des offres</h1>
                 </div>
                 <div class="d-flex gap-2">
+                    <a class="btn btn-outline-primary" href="index.php?espace=back&module=offreemploi&action=stats">Statistiques</a>
                     <a class="btn btn-outline-secondary" href="index.php?espace=front&module=offreemploi&action=liste">Voir le front office</a>
                     <a class="btn btn-primary" href="index.php?espace=back&module=offreemploi&action=ajouter">Nouvelle offre</a>
                 </div>
@@ -139,7 +140,7 @@ $filterState = $filterState ?? [
                 <div class="card metric-card">
                     <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
                         <h3 class="h5 mb-0">Liste des offres d'emploi</h3>
-                        <span id="offre-count-badge" class="badge text-bg-primary\"><?= count($offres) ?> offre(s)</span>
+                        <span id="offre-count-badge" class="badge text-bg-primary"><?= count($offres) ?> offre(s)</span>
                     </div>
                     <div class="card-body px-4 pb-4">
                         <div class="table-responsive">

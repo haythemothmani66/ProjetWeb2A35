@@ -1,5 +1,7 @@
 <?php
 $candidature = $candidature ?? [];
+$reply = $_GET['reply'] ?? null;
+$error = $_GET['error'] ?? null;
 ?>
 <!doctype html>
 <html lang="fr">
@@ -43,6 +45,27 @@ $candidature = $candidature ?? [];
             </header>
 
             <main class="container-fluid p-4 p-lg-5">
+                <?php if ($reply === 'acceptee'): ?>
+                    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                        <strong>✓ Candidature acceptée !</strong> Le statut a été mis à jour.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php elseif ($reply === 'refusee'): ?>
+                    <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                        <strong>✓ Candidature refusée !</strong> Le statut a été mis à jour.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php elseif ($reply === 'enattente'): ?>
+                    <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                        <strong>✓ Statut restauré !</strong> La candidature est à nouveau en attente.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php elseif ($error === 'update'): ?>
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                        <strong>Erreur !</strong> Impossible de mettre à jour le statut.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php endif; ?>
                 <div class="row g-4">
                     <div class="col-lg-8">
                         <div class="card metric-card">
@@ -81,8 +104,98 @@ $candidature = $candidature ?? [];
                                 <p class="mb-1"><strong>Lieu:</strong> <?= htmlspecialchars((string) ($candidature['offre_lieu'] ?? 'N/A')) ?></p>
                                 <p class="mb-1"><strong>Contrat:</strong> <?= htmlspecialchars((string) ($candidature['offre_typecontrat'] ?? 'N/A')) ?></p>
                                 <p class="mb-3"><strong>Suivi:</strong> En cours</p>
-                                <a class="btn btn-outline-primary" href="index.php?espace=back&module=candidature&action=modifier&id=<?= (int) $candidature['id'] ?>">Modifier cette candidature</a>
+
+                                <?php if ($candidature['statut'] === 'enattente'): ?>
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#acceptModal">Accepter</button>
+                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">Refuser</button>
+                                    </div>
+                                <?php else: ?>
+                                    <p class="mb-0 text-secondary small">
+                                        <strong>Status:</strong>
+                                        <?php if ($candidature['statut'] === 'acceptee' || $candidature['statut'] === 'acceptée'): ?>
+                                            <span class="badge text-bg-success">Acceptée</span>
+                                        <?php else: ?>
+                                            <span class="badge text-bg-danger">Refusée</span>
+                                        <?php endif; ?>
+                                    </p>
+                                    <button type="button" class="btn btn-outline-warning btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#revertModal">Revenir à En attente</button>
+                                <?php endif; ?>
+
+                                <a class="btn btn-outline-primary" href="index.php?espace=back&module=candidature&action=modifier&id=<?= (int) $candidature['id'] ?>">Modifier</a>
                                 <a class="btn btn-outline-danger" href="index.php?espace=back&module=candidature&action=supprimer&id=<?= (int) $candidature['id'] ?>" onclick="return confirm('Supprimer cette candidature ?');">Supprimer</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accept Modal -->
+                    <div class="modal fade" id="acceptModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header border-0">
+                                    <h5 class="modal-title">Accepter la candidature</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="post" action="index.php?espace=back&module=candidature&action=repondre&id=<?= (int) $candidature['id'] ?>">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="messageAccept">Message (optionnel)</label>
+                                            <textarea class="form-control" id="messageAccept" name="message" rows="4" placeholder="Ajouter un message de confirmation..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <input type="hidden" name="statut" value="acceptee">
+                                        <button type="submit" class="btn btn-success">Confirmer l'acceptation</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reject Modal -->
+                    <div class="modal fade" id="rejectModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header border-0">
+                                    <h5 class="modal-title">Refuser la candidature</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="post" action="index.php?espace=back&module=candidature&action=repondre&id=<?= (int) $candidature['id'] ?>">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label" for="messageReject">Message (optionnel)</label>
+                                            <textarea class="form-control" id="messageReject" name="message" rows="4" placeholder="Ajouter un message de refus..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <input type="hidden" name="statut" value="refusee">
+                                        <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Revert Modal -->
+                    <div class="modal fade" id="revertModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header border-0">
+                                    <h5 class="modal-title">Revenir à En attente</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="post" action="index.php?espace=back&module=candidature&action=repondre&id=<?= (int) $candidature['id'] ?>">
+                                    <div class="modal-body">
+                                        <p class="text-secondary">Êtes-vous sûr de vouloir revenir à "En attente" ?</p>
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <input type="hidden" name="statut" value="enattente">
+                                        <button type="submit" class="btn btn-warning">Revenir à En attente</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>

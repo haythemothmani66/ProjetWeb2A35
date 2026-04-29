@@ -34,6 +34,9 @@ switch ($module) {
                 case 'liste':
                     $controller->liste();
                     break;
+                case 'stats':
+                    $controller->stats();
+                    break;
                 case 'details':
                     if ($id > 0) {
                         $controller->details($id);
@@ -97,6 +100,13 @@ switch ($module) {
             $controller = new CandidatureController($pdo);
 
             switch ($action) {
+                case 'repondre':
+                    if ($id > 0) {
+                        $controller->repondre($id);
+                        break;
+                    }
+                    $controller->liste();
+                    break;
                 case 'details':
                     if ($id > 0) {
                         $controller->details($id);

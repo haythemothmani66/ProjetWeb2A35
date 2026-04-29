@@ -47,4 +47,9 @@ class OffreEmploiController
 
         include __DIR__ . '/../../views/front/offreemploi/details.php';
     }
+
+    public function stats(): void
+    {
+        $this->liste();
+    }
 }
