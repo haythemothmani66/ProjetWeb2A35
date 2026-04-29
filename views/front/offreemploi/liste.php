@@ -17,6 +17,73 @@
     <link rel="stylesheet" href="../assets/css/magnific-popup.css">
     <link rel="stylesheet" href="../assets/css/animate.css">
     <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .home_course .row > [class*="col-"] {
+            display: flex;
+        }
+
+        .home_course .single_course {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            min-height: 390px;
+        }
+
+        .home_course .single_c_img {
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .home_course .single_c_img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .home_course .single_course h4 {
+            margin: 14px 16px 8px;
+            min-height: 2.6em;
+            line-height: 1.3;
+            display: -webkit-box;
+            line-clamp: 2;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .home_course .single_course h4 a {
+            display: inline-block;
+            line-height: 1.3;
+        }
+
+        .home_course .single_course p {
+            min-height: 0;
+            margin: 0 16px 6px;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .home_course .offre-card-actions {
+            margin-top: auto;
+            margin-left: 16px;
+            margin-right: 16px;
+            margin-bottom: 12px;
+            min-height: 78px;
+        }
+
+        @media (max-width: 768px) {
+            .home_course .single_course {
+                min-height: 380px;
+            }
+
+            .home_course .single_c_img {
+                height: 190px;
+            }
+        }
+    </style>
 </head>
 <body data-spy="scroll" data-offset="80">
     <div class="preloaders">
@@ -102,7 +169,7 @@
                                 <p><span class="ti-location-pin"></span> <?= htmlspecialchars((string) $offre['lieu']) ?></p>
                                 <p><span class="ti-briefcase"></span> <?= htmlspecialchars((string) $offre['typecontrat']) ?></p>
                                 <p><span class="ti-calendar"></span> Date limite: <?= htmlspecialchars((string) $offre['datelimite']) ?></p>
-                                <div class="d-grid gap-2">
+                                <div class="d-grid gap-2 offre-card-actions">
                                     <a href="index.php?espace=front&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>" class="btn_one">Voir details</a>
                                     <?php if (($offre['statut'] ?? '') === 'ouverte'): ?>
                                         <a href="index.php?espace=front&module=candidature&action=ajouter&offreid=<?= (int) $offre['id'] ?>" class="btn btn-outline-primary">Candidater</a>

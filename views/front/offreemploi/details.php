@@ -1,3 +1,6 @@
+<?php
+$offre = $offre ?? [];
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

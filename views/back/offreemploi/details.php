@@ -1,3 +1,6 @@
+<?php
+$offre = $offre ?? [];
+?>
 <!doctype html>
 <html lang="fr">
 <head>
@@ -15,11 +18,6 @@
         .emploi-sidebar { width: 280px; background: #0f172a; color: #fff; }
         .emploi-sidebar a { color: rgba(255,255,255,.8); text-decoration: none; }
         .emploi-sidebar a:hover, .emploi-sidebar .active { color: #fff; }
-        .emploi-brand { display: flex; align-items: center; gap: .75rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.08); }
-        .emploi-brand img { width: 36px; height: 36px; }
-        .emploi-nav { padding: 1rem; display: flex; flex-direction: column; gap: .35rem; }
-        .emploi-nav a { display: flex; align-items: center; gap: .75rem; padding: .8rem 1rem; border-radius: .75rem; }
-        .emploi-nav a.active, .emploi-nav a:hover { background: rgba(255,255,255,.08); }
         .emploi-main { flex: 1; min-width: 0; }
         .emploi-topbar { background: #fff; border-bottom: 1px solid #e5e7eb; }
         .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
@@ -29,25 +27,15 @@
 <body>
     <div class="emploi-shell d-flex">
         <aside class="emploi-sidebar d-none d-lg-flex flex-column">
-            <div class="emploi-brand">
-                <img src="../dasher-1.0.0/src/assets/images/brand/logo/logo-icon.svg" alt="Dasher" />
-                <div>
-                    <div class="fw-bold fs-5">Dasher</div>
-                    <small class="text-white-50">Offres Emploi Admin</small>
-                </div>
-            </div>
-            <nav class="emploi-nav">
-                <a href="index.php?espace=back&module=offreemploi&action=liste">Lister les offres</a>
-                <a href="index.php?espace=back&module=offreemploi&action=ajouter">Ajouter une offre</a>
-                <a href="index.php?espace=front&module=offreemploi&action=liste">Front Office</a>
-            </nav>
+            <?php include __DIR__ . '/../partials/brand.php'; ?>
+            <?php $activeTab = 'offres'; include __DIR__ . '/../partials/nav.php'; ?>
         </aside>
 
         <div class="emploi-main">
             <header class="emploi-topbar px-4 py-3 d-flex justify-content-between align-items-center">
                 <div>
                     <p class="mb-1 text-secondary small">Module Offres d'emploi</p>
-                    <h1 class="h4 mb-0">Details de l'offre #<?= (int) $offre['id'] ?></h1>
+                    <h1 class="h4 mb-0">Details de l'offre</h1>
                 </div>
                 <div class="d-flex gap-2">
                     <a class="btn btn-outline-secondary" href="index.php?espace=back&module=offreemploi&action=liste">Retour liste</a>

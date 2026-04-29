@@ -1,3 +1,6 @@
+<?php
+$candidature = $candidature ?? [];
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

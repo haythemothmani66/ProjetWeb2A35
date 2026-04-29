@@ -1,3 +1,17 @@
+<?php
+$formData = $formData ?? [
+    'offreid' => '',
+    'nom' => '',
+    'prenom' => '',
+    'email' => '',
+    'cvurl' => '',
+    'lettremotivation' => '',
+];
+$fieldErrors = $fieldErrors ?? [];
+$errors = $errors ?? [];
+$error = $error ?? '';
+$selectedOffer = $selectedOffer ?? null;
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

@@ -1,3 +1,10 @@
+<?php
+$candidature = $candidature ?? [];
+$offres = $offres ?? [];
+$fieldErrors = $fieldErrors ?? [];
+$errors = $errors ?? [];
+$error = $error ?? '';
+?>
 <!doctype html>
 <html lang="fr">
 <head>
@@ -14,14 +21,6 @@
         .sidebar { width: 280px; background: #0f172a; color: #fff; }
         .sidebar a { color: rgba(255,255,255,.82); text-decoration: none; }
         .sidebar a:hover, .sidebar .active { color: #fff; }
-        .brand { display:flex; align-items:center; gap:.75rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,.08); }
-        .brand-badge {
-            width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, #f3a712, #ff7a59);
-            display:flex; align-items:center; justify-content:center; font-weight:800; color:#111;
-        }
-        .nav-box { padding: 1rem; display:flex; flex-direction:column; gap:.35rem; }
-        .nav-box a { display:flex; align-items:center; gap:.75rem; padding: .8rem 1rem; border-radius: .75rem; }
-        .nav-box a.active, .nav-box a:hover { background: rgba(255,255,255,.08); }
         .main { flex: 1; min-width: 0; }
         .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; }
         .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
@@ -43,25 +42,15 @@
 <body>
     <div class="shell d-flex">
         <aside class="sidebar d-none d-lg-flex flex-column">
-            <div class="brand">
-                <div class="brand-badge">PW</div>
-                <div>
-                    <div class="fw-bold fs-5">ProjetWeb2A35</div>
-                    <small class="text-white-50">Administration candidature</small>
-                </div>
-            </div>
-            <nav class="nav-box">
-                <a href="index.php?espace=back&module=candidature&action=liste">Candidatures</a>
-                <a href="index.php?espace=front&module=candidature&action=liste">Espace candidat</a>
-                <a href="index.php?espace=back&module=offreemploi&action=liste">Administration offres</a>
-            </nav>
+            <?php include __DIR__ . '/../partials/brand.php'; ?>
+            <?php $activeTab = 'candidatures'; include __DIR__ . '/../partials/nav.php'; ?>
         </aside>
 
         <div class="main">
             <header class="topbar px-4 py-3 d-flex justify-content-between align-items-center">
                 <div>
                     <p class="mb-1 text-secondary small">Module Candidature</p>
-                    <h1 class="h4 mb-0">Modifier la candidature #<?= (int) $candidature['id'] ?></h1>
+                    <h1 class="h4 mb-0">Modifier la candidature</h1>
                 </div>
                 <a class="btn btn-outline-secondary" href="index.php?espace=back&module=candidature&action=details&id=<?= (int) $candidature['id'] ?>">Retour aux details</a>
             </header>

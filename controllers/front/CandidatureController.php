@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 class CandidatureController
 {
-    private Candidature $candidatureModel;
-    private OffreEmploi $offreModel;
+    private PDO $pdo;
 
     private function isPersonName(string $value): bool
     {
@@ -24,13 +23,81 @@ class CandidatureController
 
     public function __construct(PDO $pdo)
     {
-        $this->candidatureModel = new Candidature($pdo);
-        $this->offreModel = new OffreEmploi($pdo);
+        $this->pdo = $pdo;
+    }
+
+    private function getAllOffres(): array
+    {
+        $sql = 'SELECT * FROM offreemploi ORDER BY datecreation DESC';
+        $statement = $this->pdo->query($sql);
+
+        return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
+    }
+
+    private function getOffreById(int $id): ?array
+    {
+        $sql = 'SELECT * FROM offreemploi WHERE id = :id LIMIT 1';
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute(['id' => $id]);
+        $offre = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $offre ?: null;
+    }
+
+    private function createCandidature(array $data): int
+    {
+        $sql = 'INSERT INTO candidature
+                    (nom, prenom, lettremotivation, cvurl, email, statut, offreid)
+                VALUES
+                    (:nom, :prenom, :lettremotivation, :cvurl, :email, :statut, :offreid)';
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute([
+            'nom' => $data['nom'],
+            'prenom' => $data['prenom'],
+            'lettremotivation' => $data['lettremotivation'],
+            'cvurl' => $data['cvurl'],
+            'email' => $data['email'],
+            'statut' => $data['statut'] ?? 'enattente',
+            'offreid' => $data['offreid'],
+        ]);
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    private function getCandidatureById(int $id): ?array
+    {
+        $sql = 'SELECT
+                    c.id,
+                    c.nom,
+                    c.prenom,
+                    c.lettremotivation,
+                    c.cvurl,
+                    c.email,
+                    c.statut,
+                    c.datecandidature,
+                    c.datereponse,
+                    c.offreid,
+                    o.titre AS offre_titre,
+                    o.description AS offre_description,
+                    o.lieu AS offre_lieu,
+                    o.typecontrat AS offre_typecontrat,
+                    o.datelimite AS offre_datelimite
+                FROM candidature c
+                LEFT JOIN offreemploi o ON o.id = c.offreid
+                WHERE c.id = :id
+                LIMIT 1';
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute(['id' => $id]);
+        $candidature = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $candidature ?: null;
     }
 
     private function getOpenOffers(): array
     {
-        $offers = $this->offreModel->getAll();
+        $offers = $this->getAllOffres();
 
         return array_values(array_filter($offers, static function (array $offre): bool {
             return ($offre['statut'] ?? '') === 'ouverte';
@@ -59,7 +126,7 @@ class CandidatureController
 
         if (isset($_GET['offreid']) && (int) $_GET['offreid'] > 0) {
             $formData['offreid'] = (string) (int) $_GET['offreid'];
-            $selectedOffer = $this->offreModel->getById((int) $formData['offreid']);
+            $selectedOffer = $this->getOffreById((int) $formData['offreid']);
             if ($selectedOffer && ($selectedOffer['statut'] ?? '') !== 'ouverte') {
                 $selectedOffer = null;
             }
@@ -104,7 +171,7 @@ class CandidatureController
                 $fieldErrors['lettremotivation'] = 'La lettre de motivation doit contenir au moins 30 caracteres.';
             }
 
-            $selectedOffer = $this->offreModel->getById((int) $formData['offreid']);
+            $selectedOffer = $this->getOffreById((int) $formData['offreid']);
             if (!$selectedOffer || ($selectedOffer['statut'] ?? '') !== 'ouverte') {
                 $fieldErrors['offreid'] = 'Offre invalide. Veuillez revenir a la liste et cliquer sur Postuler depuis une offre ouverte.';
             }
@@ -121,7 +188,7 @@ class CandidatureController
                 return;
             }
 
-            $newId = $this->candidatureModel->create([
+            $newId = $this->createCandidature([
                 'nom' => $formData['nom'],
                 'prenom' => $formData['prenom'],
                 'lettremotivation' => $formData['lettremotivation'],
@@ -145,7 +212,7 @@ class CandidatureController
 
     public function details(int $id): void
     {
-        $candidature = $this->candidatureModel->getById($id);
+        $candidature = $this->getCandidatureById($id);
 
         if (!$candidature) {
             http_response_code(404);

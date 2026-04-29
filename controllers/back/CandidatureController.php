@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 class CandidatureController
 {
-    private Candidature $model;
-    private OffreEmploi $offreModel;
+    private PDO $pdo;
 
     private function isPersonName(string $value): bool
     {
@@ -24,24 +23,120 @@ class CandidatureController
 
     public function __construct(PDO $pdo)
     {
-        $this->model = new Candidature($pdo);
-        $this->offreModel = new OffreEmploi($pdo);
+        $this->pdo = $pdo;
+    }
+
+    private function getAllOffres(): array
+    {
+        $sql = 'SELECT * FROM offreemploi ORDER BY datecreation DESC';
+        $statement = $this->pdo->query($sql);
+
+        return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
+    }
+
+    private function getAllCandidatures(): array
+    {
+        $sql = 'SELECT
+                    c.id,
+                    c.nom,
+                    c.prenom,
+                    c.lettremotivation,
+                    c.cvurl,
+                    c.email,
+                    c.statut,
+                    c.datecandidature,
+                    c.datereponse,
+                    c.offreid,
+                    o.titre AS offre_titre,
+                    o.lieu AS offre_lieu,
+                    o.typecontrat AS offre_typecontrat
+                FROM candidature c
+                LEFT JOIN offreemploi o ON o.id = c.offreid
+                ORDER BY c.datecandidature DESC';
+
+        $statement = $this->pdo->query($sql);
+        return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
+    }
+
+    private function getCandidatureById(int $id): ?array
+    {
+        $sql = 'SELECT
+                    c.id,
+                    c.nom,
+                    c.prenom,
+                    c.lettremotivation,
+                    c.cvurl,
+                    c.email,
+                    c.statut,
+                    c.datecandidature,
+                    c.datereponse,
+                    c.offreid,
+                    o.titre AS offre_titre,
+                    o.description AS offre_description,
+                    o.lieu AS offre_lieu,
+                    o.typecontrat AS offre_typecontrat,
+                    o.datelimite AS offre_datelimite
+                FROM candidature c
+                LEFT JOIN offreemploi o ON o.id = c.offreid
+                WHERE c.id = :id
+                LIMIT 1';
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute(['id' => $id]);
+        $candidature = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $candidature ?: null;
+    }
+
+    private function updateCandidature(int $id, array $data): bool
+    {
+        $sql = 'UPDATE candidature
+                SET nom = :nom,
+                    prenom = :prenom,
+                    lettremotivation = :lettremotivation,
+                    cvurl = :cvurl,
+                    email = :email,
+                    statut = :statut,
+                    datereponse = :datereponse,
+                    offreid = :offreid
+                WHERE id = :id';
+
+        $statement = $this->pdo->prepare($sql);
+        return $statement->execute([
+            'id' => $id,
+            'nom' => $data['nom'],
+            'prenom' => $data['prenom'],
+            'lettremotivation' => $data['lettremotivation'],
+            'cvurl' => $data['cvurl'],
+            'email' => $data['email'],
+            'statut' => $data['statut'] ?? 'enattente',
+            'datereponse' => $data['datereponse'] !== '' ? ($data['datereponse'] ?? null) : null,
+            'offreid' => $data['offreid'],
+        ]);
+    }
+
+    private function deleteCandidature(int $id): bool
+    {
+        $sql = 'DELETE FROM candidature WHERE id = :id';
+        $statement = $this->pdo->prepare($sql);
+
+        return $statement->execute(['id' => $id]);
     }
 
     private function getOffers(): array
     {
-        return $this->offreModel->getAll();
+        return $this->getAllOffres();
     }
 
     public function liste(): void
     {
-        $candidatures = $this->model->getAll();
+        $candidatures = $this->getAllCandidatures();
         include __DIR__ . '/../../views/back/candidature/liste.php';
     }
 
     public function details(int $id): void
     {
-        $candidature = $this->model->getById($id);
+        $candidature = $this->getCandidatureById($id);
 
         if (!$candidature) {
             http_response_code(404);
@@ -54,7 +149,7 @@ class CandidatureController
 
     public function modifier(int $id): void
     {
-        $candidature = $this->model->getById($id);
+        $candidature = $this->getCandidatureById($id);
 
         if (!$candidature) {
             http_response_code(404);
@@ -136,7 +231,7 @@ class CandidatureController
                 return;
             }
 
-            $this->model->update($id, [
+            $this->updateCandidature($id, [
                 'nom' => $formData['nom'],
                 'prenom' => $formData['prenom'],
                 'lettremotivation' => $formData['lettremotivation'],
@@ -156,7 +251,7 @@ class CandidatureController
 
     public function supprimer(int $id): void
     {
-        $this->model->delete($id);
+        $this->deleteCandidature($id);
         header('Location: index.php?espace=back&module=candidature&action=liste');
         exit;
     }
