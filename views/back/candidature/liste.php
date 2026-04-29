@@ -1,5 +1,11 @@
 <?php
 $candidatures = $candidatures ?? [];
+$filterState = $filterState ?? [
+    'q' => '',
+    'sort_by' => 'datecandidature',
+    'sort_dir' => 'desc',
+    'sort_fields' => ['offre_titre', 'nom', 'prenom', 'email', 'statut', 'datecandidature', 'datereponse'],
+];
 ?>
 <!doctype html>
 <html lang="fr">
@@ -20,7 +26,11 @@ $candidatures = $candidatures ?? [];
         .main { flex: 1; min-width: 0; }
         .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; }
         .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+        .filter-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+        .filter-title { font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; color: #64748b; font-weight: 700; }
+        .radio-inline-wrap { display: flex; gap: 1.25rem; flex-wrap: wrap; }
         .table thead th { font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; color: #64748b; }
+        .search-row-hide { display: none; }
         @media (max-width: 991.98px) { .sidebar { width: 100%; } }
     </style>
 </head>
@@ -44,14 +54,76 @@ $candidatures = $candidatures ?? [];
             </header>
 
             <main class="container-fluid p-4 p-lg-5">
+                <form method="get" action="index.php" class="mb-4" id="candidature-filter-form">
+                    <input type="hidden" name="espace" value="back">
+                    <input type="hidden" name="module" value="candidature">
+                    <input type="hidden" name="action" value="liste">
+
+                    <div class="row g-3">
+                        <div class="col-lg-6">
+                            <div class="card filter-card h-100">
+                                <div class="card-body p-4">
+                                    <div class="filter-title mb-2">Recherche globale</div>
+                                    <label class="form-label" for="q">Texte à rechercher dans le tableau</label>
+                                    <input
+                                        type="text"
+                                        id="q"
+                                        name="q"
+                                        class="form-control"
+                                        value="<?= htmlspecialchars((string) ($filterState['q'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                        placeholder="Offre, candidat, email, statut, dates..."
+                                        autocomplete="off"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="card filter-card h-100">
+                                <div class="card-body p-4">
+                                    <div class="filter-title mb-2">Zone de tri</div>
+                                    <label class="form-label" for="sort_by">Trier par</label>
+                                    <select id="sort_by" name="sort_by" class="form-select mb-3">
+                                        <?php $selectedSortBy = (string) ($filterState['sort_by'] ?? 'datecandidature'); ?>
+                                        <option value="offre_titre" <?= $selectedSortBy === 'offre_titre' ? 'selected' : '' ?>>offre</option>
+                                        <option value="nom" <?= $selectedSortBy === 'nom' ? 'selected' : '' ?>>nom</option>
+                                        <option value="prenom" <?= $selectedSortBy === 'prenom' ? 'selected' : '' ?>>prenom</option>
+                                        <option value="email" <?= $selectedSortBy === 'email' ? 'selected' : '' ?>>email</option>
+                                        <option value="statut" <?= $selectedSortBy === 'statut' ? 'selected' : '' ?>>statut</option>
+                                        <option value="datecandidature" <?= $selectedSortBy === 'datecandidature' ? 'selected' : '' ?>>date de depot</option>
+                                        <option value="datereponse" <?= $selectedSortBy === 'datereponse' ? 'selected' : '' ?>>date de reponse</option>
+                                    </select>
+
+                                    <?php $selectedSortDir = (string) ($filterState['sort_dir'] ?? 'desc'); ?>
+                                    <div class="radio-inline-wrap">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="sort_dir" id="sort_dir_asc" value="asc" <?= $selectedSortDir === 'asc' ? 'checked' : '' ?>>
+                                            <label class="form-check-label" for="sort_dir_asc">ascending</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="sort_dir" id="sort_dir_desc" value="desc" <?= $selectedSortDir !== 'asc' ? 'checked' : '' ?>>
+                                            <label class="form-check-label" for="sort_dir_desc">descending</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3 flex-wrap">
+                        <button type="submit" class="btn btn-primary">Appliquer</button>
+                        <a class="btn btn-outline-secondary" href="index.php?espace=back&module=candidature&action=liste">Reinitialiser</a>
+                    </div>
+                </form>
+
                 <div class="card metric-card">
                     <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
                         <h3 class="h5 mb-0">Liste des candidatures</h3>
-                        <span class="badge text-bg-primary"><?= count($candidatures) ?> candidature(s)</span>
+                        <span id="candidature-count-badge" class="badge text-bg-primary"><?= count($candidatures) ?> candidature(s)</span>
                     </div>
                     <div class="card-body px-4 pb-4">
                         <div class="table-responsive">
-                            <table class="table align-middle">
+                            <table class="table align-middle" id="candidatures-table">
                                 <thead>
                                     <tr>
                                         <th>Offre</th>
@@ -62,14 +134,14 @@ $candidatures = $candidatures ?? [];
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="candidatures-table-body">
                                     <?php if (empty($candidatures)): ?>
-                                        <tr>
+                                        <tr id="server-empty-row">
                                             <td colspan="6" class="text-center text-secondary py-4">Aucune candidature pour le moment.</td>
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach ($candidatures as $candidature): ?>
-                                            <tr>
+                                            <tr class="candidature-row">
                                                 <td><?= htmlspecialchars((string) ($candidature['offre_titre'] ?? 'Offre inconnue')) ?></td>
                                                 <td>
                                                     <?= htmlspecialchars(trim((string) ($candidature['prenom'] ?? '') . ' ' . (string) ($candidature['nom'] ?? ''))) ?>
@@ -88,6 +160,9 @@ $candidatures = $candidatures ?? [];
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
+                                        <tr id="client-no-result-row" class="search-row-hide">
+                                            <td colspan="6" class="text-center text-secondary py-4">Aucun resultat pour cette recherche.</td>
+                                        </tr>
                                     <?php endif; ?>
                                 </tbody>
                             </table>
@@ -99,5 +174,62 @@ $candidatures = $candidatures ?? [];
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function () {
+            const form = document.getElementById('candidature-filter-form');
+            const searchInput = document.getElementById('q');
+            const rows = Array.from(document.querySelectorAll('#candidatures-table-body .candidature-row'));
+            const countBadge = document.getElementById('candidature-count-badge');
+            const noResultRow = document.getElementById('client-no-result-row');
+            if (!form || !searchInput || rows.length === 0) return;
+
+            function normalize(value) {
+                return value
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function updateCount(visibleCount) {
+                if (!countBadge) return;
+                countBadge.textContent = visibleCount + ' candidature(s)';
+            }
+
+            function filterRows() {
+                const query = normalize(searchInput.value.trim());
+                let visibleCount = 0;
+
+                rows.forEach(function (row) {
+                    const searchableText = normalize(
+                        Array.from(row.querySelectorAll('td'))
+                            .slice(0, 5)
+                            .map(function (cell) { return cell.textContent || ''; })
+                            .join(' ')
+                    );
+
+                    const isMatch = query === '' || searchableText.includes(query);
+                    row.classList.toggle('search-row-hide', !isMatch);
+                    if (isMatch) {
+                        visibleCount += 1;
+                    }
+                });
+
+                if (noResultRow) {
+                    noResultRow.classList.toggle('search-row-hide', visibleCount !== 0);
+                }
+
+                updateCount(visibleCount);
+            }
+
+            searchInput.addEventListener('input', filterRows);
+            searchInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                }
+            });
+
+            filterRows();
+        })();
+    </script>
 </body>
 </html>

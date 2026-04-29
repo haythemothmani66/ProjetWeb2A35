@@ -26,6 +26,19 @@ class CandidatureController
         $this->pdo = $pdo;
     }
 
+    private function getSortFieldMap(): array
+    {
+        return [
+            'offre_titre' => 'o.titre',
+            'nom' => 'c.nom',
+            'prenom' => 'c.prenom',
+            'email' => 'c.email',
+            'statut' => 'c.statut',
+            'datecandidature' => 'c.datecandidature',
+            'datereponse' => 'c.datereponse',
+        ];
+    }
+
     private function getAllOffres(): array
     {
         $sql = 'SELECT * FROM offreemploi ORDER BY datecreation DESC';
@@ -34,8 +47,12 @@ class CandidatureController
         return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
     }
 
-    private function getAllCandidatures(): array
+    private function getAllCandidatures(string $searchTerm = '', string $sortBy = 'datecandidature', string $sortDir = 'desc'): array
     {
+        $sortFieldMap = $this->getSortFieldMap();
+        $sortColumn = $sortFieldMap[$sortBy] ?? 'c.datecandidature';
+        $direction = strtolower($sortDir) === 'asc' ? 'ASC' : 'DESC';
+
         $sql = 'SELECT
                     c.id,
                     c.nom,
@@ -51,10 +68,29 @@ class CandidatureController
                     o.lieu AS offre_lieu,
                     o.typecontrat AS offre_typecontrat
                 FROM candidature c
-                LEFT JOIN offreemploi o ON o.id = c.offreid
-                ORDER BY c.datecandidature DESC';
+                LEFT JOIN offreemploi o ON o.id = c.offreid';
 
-        $statement = $this->pdo->query($sql);
+        $params = [];
+
+        if ($searchTerm !== '') {
+            $sql .= ' WHERE (
+                    c.nom LIKE :search
+                    OR c.prenom LIKE :search
+                    OR c.email LIKE :search
+                    OR c.statut LIKE :search
+                    OR c.datecandidature LIKE :search
+                    OR c.datereponse LIKE :search
+                    OR o.titre LIKE :search
+                    OR o.lieu LIKE :search
+                    OR o.typecontrat LIKE :search
+                )';
+            $params['search'] = '%' . $searchTerm . '%';
+        }
+
+        $sql .= ' ORDER BY ' . $sortColumn . ' ' . $direction;
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
         return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
     }
 
@@ -130,7 +166,28 @@ class CandidatureController
 
     public function liste(): void
     {
-        $candidatures = $this->getAllCandidatures();
+        $sortFieldMap = $this->getSortFieldMap();
+
+        $searchTerm = trim((string) ($_GET['q'] ?? ''));
+        $sortBy = trim((string) ($_GET['sort_by'] ?? 'datecandidature'));
+        if (!array_key_exists($sortBy, $sortFieldMap)) {
+            $sortBy = 'datecandidature';
+        }
+
+        $sortDir = strtolower(trim((string) ($_GET['sort_dir'] ?? 'desc')));
+        if (!in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
+
+        $candidatures = $this->getAllCandidatures($searchTerm, $sortBy, $sortDir);
+
+        $filterState = [
+            'q' => $searchTerm,
+            'sort_by' => $sortBy,
+            'sort_dir' => $sortDir,
+            'sort_fields' => array_keys($sortFieldMap),
+        ];
+
         include __DIR__ . '/../../views/back/candidature/liste.php';
     }
 
