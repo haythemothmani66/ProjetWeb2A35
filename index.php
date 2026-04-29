@@ -37,6 +37,9 @@ switch ($module) {
                 case 'stats':
                     $controller->stats();
                     break;
+                case 'exportStatsPdf':
+                    $controller->exportStatsPdf();
+                    break;
                 case 'details':
                     if ($id > 0) {
                         $controller->details($id);

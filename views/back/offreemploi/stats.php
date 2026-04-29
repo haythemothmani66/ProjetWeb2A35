@@ -52,6 +52,7 @@ $pendingReplies = $pendingReplies ?? [];
                     <h1 class="h4 mb-0">Tableau de bord des statistiques</h1>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-outline-primary" href="index.php?espace=back&module=offreemploi&action=exportStatsPdf" target="_blank">Exporter en HTML</a>
                     <a class="btn btn-outline-secondary" href="index.php?espace=back&module=offreemploi&action=liste">Retour aux offres</a>
                     <a class="btn btn-primary" href="index.php?espace=back&module=candidature&action=liste">Voir les candidatures</a>
                 </div>
