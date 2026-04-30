@@ -130,23 +130,52 @@ $error = $_GET['error'] ?? null;
 
                     <!-- Accept Modal -->
                     <div class="modal fade" id="acceptModal" tabindex="-1">
-                        <div class="modal-dialog">
+                        <div class="modal-dialog modal-lg">
                             <div class="modal-content">
                                 <div class="modal-header border-0">
-                                    <h5 class="modal-title">Accepter la candidature</h5>
+                                    <h5 class="modal-title">Accepter la candidature & Planifier l'entretien</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <form method="post" action="index.php?espace=back&module=candidature&action=repondre&id=<?= (int) $candidature['id'] ?>">
                                     <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label class="form-label" for="messageAccept">Message (optionnel)</label>
-                                            <textarea class="form-control" id="messageAccept" name="message" rows="4" placeholder="Ajouter un message de confirmation..."></textarea>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label" for="dateEntretien">Date d'entretien *</label>
+                                                    <input type="date" class="form-control" id="dateEntretien" name="date_entretien" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label" for="heureEntretien">Heure d'entretien *</label>
+                                                    <input type="time" class="form-control" id="heureEntretien" name="heure_entretien" required>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label" for="modeEntretien">Mode *</label>
+                                                    <select class="form-select" id="modeEntretien" name="mode_entretien" required>
+                                                        <option value="">-- Sélectionner --</option>
+                                                        <option value="presentiel">Présentiel</option>
+                                                        <option value="distanciel">Distanciel (Zoom/Teams)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label" for="lieuEntretien">Lieu (si présentiel) *</label>
+                                                    <input type="text" class="form-control" id="lieuEntretien" name="lieu_entretien" placeholder="Ex: Salle 102, 5 rue...">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="modal-footer border-0">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                         <input type="hidden" name="statut" value="acceptee">
-                                        <button type="submit" class="btn btn-success">Confirmer l'acceptation</button>
+                                        <button type="submit" class="btn btn-success">Confirmer l'acceptation & Notifier</button>
                                     </div>
                                 </form>
                             </div>
@@ -164,14 +193,15 @@ $error = $_GET['error'] ?? null;
                                 <form method="post" action="index.php?espace=back&module=candidature&action=repondre&id=<?= (int) $candidature['id'] ?>">
                                     <div class="modal-body">
                                         <div class="mb-3">
-                                            <label class="form-label" for="messageReject">Message (optionnel)</label>
-                                            <textarea class="form-control" id="messageReject" name="message" rows="4" placeholder="Ajouter un message de refus..."></textarea>
+                                            <label class="form-label" for="motifRefus">Motif de refus (optionnel)</label>
+                                            <textarea class="form-control" id="motifRefus" name="motif_refus" rows="4" placeholder="Expliquer le motif du refus (sera envoyé au candidat)..."></textarea>
+                                            <small class="form-text text-muted">Ce motif sera inclus dans l'e-mail de refus envoyé au candidat.</small>
                                         </div>
                                     </div>
                                     <div class="modal-footer border-0">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                         <input type="hidden" name="statut" value="refusee">
-                                        <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+                                        <button type="submit" class="btn btn-danger">Confirmer le refus & Notifier</button>
                                     </div>
                                 </form>
                             </div>

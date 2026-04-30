@@ -11,10 +11,45 @@ class OffreEmploiController
         $this->pdo = $pdo;
     }
 
-    private function getAllOffres(): array
+    private function getSortFieldMap(): array
     {
-        $sql = 'SELECT * FROM offreemploi ORDER BY datecreation DESC';
-        $statement = $this->pdo->query($sql);
+        return [
+            'titre' => 'titre',
+            'lieu' => 'lieu',
+            'typecontrat' => 'typecontrat',
+            'datecreation' => 'datecreation',
+            'datelimite' => 'datelimite',
+            'statut' => 'statut',
+        ];
+    }
+
+    private function getAllOffres(string $searchTerm = '', string $sortBy = 'datecreation', string $sortDir = 'desc'): array
+    {
+        $sortFieldMap = $this->getSortFieldMap();
+        $sortColumn = $sortFieldMap[$sortBy] ?? 'datecreation';
+        $direction = strtolower($sortDir) === 'asc' ? 'ASC' : 'DESC';
+
+        $sql = 'SELECT * FROM offreemploi';
+        $params = [];
+
+        if ($searchTerm !== '') {
+            $sql .= ' WHERE (
+                titre LIKE :search
+                OR description LIKE :search
+                OR competencesrequises LIKE :search
+                OR lieu LIKE :search
+                OR typecontrat LIKE :search
+                OR statut LIKE :search
+                OR CAST(datecreation AS CHAR) LIKE :search
+                OR CAST(datelimite AS CHAR) LIKE :search
+            )';
+            $params['search'] = '%' . $searchTerm . '%';
+        }
+
+        $sql .= ' ORDER BY ' . $sortColumn . ' ' . $direction;
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($params);
 
         return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
     }
@@ -31,7 +66,28 @@ class OffreEmploiController
 
     public function liste(): void
     {
-        $offres = $this->getAllOffres();
+        $sortFieldMap = $this->getSortFieldMap();
+
+        $searchTerm = trim((string) ($_GET['q'] ?? ''));
+        $sortBy = trim((string) ($_GET['sort_by'] ?? 'datecreation'));
+        if (!array_key_exists($sortBy, $sortFieldMap)) {
+            $sortBy = 'datecreation';
+        }
+
+        $sortDir = strtolower(trim((string) ($_GET['sort_dir'] ?? 'desc')));
+        if (!in_array($sortDir, ['asc', 'desc'], true)) {
+            $sortDir = 'desc';
+        }
+
+        $offres = $this->getAllOffres($searchTerm, $sortBy, $sortDir);
+
+        $filterState = [
+            'q' => $searchTerm,
+            'sort_by' => $sortBy,
+            'sort_dir' => $sortDir,
+            'sort_fields' => array_keys($sortFieldMap),
+        ];
+
         include __DIR__ . '/../../views/front/offreemploi/liste.php';
     }
 

@@ -1,3 +1,12 @@
+<?php
+$offres = $offres ?? [];
+$filterState = $filterState ?? [
+    'q' => '',
+    'sort_by' => 'datecreation',
+    'sort_dir' => 'desc',
+    'sort_fields' => ['titre', 'lieu', 'typecontrat', 'datecreation', 'datelimite', 'statut'],
+];
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -18,6 +27,30 @@
     <link rel="stylesheet" href="../assets/css/animate.css">
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
+        .search-row-hide {
+            display: none !important;
+        }
+
+        .filter-card {
+            border: 0;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, .08);
+            border-radius: 18px;
+        }
+
+        .filter-title {
+            font-size: .82rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+        }
+
+        .radio-inline-wrap {
+            display: flex;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+
         .home_course .row > [class*="col-"] {
             display: flex;
         }
@@ -144,6 +177,75 @@
                     </div>
                 </div>
             </div>
+
+            <form method="get" action="index.php" class="mb-4">
+                <input type="hidden" name="espace" value="front">
+                <input type="hidden" name="module" value="offreemploi">
+                <input type="hidden" name="action" value="liste">
+
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="card filter-card h-100">
+                            <div class="card-body p-4">
+                                <div class="filter-title mb-2">Recherche globale</div>
+                                <label class="form-label" for="q">Texte à rechercher</label>
+                                <input
+                                    type="text"
+                                    id="q"
+                                    name="q"
+                                    class="form-control"
+                                    value="<?= htmlspecialchars((string) ($filterState['q'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                    placeholder="Rechercher..."
+                                    autocomplete="off"
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <div class="card filter-card h-100">
+                            <div class="card-body p-4">
+                                <div class="filter-title mb-2">Zone de tri</div>
+                                <label class="form-label" for="sort_by">Trier par</label>
+                                <select id="sort_by" name="sort_by" class="form-select mb-3">
+                                    <?php $selectedSortBy = (string) ($filterState['sort_by'] ?? 'datecreation'); ?>
+                                    <option value="titre" <?= $selectedSortBy === 'titre' ? 'selected' : '' ?>>titre</option>
+                                    <option value="lieu" <?= $selectedSortBy === 'lieu' ? 'selected' : '' ?>>lieu</option>
+                                    <option value="typecontrat" <?= $selectedSortBy === 'typecontrat' ? 'selected' : '' ?>>type de contrat</option>
+                                    <option value="datecreation" <?= $selectedSortBy === 'datecreation' ? 'selected' : '' ?>>date de creation</option>
+                                    <option value="datelimite" <?= $selectedSortBy === 'datelimite' ? 'selected' : '' ?>>date limite</option>
+                                    <option value="statut" <?= $selectedSortBy === 'statut' ? 'selected' : '' ?>>statut</option>
+                                </select>
+
+                                <?php $selectedSortDir = (string) ($filterState['sort_dir'] ?? 'desc'); ?>
+                                <div class="radio-inline-wrap">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="sort_dir" id="sort_dir_asc" value="asc" <?= $selectedSortDir === 'asc' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="sort_dir_asc">ascending</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="sort_dir" id="sort_dir_desc" value="desc" <?= $selectedSortDir !== 'asc' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="sort_dir_desc">descending</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <button type="submit" class="btn btn-primary">Appliquer</button>
+                    <a class="btn btn-outline-secondary" href="index.php?espace=front&module=offreemploi&action=liste">Réinitialiser</a>
+                </div>
+            </form>
+
+            <div class="row mb-3">
+                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="text-secondary small">Les résultats se filtrent en direct pendant la saisie.</div>
+                    <span id="offre-count-badge" class="badge bg-primary"><?= count($offres) ?> offre(s)</span>
+                </div>
+            </div>
+
             <div class="row">
                 <?php if (empty($offres)): ?>
                     <div class="col-12">
@@ -159,7 +261,7 @@
                     ];
                     ?>
                     <?php foreach ($offres as $index => $offre): ?>
-                        <div class="col-lg-4 col-sm-6 col-xs-12">
+                        <div class="col-lg-4 col-sm-6 col-xs-12 offre-card">
                             <div class="single_course">
                                 <div class="single_c_img">
                                     <img src="<?= htmlspecialchars($images[$index % count($images)]) ?>" class="img-fluid" alt="offre-image" />
@@ -178,6 +280,9 @@
                             </div>
                         </div>
                     <?php endforeach; ?>
+                    <div class="col-12">
+                        <div id="no-result-alert" class="alert alert-info d-none">Aucune offre ne correspond à votre recherche.</div>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -206,5 +311,59 @@
     <script src="../assets/js/scrolltopcontrol.js"></script>
     <script src="../assets/js/superMarquee.min.js"></script>
     <script src="../assets/js/scripts.js"></script>
+    <script>
+        (function () {
+            const searchInput = document.getElementById('q');
+            const offerCards = Array.from(document.querySelectorAll('.offre-card'));
+            const noResultAlert = document.getElementById('no-result-alert');
+            const countBadge = document.getElementById('offre-count-badge');
+
+            if (!searchInput || offerCards.length === 0) {
+                return;
+            }
+
+            function normalize(value) {
+                return value
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function updateCount(visibleCount) {
+                if (countBadge) {
+                    countBadge.textContent = visibleCount + ' offre(s)';
+                }
+            }
+
+            function filterOffers() {
+                const query = normalize(searchInput.value.trim());
+                let visibleCount = 0;
+
+                offerCards.forEach(function (card) {
+                    const text = normalize(card.textContent || '');
+                    const isMatch = query === '' || text.includes(query);
+                    card.classList.toggle('search-row-hide', !isMatch);
+                    if (isMatch) {
+                        visibleCount += 1;
+                    }
+                });
+
+                if (noResultAlert) {
+                    noResultAlert.classList.toggle('d-none', visibleCount !== 0);
+                }
+
+                updateCount(visibleCount);
+            }
+
+            searchInput.addEventListener('input', filterOffers);
+            searchInput.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                }
+            });
+
+            filterOffers();
+        })();
+    </script>
 </body>
 </html>

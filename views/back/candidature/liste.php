@@ -1,5 +1,6 @@
 <?php
 $candidatures = $candidatures ?? [];
+$contextOffre = $contextOffre ?? null;
 $filterState = $filterState ?? [
     'q' => '',
     'sort_by' => 'datecandidature',
@@ -45,15 +46,24 @@ $filterState = $filterState ?? [
             <header class="topbar px-4 py-3 d-flex justify-content-between align-items-center">
                 <div>
                     <p class="mb-1 text-secondary small">Module Candidature</p>
-                    <h1 class="h4 mb-0">Gestion des candidatures</h1>
+                    <h1 class="h4 mb-0"><?= $contextOffre ? 'Candidatures de l\'offre' : 'Gestion des candidatures' ?></h1>
+                    <?php if ($contextOffre): ?>
+                        <p class="mb-0 text-secondary small">
+                            <?= htmlspecialchars((string) $contextOffre['titre']) ?> · <?= htmlspecialchars((string) $contextOffre['lieu']) ?>
+                        </p>
+                    <?php endif; ?>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
+                    <?php if ($contextOffre): ?>
+                        <a class="btn btn-outline-secondary" href="index.php?espace=back&module=offreemploi&action=details&id=<?= (int) $contextOffre['id'] ?>">Retour à l'offre</a>
+                    <?php endif; ?>
                     <a class="btn btn-outline-secondary" href="index.php?espace=front&module=candidature&action=liste">Voir l'espace candidat</a>
                     <a class="btn btn-outline-primary" href="index.php?espace=back&module=offreemploi&action=liste">Administration offres</a>
                 </div>
             </header>
 
             <main class="container-fluid p-4 p-lg-5">
+                <?php if (!$contextOffre): ?>
                 <form method="get" action="index.php" class="mb-4" id="candidature-filter-form">
                     <input type="hidden" name="espace" value="back">
                     <input type="hidden" name="module" value="candidature">
@@ -115,6 +125,7 @@ $filterState = $filterState ?? [
                         <a class="btn btn-outline-secondary" href="index.php?espace=back&module=candidature&action=liste">Reinitialiser</a>
                     </div>
                 </form>
+                <?php endif; ?>
 
                 <div class="card metric-card">
                     <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">

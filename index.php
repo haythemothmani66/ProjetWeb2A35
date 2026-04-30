@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/models/OffreEmploi.php';
 require_once __DIR__ . '/models/Candidature.php';
+require_once __DIR__ . '/helpers/Mailer.php';
 
 $espace = $_GET['espace'] ?? 'front';
 $module = $_GET['module'] ?? 'offreemploi';
@@ -103,6 +104,13 @@ switch ($module) {
             $controller = new CandidatureController($pdo);
 
             switch ($action) {
+                case 'parOffre':
+                    if ($id > 0) {
+                        $controller->parOffre($id);
+                        break;
+                    }
+                    $controller->liste();
+                    break;
                 case 'repondre':
                     if ($id > 0) {
                         $controller->repondre($id);

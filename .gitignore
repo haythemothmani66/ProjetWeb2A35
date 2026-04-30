@@ -1,0 +1,24 @@
+# Local configuration files with sensitive info
+config/mail.local.php
+config/database.local.php
+.env.local
+*.local.php
+
+# IDE and editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Composer
+vendor/
+composer.lock
+composer-setup.php
+
+# System
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

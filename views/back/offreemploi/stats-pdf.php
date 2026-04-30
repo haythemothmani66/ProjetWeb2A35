@@ -238,6 +238,6 @@ $html = '
 ';
 
 header('Content-Type: text/html; charset=utf-8');
-header('Content-Disposition: attachment; filename="stats-recruitment-' . date('Y-m-d') . '.html"');
+header('Content-Disposition: attachment; filename="stats-recruitment-' . date('Y-m-d') . '.pdf"');
 echo $html;
 exit;

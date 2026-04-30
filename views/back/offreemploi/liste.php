@@ -61,7 +61,6 @@ $filterState = $filterState ?? [
                     <h1 class="h4 mb-0">Gestion des offres</h1>
                 </div>
                 <div class="d-flex gap-2">
-                    <a class="btn btn-outline-primary" href="index.php?espace=back&module=offreemploi&action=stats">Statistiques</a>
                     <a class="btn btn-outline-secondary" href="index.php?espace=front&module=offreemploi&action=liste">Voir le front office</a>
                     <a class="btn btn-primary" href="index.php?espace=back&module=offreemploi&action=ajouter">Nouvelle offre</a>
                 </div>
@@ -173,6 +172,7 @@ $filterState = $filterState ?? [
                                                     </span>
                                                 </td>
                                                 <td class="d-flex gap-2">
+                                                    <a class="btn btn-sm btn-outline-warning" href="index.php?espace=back&module=candidature&action=parOffre&id=<?= (int) $offre['id'] ?>">Candidatures</a>
                                                     <a class="btn btn-sm btn-outline-primary" href="index.php?espace=back&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>">Details</a>
                                                     <a class="btn btn-sm btn-outline-secondary" href="index.php?espace=back&module=offreemploi&action=modifier&id=<?= (int) $offre['id'] ?>">Modifier</a>
                                                     <a class="btn btn-sm btn-outline-danger" href="index.php?espace=back&module=offreemploi&action=supprimer&id=<?= (int) $offre['id'] ?>" onclick="return confirm('Supprimer cette offre ?');">Supprimer</a>

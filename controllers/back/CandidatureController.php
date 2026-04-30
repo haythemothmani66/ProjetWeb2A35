@@ -47,6 +47,16 @@ class CandidatureController
         return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
     }
 
+    private function getOffreById(int $id): ?array
+    {
+        $sql = 'SELECT * FROM offreemploi WHERE id = :id LIMIT 1';
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute(['id' => $id]);
+        $offre = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $offre ?: null;
+    }
+
     private function getAllCandidatures(string $searchTerm = '', string $sortBy = 'datecandidature', string $sortDir = 'desc'): array
     {
         $sortFieldMap = $this->getSortFieldMap();
@@ -91,6 +101,33 @@ class CandidatureController
 
         $statement = $this->pdo->prepare($sql);
         $statement->execute($params);
+        return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
+    }
+
+    private function getCandidaturesByOffreId(int $offreId): array
+    {
+        $sql = 'SELECT
+                    c.id,
+                    c.nom,
+                    c.prenom,
+                    c.lettremotivation,
+                    c.cvurl,
+                    c.email,
+                    c.statut,
+                    c.datecandidature,
+                    c.datereponse,
+                    c.offreid,
+                    o.titre AS offre_titre,
+                    o.lieu AS offre_lieu,
+                    o.typecontrat AS offre_typecontrat
+                FROM candidature c
+                LEFT JOIN offreemploi o ON o.id = c.offreid
+                WHERE c.offreid = :offreid
+                ORDER BY c.datecandidature DESC';
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute(['offreid' => $offreId]);
+
         return $statement ? $statement->fetchAll(PDO::FETCH_ASSOC) : [];
     }
 
@@ -187,6 +224,28 @@ class CandidatureController
             'sort_dir' => $sortDir,
             'sort_fields' => array_keys($sortFieldMap),
         ];
+
+        include __DIR__ . '/../../views/back/candidature/liste.php';
+    }
+
+    public function parOffre(int $offreId): void
+    {
+        $offre = $this->getOffreById($offreId);
+
+        if (!$offre) {
+            http_response_code(404);
+            echo '<h1>Offre non trouvee</h1>';
+            return;
+        }
+
+        $candidatures = $this->getCandidaturesByOffreId($offreId);
+        $filterState = [
+            'q' => '',
+            'sort_by' => 'datecandidature',
+            'sort_dir' => 'desc',
+            'sort_fields' => ['offre_titre', 'nom', 'prenom', 'email', 'statut', 'datecandidature', 'datereponse'],
+        ];
+        $contextOffre = $offre;
 
         include __DIR__ . '/../../views/back/candidature/liste.php';
     }
@@ -353,6 +412,59 @@ class CandidatureController
         ]);
 
         if ($success) {
+            // Send email notification based on status
+            $candidat_nom = $candidature['prenom'] . ' ' . $candidature['nom'];
+            $candidat_email = $candidature['email'];
+            $offre_id = (int) ($candidature['offreid'] ?? $candidature['offre_id'] ?? 0);
+            $offre = $offre_id > 0 ? $this->getOffreById($offre_id) : null;
+            $offre_titre = $offre ? $offre['titre'] : 'Offre d\'emploi';
+
+            try {
+                $mailer = new Mailer();
+
+                if ($statut === 'acceptee') {
+                    // Send acceptance email
+                    $date_entretien = $_POST['date_entretien'] ?? null;
+                    $heure_entretien = $_POST['heure_entretien'] ?? null;
+                    $mode_entretien = $_POST['mode_entretien'] ?? null;
+                    $lieu_entretien = $_POST['lieu_entretien'] ?? null;
+
+                    $templateData = [
+                        'candidat_nom' => $candidat_nom,
+                        'offre_titre' => $offre_titre,
+                        'date_entretien' => $date_entretien,
+                        'heure_entretien' => $heure_entretien,
+                        'mode_entretien' => $mode_entretien,
+                        'lieu_entretien' => $lieu_entretien,
+                    ];
+
+                    $mailer->sendFromTemplate(
+                        $candidat_email,
+                        'Félicitations ! Votre candidature a été acceptée',
+                        __DIR__ . '/../../views/emails/candidature_accept.php',
+                        $templateData
+                    );
+                } elseif ($statut === 'refusee') {
+                    // Send refusal email
+                    $motif_refus = $_POST['motif_refus'] ?? '';
+
+                    $templateData = [
+                        'candidat_nom' => $candidat_nom,
+                        'offre_titre' => $offre_titre,
+                        'motif_refus' => $motif_refus,
+                    ];
+
+                    $mailer->sendFromTemplate(
+                        $candidat_email,
+                        'Résultat de votre candidature',
+                        __DIR__ . '/../../views/emails/candidature_refuse.php',
+                        $templateData
+                    );
+                }
+            } catch (Exception $e) {
+                error_log('Error sending email in repondre(): ' . $e->getMessage());
+            }
+
             $statusMap = [
                 'acceptee' => 'acceptee',
                 'refusee' => 'refusee',
