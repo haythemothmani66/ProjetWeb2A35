@@ -6,6 +6,19 @@ $filterState = $filterState ?? [
     'sort_dir' => 'desc',
     'sort_fields' => ['titre', 'lieu', 'typecontrat', 'salairemin', 'salairemax', 'datecreation', 'datelimite', 'statut'],
 ];
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
 ?>
 <!doctype html>
 <html lang="fr">
@@ -165,7 +178,7 @@ $filterState = $filterState ?? [
                                                 <td><?= htmlspecialchars((string) $offre['titre']) ?></td>
                                                 <td><?= htmlspecialchars((string) $offre['lieu']) ?></td>
                                                 <td><?= htmlspecialchars((string) $offre['typecontrat']) ?></td>
-                                                <td><?= htmlspecialchars((string) $offre['datelimite']) ?></td>
+                                                <td><?= htmlspecialchars($formatDateTime($offre['datelimite'])) ?></td>
                                                 <td>
                                                     <span class="badge <?= ($offre['statut'] === 'ouverte') ? 'text-bg-success' : 'text-bg-danger' ?>">
                                                         <?= htmlspecialchars((string) $offre['statut']) ?>

@@ -1,3 +1,18 @@
+<?php
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -199,7 +214,7 @@
                                 </div>
                                 <div class="offer-body">
                                     <div class="mini-row">
-                                        <span class="mini-pill"><i class="fa-regular fa-calendar"></i> Date limite: <?= htmlspecialchars((string) $offre['datelimite']) ?></span>
+                                        <span class="mini-pill"><i class="fa-regular fa-calendar"></i> Date limite: <?= htmlspecialchars($formatDateTime($offre['datelimite'])) ?></span>
                                         <?php if (!empty($offre['salairemin']) || !empty($offre['salairemax'])): ?>
                                             <span class="mini-pill"><i class="fa-solid fa-sack-dollar"></i> Salaire</span>
                                         <?php endif; ?>

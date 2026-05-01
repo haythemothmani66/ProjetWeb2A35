@@ -6,6 +6,19 @@ $filterState = $filterState ?? [
     'sort_dir' => 'desc',
     'sort_fields' => ['titre', 'lieu', 'typecontrat', 'datecreation', 'datelimite', 'statut'],
 ];
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -270,7 +283,7 @@ $filterState = $filterState ?? [
                                 <h4><a href="index.php?espace=front&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>"><?= htmlspecialchars((string) $offre['titre']) ?></a></h4>
                                 <p><span class="ti-location-pin"></span> <?= htmlspecialchars((string) $offre['lieu']) ?></p>
                                 <p><span class="ti-briefcase"></span> <?= htmlspecialchars((string) $offre['typecontrat']) ?></p>
-                                <p><span class="ti-calendar"></span> Date limite: <?= htmlspecialchars((string) $offre['datelimite']) ?></p>
+                                <p><span class="ti-calendar"></span> Date limite: <?= htmlspecialchars($formatDateTime($offre['datelimite'])) ?></p>
                                 <div class="d-grid gap-2 offre-card-actions">
                                     <a href="index.php?espace=front&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>" class="btn_one">Voir details</a>
                                     <?php if (($offre['statut'] ?? '') === 'ouverte'): ?>

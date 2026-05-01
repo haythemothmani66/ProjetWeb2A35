@@ -12,6 +12,19 @@ $chartData = $chartData ?? [
 ];
 $expiringOffers = $expiringOffers ?? [];
 $pendingReplies = $pendingReplies ?? [];
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
 ?>
 <!doctype html>
 <html lang="fr">
@@ -157,7 +170,7 @@ $pendingReplies = $pendingReplies ?? [];
                                             <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                                                 <div>
                                                     <div class="fw-semibold"><?= htmlspecialchars((string) $offer['titre']) ?></div>
-                                                    <div class="small text-secondary"><?= htmlspecialchars((string) $offer['lieu']) ?> · limite le <?= htmlspecialchars((string) $offer['datelimite']) ?></div>
+                                                    <div class="small text-secondary"><?= htmlspecialchars((string) $offer['lieu']) ?> · limite le <?= htmlspecialchars($formatDateTime($offer['datelimite'])) ?></div>
                                                 </div>
                                                 <span class="badge <?= ((int) $offer['days_left'] <= 3) ? 'text-bg-danger' : 'text-bg-warning' ?>"><?= (int) $offer['days_left'] ?> jour(s)</span>
                                             </div>
@@ -185,7 +198,7 @@ $pendingReplies = $pendingReplies ?? [];
                                                         <div class="fw-semibold"><?= htmlspecialchars(trim((string) $reply['prenom'] . ' ' . (string) $reply['nom'])) ?></div>
                                                         <div class="small text-secondary"><?= htmlspecialchars((string) ($reply['offre_titre'] ?? 'Offre inconnue')) ?></div>
                                                     </div>
-                                                    <span class="badge text-bg-secondary"><?= htmlspecialchars((string) $reply['datecandidature']) ?></span>
+                                                    <span class="badge text-bg-secondary"><?= htmlspecialchars($formatDateTime($reply['datecandidature'])) ?></span>
                                                 </div>
                                             </a>
                                         <?php endforeach; ?>

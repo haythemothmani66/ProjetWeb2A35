@@ -1,5 +1,18 @@
 <?php
 $offre = $offre ?? [];
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
 ?>
 <!doctype html>
 <html lang="fr">
@@ -65,7 +78,7 @@ $offre = $offre ?? [];
                                 <p class="mb-1"><strong>Salaire min:</strong> <?= htmlspecialchars((string) ($offre['salairemin'] ?? '-')) ?></p>
                                 <p class="mb-1"><strong>Salaire max:</strong> <?= htmlspecialchars((string) ($offre['salairemax'] ?? '-')) ?></p>
                                 <p class="mb-1"><strong>Date creation:</strong> <?= htmlspecialchars((string) $offre['datecreation']) ?></p>
-                                <p class="mb-1"><strong>Date limite:</strong> <?= htmlspecialchars((string) $offre['datelimite']) ?></p>
+                                <p class="mb-1"><strong>Date limite:</strong> <?= htmlspecialchars($formatDateTime($offre['datelimite'])) ?></p>
                                 <p class="mb-3"><strong>Statut:</strong> <span class="badge <?= ($offre['statut'] === 'ouverte') ? 'text-bg-success' : 'text-bg-danger' ?>"><?= htmlspecialchars((string) $offre['statut']) ?></span></p>
                                 <a class="btn btn-outline-danger" href="index.php?espace=back&module=offreemploi&action=supprimer&id=<?= (int) $offre['id'] ?>" onclick="return confirm('Supprimer cette offre ?');">Supprimer</a>
                             </div>

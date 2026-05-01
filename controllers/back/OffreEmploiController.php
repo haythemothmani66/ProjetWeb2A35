@@ -419,7 +419,7 @@ class OffreEmploiController
             ],
         ];
 
-        $exportDate = date('d/m/Y H:i:s');
+        $exportDate = date('d/m/Y H:i');
 
         include __DIR__ . '/../../views/back/offreemploi/stats-pdf.php';
     }

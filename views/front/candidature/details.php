@@ -1,5 +1,18 @@
 <?php
 $candidature = $candidature ?? [];
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -107,7 +120,7 @@ $candidature = $candidature ?? [];
                     <div>
                         <span class="badge-soft"><?= htmlspecialchars((string) $candidature['statut']) ?></span>
                         <h1 class="title h2 mt-3 mb-2">Candidature #<?= (int) $candidature['id'] ?></h1>
-                        <p class="muted mb-0">Deposee le <?= htmlspecialchars((string) $candidature['datecandidature']) ?></p>
+                        <p class="muted mb-0">Deposee le <?= htmlspecialchars($formatDateTime($candidature['datecandidature'])) ?></p>
                     </div>
                     <a href="index.php?espace=front&module=candidature&action=liste" class="btn-primary-job">Retour aux offres</a>
                 </div>
@@ -147,10 +160,10 @@ $candidature = $candidature ?? [];
                             <div class="value mb-3"><?= htmlspecialchars((string) $candidature['statut']) ?></div>
 
                             <div class="label">Date de candidature</div>
-                            <div class="value mb-3"><?= htmlspecialchars((string) $candidature['datecandidature']) ?></div>
+                            <div class="value mb-3"><?= htmlspecialchars($formatDateTime($candidature['datecandidature'])) ?></div>
 
                             <div class="label">Date de reponse</div>
-                            <div class="value mb-4"><?= htmlspecialchars((string) ($candidature['datereponse'] ?? 'En attente')) ?></div>
+                            <div class="value mb-4"><?= htmlspecialchars(isset($candidature['datereponse']) ? $formatDateTime($candidature['datereponse']) : 'En attente') ?></div>
 
                             <a href="index.php?espace=front&module=candidature&action=ajouter&offreid=<?= (int) $candidature['offreid'] ?>" class="btn-primary-job w-100 d-block text-center">Repostuler a cette offre</a>
                         </div>

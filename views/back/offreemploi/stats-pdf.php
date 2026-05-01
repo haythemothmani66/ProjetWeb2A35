@@ -2,7 +2,20 @@
 $stats = $stats ?? [];
 $expiringOffers = $expiringOffers ?? [];
 $pendingReplies = $pendingReplies ?? [];
-$exportDate = $exportDate ?? date('d/m/Y H:i:s');
+$exportDate = $exportDate ?? date('d/m/Y H:i');
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
 
 $html = '
 <!DOCTYPE html>
@@ -187,13 +200,13 @@ $html = '
                     </tr>
                 </thead>
                 <tbody>
-                    ' . implode('', array_map(static function (array $offer): string {
+                    ' . implode('', array_map(static function (array $offer) use ($formatDateTime): string {
     $daysClass = ((int) $offer['days_left'] <= 3) ? 'badge-danger' : 'badge-warning';
     return '
                     <tr>
                         <td>' . htmlspecialchars((string) $offer['titre']) . '</td>
                         <td>' . htmlspecialchars((string) $offer['lieu']) . '</td>
-                        <td>' . htmlspecialchars((string) $offer['datelimite']) . '</td>
+                        <td>' . htmlspecialchars($formatDateTime($offer['datelimite'])) . '</td>
                         <td><span class="badge ' . $daysClass . '">' . (int) $offer['days_left'] . ' jour(s)</span></td>
                     </tr>
                     ';
@@ -215,12 +228,12 @@ $html = '
                     </tr>
                 </thead>
                 <tbody>
-                    ' . implode('', array_map(static function (array $reply): string {
+                    ' . implode('', array_map(static function (array $reply) use ($formatDateTime): string {
     return '
                     <tr>
                         <td>' . htmlspecialchars(trim((string) $reply['prenom'] . ' ' . (string) $reply['nom'])) . '</td>
                         <td>' . htmlspecialchars((string) ($reply['offre_titre'] ?? 'Offre inconnue')) . '</td>
-                        <td>' . htmlspecialchars((string) $reply['datecandidature']) . '</td>
+                        <td>' . htmlspecialchars($formatDateTime($reply['datecandidature'])) . '</td>
                     </tr>
                     ';
 }, $pendingReplies)) . '

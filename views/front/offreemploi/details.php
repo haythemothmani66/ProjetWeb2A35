@@ -1,5 +1,18 @@
 <?php
 $offre = $offre ?? [];
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -78,7 +91,7 @@ $offre = $offre ?? [];
                         <p><span class="ti-briefcase"></span> <strong>Contrat:</strong> <?= htmlspecialchars((string) $offre['typecontrat']) ?></p>
                         <p><span class="ti-wallet"></span> <strong>Salaire min:</strong> <?= htmlspecialchars((string) ($offre['salairemin'] ?? '-')) ?></p>
                         <p><span class="ti-money"></span> <strong>Salaire max:</strong> <?= htmlspecialchars((string) ($offre['salairemax'] ?? '-')) ?></p>
-                        <p><span class="ti-calendar"></span> <strong>Date limite:</strong> <?= htmlspecialchars((string) $offre['datelimite']) ?></p>
+                        <p><span class="ti-calendar"></span> <strong>Date limite:</strong> <?= htmlspecialchars($formatDateTime($offre['datelimite'])) ?></p>
                         <p><span class="ti-check-box"></span> <strong>Statut:</strong> <?= htmlspecialchars((string) $offre['statut']) ?></p>
 
                         <?php if (($offre['statut'] ?? '') === 'ouverte'): ?>

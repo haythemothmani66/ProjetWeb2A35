@@ -2,6 +2,19 @@
 $candidature = $candidature ?? [];
 $reply = $_GET['reply'] ?? null;
 $error = $_GET['error'] ?? null;
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
 ?>
 <!doctype html>
 <html lang="fr">
@@ -84,8 +97,8 @@ $error = $_GET['error'] ?? null;
                                     <div class="col-md-6"><strong>Prenom:</strong> <?= htmlspecialchars((string) ($candidature['prenom'] ?? '')) ?></div>
                                     <div class="col-md-6"><strong>Email:</strong> <?= htmlspecialchars((string) $candidature['email']) ?></div>
                                     <div class="col-md-6"><strong>CV:</strong> <a href="<?= htmlspecialchars((string) $candidature['cvurl']) ?>" target="_blank" rel="noopener">Ouvrir le CV</a></div>
-                                    <div class="col-md-6"><strong>Date de depot:</strong> <?= htmlspecialchars((string) $candidature['datecandidature']) ?></div>
-                                    <div class="col-md-6"><strong>Date de reponse:</strong> <?= htmlspecialchars((string) ($candidature['datereponse'] ?? 'En attente')) ?></div>
+                                    <div class="col-md-6"><strong>Date de depot:</strong> <?= htmlspecialchars($formatDateTime($candidature['datecandidature'])) ?></div>
+                                    <div class="col-md-6"><strong>Date de reponse:</strong> <?= htmlspecialchars(isset($candidature['datereponse']) ? $formatDateTime($candidature['datereponse']) : 'En attente') ?></div>
                                 </div>
 
                                 <div class="mt-4">
