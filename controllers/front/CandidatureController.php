@@ -5,6 +5,7 @@ declare(strict_types=1);
 class CandidatureController
 {
     private PDO $pdo;
+    private array $recaptchaConfig;
 
     private function isPersonName(string $value): bool
     {
@@ -24,6 +25,46 @@ class CandidatureController
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
+        $this->recaptchaConfig = require __DIR__ . '/../../config/recaptcha.php';
+    }
+
+    private function isRecaptchaConfigured(): bool
+    {
+        return !empty($this->recaptchaConfig['enabled'])
+            && !empty($this->recaptchaConfig['site_key'])
+            && !empty($this->recaptchaConfig['secret_key'])
+            && $this->recaptchaConfig['site_key'] !== 'your-site-key'
+            && $this->recaptchaConfig['secret_key'] !== 'your-secret-key';
+    }
+
+    private function verifyRecaptchaToken(string $token): bool
+    {
+        if (!$this->isRecaptchaConfigured() || $token === '') {
+            return false;
+        }
+
+        $payload = http_build_query([
+            'secret' => (string) $this->recaptchaConfig['secret_key'],
+            'response' => $token,
+        ]);
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                'content' => $payload,
+                'timeout' => (int) ($this->recaptchaConfig['timeout'] ?? 5),
+            ],
+        ]);
+
+        $verifyUrl = (string) ($this->recaptchaConfig['verify_url'] ?? 'https://www.google.com/recaptcha/api/siteverify');
+        $response = @file_get_contents($verifyUrl, false, $context);
+        if ($response === false) {
+            return false;
+        }
+
+        $decoded = json_decode($response, true);
+        return is_array($decoded) && !empty($decoded['success']);
     }
 
     private function getAllOffres(): array
@@ -123,6 +164,7 @@ class CandidatureController
             'cvurl' => '',
             'lettremotivation' => '',
         ];
+        $recaptchaSiteKey = (string) ($this->recaptchaConfig['site_key'] ?? '');
 
         if (isset($_GET['offreid']) && (int) $_GET['offreid'] > 0) {
             $formData['offreid'] = (string) (int) $_GET['offreid'];
@@ -169,6 +211,13 @@ class CandidatureController
                 $fieldErrors['lettremotivation'] = 'La lettre de motivation est obligatoire.';
             } elseif (mb_strlen($formData['lettremotivation']) < 30) {
                 $fieldErrors['lettremotivation'] = 'La lettre de motivation doit contenir au moins 30 caracteres.';
+            }
+
+            $recaptchaToken = trim((string) ($_POST['g-recaptcha-response'] ?? ''));
+            if (!$this->verifyRecaptchaToken($recaptchaToken)) {
+                $fieldErrors['recaptcha'] = $this->isRecaptchaConfigured()
+                    ? 'Veuillez confirmer que vous n\'etes pas un robot.'
+                    : 'La verification anti-robot n\'est pas configuree sur ce poste.';
             }
 
             $selectedOffer = $this->getOffreById((int) $formData['offreid']);

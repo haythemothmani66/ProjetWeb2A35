@@ -11,6 +11,7 @@ $fieldErrors = $fieldErrors ?? [];
 $errors = $errors ?? [];
 $error = $error ?? '';
 $selectedOffer = $selectedOffer ?? null;
+$recaptchaSiteKey = $recaptchaSiteKey ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -229,6 +230,18 @@ $selectedOffer = $selectedOffer ?? null;
                                 <?php endif; ?>
                             </div>
 
+                            <div class="col-12">
+                                <label class="form-label">Verification anti-robot *</label>
+                                <?php if (!empty($recaptchaSiteKey) && $recaptchaSiteKey !== 'your-site-key'): ?>
+                                    <div class="g-recaptcha<?= !empty($fieldErrors['recaptcha']) ? ' field-error' : '' ?>" data-sitekey="<?= htmlspecialchars($recaptchaSiteKey) ?>"></div>
+                                <?php else: ?>
+                                    <div class="alert alert-warning mb-0">Le reCAPTCHA n'est pas encore configure localement.</div>
+                                <?php endif; ?>
+                                <?php if (!empty($fieldErrors['recaptcha'])): ?>
+                                    <div class="field-error-text"><?= htmlspecialchars((string) $fieldErrors['recaptcha']) ?></div>
+                                <?php endif; ?>
+                            </div>
+
                             <div class="col-12 d-flex flex-wrap gap-2 pt-2">
                                 <button type="submit" class="btn-primary-job">Envoyer la candidature</button>
                                 <a href="index.php?espace=front&module=candidature&action=liste" class="btn-secondary-job">Retour aux offres</a>
@@ -241,6 +254,9 @@ $selectedOffer = $selectedOffer ?? null;
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <?php if (!empty($recaptchaSiteKey) && $recaptchaSiteKey !== 'your-site-key'): ?>
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <?php endif; ?>
     <script>
         (function () {
             const form = document.getElementById('candidature-form');
