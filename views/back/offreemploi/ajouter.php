@@ -179,16 +179,15 @@
                     return false;
                 }
 
-                if (name === 'datelimite' && value !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                if (name === 'datelimite' && value !== '' && !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
                     setFieldError(name, 'La date limite est invalide.');
                     return false;
                 }
 
                 if (name === 'datelimite' && value !== '') {
-                    const inputDate = new Date(value + 'T00:00:00');
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    if (inputDate <= today) {
+                    const inputDate = new Date(value);
+                    const now = new Date();
+                    if (inputDate <= now) {
                         setFieldError(name, 'La date limite doit etre strictement posterieure a la date du jour.');
                         return false;
                     }

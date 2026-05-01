@@ -38,14 +38,19 @@ class OffreEmploiController
         }
         if ($data['datelimite'] === '') {
             $fieldErrors['datelimite'][] = 'La date limite est obligatoire.';
-        } elseif (DateTime::createFromFormat('Y-m-d\TH:i', $data['datelimite']) === false) {
-            $fieldErrors['datelimite'][] = 'La date limite est invalide.';
         } else {
-            $today = new DateTimeImmutable('today');
-            $dateLimite = new DateTimeImmutable($data['datelimite']);
-            $now = new DateTimeImmutable('now');
-            if ($dateLimite <= $now) {
-                $fieldErrors['datelimite'][] = 'La date limite doit etre strictement posterieure a la date du jour.';
+            error_log("DEBUG RAW INPUT: " . htmlspecialchars($data['datelimite']));
+            // Parse datetime string with explicit timezone
+            $timestamp = strtotime($data['datelimite'] . ' UTC');
+            if ($timestamp === false) {
+                $fieldErrors['datelimite'][] = 'La date limite est invalide. (Format reçu: ' . htmlspecialchars($data['datelimite']) . ')';
+            } else {
+                $parsedDate = new DateTime('@' . $timestamp);
+                $now = new DateTime('now');
+                error_log("DEBUG: Raw input: " . htmlspecialchars($data['datelimite']) . " | Parsed date: " . $parsedDate->format('Y-m-d H:i:s') . " | Now: " . $now->format('Y-m-d H:i:s') . " | Comparison: " . ($parsedDate <= $now ? 'PAST/NOW' : 'FUTURE'));
+                if ($parsedDate <= $now) {
+                    $fieldErrors['datelimite'][] = 'La date limite doit etre strictement posterieure a la date du jour. (Input: ' . htmlspecialchars($data['datelimite']) . ' | Parsed: ' . $parsedDate->format('Y-m-d H:i:s') . ' | Now: ' . $now->format('Y-m-d H:i:s') . ')';
+                }
             }
         }
 

@@ -185,10 +185,9 @@ $error = $error ?? '';
                 }
 
                 if (name === 'datelimite' && value !== '') {
-                    const inputDate = new Date(value + 'T00:00:00');
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    if (inputDate <= today) {
+                    const inputDate = new Date(value);
+                    const now = new Date();
+                    if (inputDate <= now) {
                         setFieldError(name, 'La date limite doit etre strictement posterieure a la date du jour.');
                         return false;
                     }
