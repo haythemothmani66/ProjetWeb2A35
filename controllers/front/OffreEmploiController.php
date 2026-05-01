@@ -29,7 +29,7 @@ class OffreEmploiController
         $sortColumn = $sortFieldMap[$sortBy] ?? 'datecreation';
         $direction = strtolower($sortDir) === 'asc' ? 'ASC' : 'DESC';
 
-        $sql = 'SELECT * FROM offreemploi';
+        $sql = 'SELECT * FROM offreemploi WHERE statut = "ouverte"';
         $params = [];
 
         if ($searchTerm !== '') {

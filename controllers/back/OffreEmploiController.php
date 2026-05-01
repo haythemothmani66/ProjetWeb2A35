@@ -11,7 +11,11 @@ class OffreEmploiController
         // Require at least one letter and allow common separators.
         return preg_match('/^(?=.*\p{L})[\p{L}\d\s\-\'\.,\/]{2,100}$/u', $value) === 1;
     }
-
+    private function expireOffers(): void
+    {
+    $sql = "UPDATE offreemploi SET statut = 'fermee' WHERE statut = 'ouverte' AND datelimite < NOW()";
+    $this->pdo->exec($sql);
+}
     private function validateOffreData(array $data): array
     {
         $fieldErrors = [];
@@ -34,12 +38,13 @@ class OffreEmploiController
         }
         if ($data['datelimite'] === '') {
             $fieldErrors['datelimite'][] = 'La date limite est obligatoire.';
-        } elseif (DateTime::createFromFormat('Y-m-d', $data['datelimite']) === false) {
+        } elseif (DateTime::createFromFormat('Y-m-d\TH:i', $data['datelimite']) === false) {
             $fieldErrors['datelimite'][] = 'La date limite est invalide.';
         } else {
             $today = new DateTimeImmutable('today');
             $dateLimite = new DateTimeImmutable($data['datelimite']);
-            if ($dateLimite <= $today) {
+            $now = new DateTimeImmutable('now');
+            if ($dateLimite <= $now) {
                 $fieldErrors['datelimite'][] = 'La date limite doit etre strictement posterieure a la date du jour.';
             }
         }
@@ -185,6 +190,7 @@ class OffreEmploiController
 
     public function liste(): void
     {
+        $this->expireOffers();
         $sortFieldMap = $this->getSortFieldMap();
 
         $searchTerm = trim((string) ($_GET['q'] ?? ''));
@@ -212,6 +218,7 @@ class OffreEmploiController
 
     public function stats(): void
     {
+        $this->expireOffers();
         $offerSummarySql = 'SELECT
                 COUNT(*) AS total_offres,
                 COALESCE(SUM(CASE WHEN statut = :ouverte THEN 1 ELSE 0 END), 0) AS offres_ouvertes,
@@ -528,6 +535,7 @@ class OffreEmploiController
 
         include __DIR__ . '/../../views/back/offreemploi/modifier.php';
     }
+
 
     public function supprimer(int $id): void
     {

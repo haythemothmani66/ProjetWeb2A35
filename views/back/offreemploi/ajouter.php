@@ -77,7 +77,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="datelimite" class="form-label">Date limite *</label>
-                                <input type="date" id="datelimite" name="datelimite" class="form-control<?= !empty($fieldErrors['datelimite']) ? ' field-error' : '' ?>" value="<?= $old('datelimite') ?>">
+                                <input type="datetime-local" id="datelimite" name="datelimite" class="form-control<?= !empty($fieldErrors['datelimite']) ? ' field-error' : '' ?>" value="<?= $old('datelimite') ?>">
                                 <div class="field-error-text<?= !empty($fieldErrors['datelimite']) ? ' visible' : '' ?>" data-error-for="datelimite"><?= $errorFor('datelimite') ?></div>
                             </div>
 
