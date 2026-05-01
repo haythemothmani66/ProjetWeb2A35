@@ -4,6 +4,7 @@ config/database.local.php
 .env.local
 *.local.php
 
+
 # IDE and editor
 .vscode/
 .idea/
