@@ -1,8 +1,8 @@
 # Local configuration files with sensitive info
-config/mail.local.php
-config/database.local.php
-.env.local
-*.local.php
+.env
+.env.*
+!.env.example
+config/*.local.php
 
 
 # IDE and editor
