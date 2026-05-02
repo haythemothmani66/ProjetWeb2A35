@@ -35,6 +35,7 @@ class CandidatureController
             && !empty($this->recaptchaConfig['secret_key'])
             && $this->recaptchaConfig['site_key'] !== 'your-site-key'
             && $this->recaptchaConfig['secret_key'] !== 'your-secret-key';
+            
     }
 
     private function verifyRecaptchaToken(string $token): bool
