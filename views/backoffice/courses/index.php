@@ -56,6 +56,18 @@
         .btn-secondary:hover {
             background: rgba(79, 107, 255, 0.18);
         }
+        .btn-ai {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+            border: none;
+        }
+        .btn-ai:hover {
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+            transform: translateY(-2px);
+            color: white;
+        }
         .courses-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -231,6 +243,9 @@
                         <a href="<?= htmlspecialchars(backofficeRoute('courses', 'stats')); ?>#top-quizzes" class="btn btn-secondary">
                             <i class="fas fa-trophy"></i> Top Quizzes
                         </a>
+                        <a href="<?= htmlspecialchars(backofficeRoute('courses', 'generate')); ?>" class="btn btn-ai">
+                            <i class="fas fa-wand-magic-sparkles"></i> Generate AI Course
+                        </a>
                         <a href="<?= htmlspecialchars(backofficeRoute('courses', 'create')); ?>" class="btn btn-primary">
                             <i class="fas fa-plus"></i> New Course
                         </a>
@@ -242,9 +257,14 @@
                         <i class="fas fa-inbox"></i>
                         <h3>No Courses Yet</h3>
                         <p>Get started by creating your first course</p>
-                        <a href="<?= htmlspecialchars(backofficeRoute('courses', 'create')); ?>" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Create Course
-                        </a>
+                        <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                            <a href="<?= htmlspecialchars(backofficeRoute('courses', 'generate')); ?>" class="btn btn-ai">
+                                <i class="fas fa-wand-magic-sparkles"></i> Generate AI Course
+                            </a>
+                            <a href="<?= htmlspecialchars(backofficeRoute('courses', 'create')); ?>" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Course
+                            </a>
+                        </div>
                     </div>
                 <?php else: ?>
                     <div class="courses-grid">

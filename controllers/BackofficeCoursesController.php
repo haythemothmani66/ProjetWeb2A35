@@ -4,6 +4,9 @@ class BackofficeCoursesController
 {
     private CourseRepository $courses;
     private QuizRepository $quizzes;
+    private LessonRepository $lessons;
+    private QuestionRepository $questions;
+    private ResponseRepository $responses;
 
     private string $viewsPath;
     private string $uploadsDir;
@@ -18,6 +21,9 @@ class BackofficeCoursesController
     {
         $this->courses = new CourseRepository();
         $this->quizzes = new QuizRepository();
+        $this->lessons = new LessonRepository();
+        $this->questions = new QuestionRepository();
+        $this->responses = new ResponseRepository();
         $this->viewsPath = dirname(__DIR__) . '/views';
         $this->uploadsDir = dirname(__DIR__) . '/uploads/courses';
         
@@ -258,5 +264,95 @@ class BackofficeCoursesController
         $topQuizCourses = array_slice($topQuizCourses, 0, 10);
 
         require $this->viewsPath . '/backoffice/courses/stats.php';
+    }
+
+    public function generate(array $params = []): void
+    {
+        require $this->viewsPath . '/backoffice/courses/generate.php';
+    }
+
+    public function storeAi(array $data = []): void
+    {
+        $topic = $data['topic'] ?? '';
+        $level = $data['level'] ?? 'beginner';
+
+        if (empty($topic)) {
+            // Re-render form with error
+            $error = "Topic is required.";
+            require $this->viewsPath . '/backoffice/courses/generate.php';
+            return;
+        }
+
+        try {
+            $generator = new AiCourseGenerator();
+            $aiData = $generator->generateCourse($topic, $level);
+
+            // Save Course
+            $courseId = $this->courses->create([
+                'title' => $aiData['course']['title'],
+                'description' => $aiData['course']['description'],
+                'level' => $aiData['course']['level'],
+                'status' => 'draft'
+            ]);
+
+            // Save Lessons
+            if (!empty($aiData['lessons'])) {
+                foreach ($aiData['lessons'] as $idx => $lessonData) {
+                    $this->lessons->create([
+                        'course_id' => $courseId,
+                        'title' => $lessonData['title'],
+                        'summary' => $lessonData['summary'],
+                        'content' => $lessonData['content'],
+                        'duration_minutes' => $lessonData['duration_minutes'] ?? 10,
+                        'lesson_order' => $idx + 1,
+                        'status' => 'published'
+                    ]);
+                }
+            }
+
+            // Save Quiz
+            if (!empty($aiData['quiz'])) {
+                $quizId = $this->quizzes->create([
+                    'course_id' => $courseId,
+                    'title' => $aiData['quiz']['title'],
+                    'description' => $aiData['quiz']['description'],
+                    'duration_minutes' => $aiData['quiz']['duration_minutes'] ?? 20,
+                    'passing_score' => $aiData['quiz']['passing_score'] ?? 60,
+                    'max_attempts' => 3,
+                    'is_timed' => 1
+                ]);
+
+                // Save Questions and Responses
+                if (!empty($aiData['quiz']['questions'])) {
+                    foreach ($aiData['quiz']['questions'] as $qIdx => $questionData) {
+                        $questionId = $this->questions->create([
+                            'quiz_id' => $quizId,
+                            'question_text' => $questionData['question_text'],
+                            'question_type' => $questionData['question_type'] ?? 'multiple_choice',
+                            'points' => $questionData['points'] ?? 1,
+                            'question_order' => $qIdx + 1
+                        ]);
+
+                        if (!empty($questionData['responses'])) {
+                            foreach ($questionData['responses'] as $rIdx => $responseData) {
+                                $this->responses->create([
+                                    'question_id' => $questionId,
+                                    'response_text' => $responseData['response_text'],
+                                    'is_correct' => $responseData['is_correct'] ?? 0,
+                                    'response_order' => $rIdx + 1
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            header('Location: ' . backofficeRoute('courses', 'index'));
+            exit;
+
+        } catch (Exception $e) {
+            $error = $e->getMessage();
+            require $this->viewsPath . '/backoffice/courses/generate.php';
+        }
     }
 }
