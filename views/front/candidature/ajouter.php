@@ -182,7 +182,7 @@ $recaptchaSiteKey = $recaptchaSiteKey ?? '';
                             <div class="alert alert-danger alert-soft"><?= htmlspecialchars($error) ?></div>
                         <?php endif; ?>
 
-                        <form method="post" class="row g-3" novalidate autocomplete="off" id="candidature-form">
+                        <form method="post" class="row g-3" novalidate autocomplete="off" enctype="multipart/form-data" id="candidature-form">
                             <input type="hidden" name="offreid" value="<?= htmlspecialchars((string) $formData['offreid']) ?>">
                             <?php if (!empty($fieldErrors['offreid'])): ?>
                                 <div class="col-12">
@@ -215,8 +215,9 @@ $recaptchaSiteKey = $recaptchaSiteKey ?? '';
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label" for="cvurl">Lien du CV *</label>
-                                <input type="url" id="cvurl" name="cvurl" class="form-control<?= !empty($fieldErrors['cvurl']) ? ' field-error' : '' ?>" placeholder="https://..." value="<?= htmlspecialchars((string) $formData['cvurl']) ?>" autocomplete="new-password">
+                                <label class="form-label" for="cvfile">CV *</label>
+                                <input type="file" id="cvfile" name="cvfile" accept=".pdf,.doc,.docx" class="form-control<?= !empty($fieldErrors['cvurl']) ? ' field-error' : '' ?>">
+                                <small class="form-text text-muted">Formats acceptes : PDF, DOC, DOCX (max 5 Mo)</small>
                                 <?php if (!empty($fieldErrors['cvurl'])): ?>
                                     <div class="field-error-text"><?= htmlspecialchars((string) $fieldErrors['cvurl']) ?></div>
                                 <?php endif; ?>

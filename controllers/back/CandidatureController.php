@@ -68,7 +68,12 @@ class CandidatureController
                     c.nom,
                     c.prenom,
                     c.lettremotivation,
-                    c.cvurl,
+                    CASE
+                        WHEN c.cv_source = \'upload\' THEN c.cv_file_path
+                        ELSE COALESCE(c.cv_external_url, c.cv_file_path)
+                    END AS cvurl,
+                    c.cv_source,
+                    c.cv_original_name,
                     c.email,
                     c.statut,
                     c.datecandidature,
@@ -111,7 +116,12 @@ class CandidatureController
                     c.nom,
                     c.prenom,
                     c.lettremotivation,
-                    c.cvurl,
+                    CASE
+                        WHEN c.cv_source = \'upload\' THEN c.cv_file_path
+                        ELSE COALESCE(c.cv_external_url, c.cv_file_path)
+                    END AS cvurl,
+                    c.cv_source,
+                    c.cv_original_name,
                     c.email,
                     c.statut,
                     c.datecandidature,
@@ -138,7 +148,12 @@ class CandidatureController
                     c.nom,
                     c.prenom,
                     c.lettremotivation,
-                    c.cvurl,
+                    CASE
+                        WHEN c.cv_source = \'upload\' THEN c.cv_file_path
+                        ELSE COALESCE(c.cv_external_url, c.cv_file_path)
+                    END AS cvurl,
+                    c.cv_source,
+                    c.cv_original_name,
                     c.email,
                     c.statut,
                     c.datecandidature,
@@ -167,7 +182,6 @@ class CandidatureController
                 SET nom = :nom,
                     prenom = :prenom,
                     lettremotivation = :lettremotivation,
-                    cvurl = :cvurl,
                     email = :email,
                     statut = :statut,
                     datereponse = :datereponse,
@@ -180,7 +194,6 @@ class CandidatureController
             'nom' => $data['nom'],
             'prenom' => $data['prenom'],
             'lettremotivation' => $data['lettremotivation'],
-            'cvurl' => $data['cvurl'],
             'email' => $data['email'],
             'statut' => $data['statut'] ?? 'enattente',
             'datereponse' => $data['datereponse'] !== '' ? ($data['datereponse'] ?? null) : null,
@@ -282,7 +295,6 @@ class CandidatureController
                 'nom' => trim($_POST['nom'] ?? ''),
                 'prenom' => trim($_POST['prenom'] ?? ''),
                 'lettremotivation' => trim($_POST['lettremotivation'] ?? ''),
-                'cvurl' => trim($_POST['cvurl'] ?? ''),
                 'email' => trim($_POST['email'] ?? ''),
                 'statut' => trim($_POST['statut'] ?? 'enattente'),
                 'datereponse' => trim($_POST['datereponse'] ?? ''),
@@ -306,11 +318,6 @@ class CandidatureController
                 $fieldErrors['email'] = 'L\'email est obligatoire.';
             } elseif (!filter_var($formData['email'], FILTER_VALIDATE_EMAIL)) {
                 $fieldErrors['email'] = 'Le format de l\'email est invalide.';
-            }
-            if ($formData['cvurl'] === '') {
-                $fieldErrors['cvurl'] = 'Le lien du CV est obligatoire.';
-            } elseif (!$this->isHttpUrl($formData['cvurl'])) {
-                $fieldErrors['cvurl'] = 'Le lien du CV doit etre une URL valide en http:// ou https://.';
             }
             if ($formData['lettremotivation'] === '') {
                 $fieldErrors['lettremotivation'] = 'La lettre de motivation est obligatoire.';
@@ -351,7 +358,6 @@ class CandidatureController
                 'nom' => $formData['nom'],
                 'prenom' => $formData['prenom'],
                 'lettremotivation' => $formData['lettremotivation'],
-                'cvurl' => $formData['cvurl'],
                 'email' => $formData['email'],
                 'statut' => $formData['statut'],
                 'datereponse' => $formData['datereponse'],

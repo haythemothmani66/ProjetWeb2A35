@@ -143,8 +143,18 @@ $formatDateTime = static function ($value): string {
                                 <div class="value"><?= htmlspecialchars((string) $candidature['email']) ?></div>
                             </div>
                             <div class="info-card">
-                                <div class="label">Lien du CV</div>
-                                <div class="value"><a href="<?= htmlspecialchars((string) $candidature['cvurl']) ?>" target="_blank" rel="noopener">Ouvrir le CV</a></div>
+                                <div class="label">CV</div>
+                                <div class="value">
+                                    <?php if (!empty($candidature['cv_source']) && $candidature['cv_source'] === 'upload'): ?>
+                                        <a href="<?= htmlspecialchars((string) $candidature['cvurl']) ?>" target="_blank" rel="noopener">
+                                            <?= htmlspecialchars((string) ($candidature['cv_original_name'] ?? 'Telecharger le CV')) ?>
+                                        </a>
+                                    <?php elseif (!empty($candidature['cvurl'])): ?>
+                                        <a href="<?= htmlspecialchars((string) $candidature['cvurl']) ?>" target="_blank" rel="noopener">Ouvrir le CV</a>
+                                    <?php else: ?>
+                                        <span class="text-muted">Aucun CV fourni</span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
 

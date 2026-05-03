@@ -7,6 +7,11 @@ class CandidatureController
     private PDO $pdo;
     private array $recaptchaConfig;
 
+    private function getCvUploadDir(): string
+    {
+        return __DIR__ . '/../../uploads/cv';
+    }
+
     private function isPersonName(string $value): bool
     {
         return preg_match('/^(?=.*\p{L})[\p{L}\s\-\']{2,60}$/u', $value) === 1;
@@ -20,6 +25,98 @@ class CandidatureController
 
         $scheme = strtolower((string) parse_url($value, PHP_URL_SCHEME));
         return in_array($scheme, ['http', 'https'], true);
+    }
+
+    private function sanitizeUploadFileName(string $name): string
+    {
+        $name = pathinfo($name, PATHINFO_FILENAME);
+        $name = preg_replace('/[^A-Za-z0-9._-]+/', '_', $name) ?? 'cv';
+        $name = trim($name, '._-');
+
+        return $name !== '' ? $name : 'cv';
+    }
+
+    private function handleCvUpload(array &$fieldErrors): ?array
+    {
+        if (!isset($_FILES['cvfile']) || !is_array($_FILES['cvfile'])) {
+            return null;
+        }
+
+        $file = $_FILES['cvfile'];
+        $uploadError = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+
+        if ($uploadError === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            $fieldErrors['cvurl'] = 'Le telechargement du CV a echoue. Veuillez reessayer.';
+            $fieldErrors['cvfile'] = 'Le telechargement du CV a echoue. Veuillez reessayer.';
+            return null;
+        }
+
+        $tmpName = (string) ($file['tmp_name'] ?? '');
+        $originalName = (string) ($file['name'] ?? 'cv');
+        $size = (int) ($file['size'] ?? 0);
+
+        if (!is_uploaded_file($tmpName)) {
+            $fieldErrors['cvurl'] = 'Le fichier CV est invalide.';
+            $fieldErrors['cvfile'] = 'Le fichier CV est invalide.';
+            return null;
+        }
+
+        if ($size <= 0 || $size > 5242880) {
+            $fieldErrors['cvurl'] = 'Le CV doit peser moins de 5 Mo.';
+            $fieldErrors['cvfile'] = 'Le CV doit peser moins de 5 Mo.';
+            return null;
+        }
+
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        if (!in_array($extension, ['pdf', 'doc', 'docx'], true)) {
+            $fieldErrors['cvurl'] = 'Le CV doit etre au format PDF, DOC ou DOCX.';
+            $fieldErrors['cvfile'] = 'Le CV doit etre au format PDF, DOC ou DOCX.';
+            return null;
+        }
+
+        $uploadDir = $this->getCvUploadDir();
+        if (!is_dir($uploadDir) && !@mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+            $fieldErrors['cvurl'] = 'Impossible de creer le dossier de stockage des CV.';
+            $fieldErrors['cvfile'] = 'Impossible de creer le dossier de stockage des CV.';
+            return null;
+        }
+
+        $mimeType = null;
+        if (class_exists('finfo')) {
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $detectedMime = $finfo->file($tmpName);
+            $mimeType = is_string($detectedMime) ? $detectedMime : null;
+        }
+
+        $safeName = $this->sanitizeUploadFileName($originalName);
+
+        try {
+            $uniqueSuffix = bin2hex(random_bytes(6));
+        } catch (Throwable) {
+            $uniqueSuffix = uniqid('', true);
+        }
+
+        $storedFileName = sprintf('%s_%s.%s', date('YmdHis'), $uniqueSuffix, $extension);
+        $destination = rtrim($uploadDir, '/\\') . DIRECTORY_SEPARATOR . $storedFileName;
+
+        if (!move_uploaded_file($tmpName, $destination)) {
+            $fieldErrors['cvurl'] = 'Impossible d\'enregistrer le CV telecharge.';
+            $fieldErrors['cvfile'] = 'Impossible d\'enregistrer le CV telecharge.';
+            return null;
+        }
+
+        return [
+            'cv_external_url' => null,
+            'cv_file_path' => 'uploads/cv/' . $storedFileName,
+            'cv_original_name' => $safeName . '.' . $extension,
+            'cv_mime' => $mimeType,
+            'cv_size' => $size,
+            'cv_source' => 'upload',
+        ];
     }
 
     public function __construct(PDO $pdo)
@@ -89,16 +186,21 @@ class CandidatureController
     private function createCandidature(array $data): int
     {
         $sql = 'INSERT INTO candidature
-                    (nom, prenom, lettremotivation, cvurl, email, statut, offreid)
+                    (nom, prenom, lettremotivation, cv_external_url, cv_file_path, cv_original_name, cv_mime, cv_size, cv_source, email, statut, offreid)
                 VALUES
-                    (:nom, :prenom, :lettremotivation, :cvurl, :email, :statut, :offreid)';
+                    (:nom, :prenom, :lettremotivation, :cv_external_url, :cv_file_path, :cv_original_name, :cv_mime, :cv_size, :cv_source, :email, :statut, :offreid)';
 
         $statement = $this->pdo->prepare($sql);
         $statement->execute([
             'nom' => $data['nom'],
             'prenom' => $data['prenom'],
             'lettremotivation' => $data['lettremotivation'],
-            'cvurl' => $data['cvurl'],
+            'cv_external_url' => $data['cv_external_url'] ?? null,
+            'cv_file_path' => $data['cv_file_path'] ?? null,
+            'cv_original_name' => $data['cv_original_name'] ?? null,
+            'cv_mime' => $data['cv_mime'] ?? null,
+            'cv_size' => $data['cv_size'] ?? null,
+            'cv_source' => $data['cv_source'] ?? 'url',
             'email' => $data['email'],
             'statut' => $data['statut'] ?? 'enattente',
             'offreid' => $data['offreid'],
@@ -114,7 +216,16 @@ class CandidatureController
                     c.nom,
                     c.prenom,
                     c.lettremotivation,
-                    c.cvurl,
+                    CASE
+                        WHEN c.cv_source = \'upload\' THEN c.cv_file_path
+                        ELSE COALESCE(c.cv_external_url, c.cv_file_path)
+                    END AS cvurl,
+                    c.cv_external_url,
+                    c.cv_file_path,
+                    c.cv_original_name,
+                    c.cv_mime,
+                    c.cv_size,
+                    c.cv_source,
                     c.email,
                     c.statut,
                     c.datecandidature,
@@ -203,15 +314,15 @@ class CandidatureController
             } elseif (!filter_var($formData['email'], FILTER_VALIDATE_EMAIL)) {
                 $fieldErrors['email'] = 'Le format de l\'email est invalide.';
             }
-            if ($formData['cvurl'] === '') {
-                $fieldErrors['cvurl'] = 'Le lien du CV est obligatoire.';
-            } elseif (!$this->isHttpUrl($formData['cvurl'])) {
-                $fieldErrors['cvurl'] = 'Le lien du CV doit etre une URL valide en http:// ou https://.';
-            }
             if ($formData['lettremotivation'] === '') {
                 $fieldErrors['lettremotivation'] = 'La lettre de motivation est obligatoire.';
             } elseif (mb_strlen($formData['lettremotivation']) < 30) {
                 $fieldErrors['lettremotivation'] = 'La lettre de motivation doit contenir au moins 30 caracteres.';
+            }
+
+            $cvUploadData = $this->handleCvUpload($fieldErrors);
+            if ($cvUploadData === null && !isset($fieldErrors['cvurl'])) {
+                $fieldErrors['cvurl'] = 'Le CV doit etre fourni. Veuillez televerser un fichier PDF, DOC ou DOCX.';
             }
 
             $recaptchaToken = trim((string) ($_POST['g-recaptcha-response'] ?? ''));
@@ -242,7 +353,12 @@ class CandidatureController
                 'nom' => $formData['nom'],
                 'prenom' => $formData['prenom'],
                 'lettremotivation' => $formData['lettremotivation'],
-                'cvurl' => $formData['cvurl'],
+                'cv_external_url' => null,
+                'cv_file_path' => $cvUploadData['cv_file_path'],
+                'cv_original_name' => $cvUploadData['cv_original_name'],
+                'cv_mime' => $cvUploadData['cv_mime'],
+                'cv_size' => $cvUploadData['cv_size'],
+                'cv_source' => 'upload',
                 'email' => $formData['email'],
                 'offreid' => (int) $formData['offreid'],
                 'statut' => 'enattente',
