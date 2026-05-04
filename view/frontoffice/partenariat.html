@@ -165,35 +165,6 @@
 		</section>
 		<!-- END FAQ -->
 
-		<!-- START CHECK STATUS SECTION -->
-<section class="check_status_area section-padding" style="padding-top: 0;">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 offset-lg-2 col-sm-12 col-xs-12">
-                <div class="check_status_card" style="background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center;">
-                    <h3 style="font-size: 24px; color: #1a1a1a; margin-bottom: 15px; font-weight: 700;">Already applied? Check your partnership status</h3>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Enter your organization name to see if your partnership request has been approved</p>
-                    
-                    <div style="display: flex; gap: 12px; max-width: 500px; margin: 0 auto;">
-                        <input 
-                            type="text" 
-                            id="check_org_name"
-                            class="form_input"
-                            placeholder="Enter your organization name"
-                            style="flex: 1; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                        >
-                        <button id="checkStatusBtn" type="button" class="contract_action_btn contract_action_btn-primary" style="padding: 12px 24px;">Check Status</button>
-                    </div>
-                    
-                    <div id="statusResult" class="status_result" style="margin-top: 20px; display: none;">
-                        <!-- Status result will appear here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-<!-- END CHECK STATUS SECTION -->
 
 		<!-- START PARTNER APPLICATION FORM -->
 		<section class="partner_form_area section-padding" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); position: relative;">
@@ -411,52 +382,7 @@
 			</div>
 		</section>
 
-		<section class="contract_search_area section-padding" style="padding-top: 10px;">
-			<div class="container">
-				<div class="row">
-					<div class="col-lg-10 offset-lg-1 col-sm-12 col-xs-12">
-						<div class="contract_search_card">
-							<h3 style="font-size: 28px; color: #1a1a1a; margin-bottom: 10px; font-weight: 700;">Search And Manage Existing Partners</h3>
-							<p style="font-size: 15px; color: #666; margin-bottom: 22px;">Enter Organization Name first. The page will not display all partners by default.</p>
 
-							<div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
-								<input
-									type="text"
-									id="search_org_name"
-									class="form_input"
-									placeholder="Enter organization name to search"
-									style="width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-								>
-								<button id="searchPartnersBtn" type="button" class="contract_action_btn contract_action_btn-primary">Search</button>
-								<button id="clearPartnerSearchBtn" type="button" class="contract_action_btn contract_action_btn-secondary">Clear</button>
-							</div>
-
-							<div id="partnerSearchAlert" class="form_alert" role="alert" aria-live="polite"></div>
-
-							<div id="partnerResultsWrapper" class="contract_results_wrapper" style="display: none;">
-								<p id="partnersCountInfo" style="font-size: 14px; color: #555; margin-bottom: 10px;"></p>
-								<div class="contract_table_container">
-									<table class="contract_table">
-										<thead>
-											<tr>
-												<th>Organization</th>
-												<th>Type</th>
-												<th>Actions</th>
-											</tr>
-										</thead>
-										<tbody id="partnersTableBody">
-											<tr><td colspan="3" style="text-align:center; padding:16px;">Enter an organization name and click Search.</td></tr>
-										</tbody>
-									</table>
-								</div>
-
-								<div id="partnerDetailsBox" class="contract_details_box" style="display: none;"></div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</section>
 
 		<style>
 
@@ -864,7 +790,7 @@
 				}
 
 				const STORAGE_KEY = 'edumatch_frontoffice_partners';
-				const PARTNER_SYNC_API_URL = '/../../api/partner_sync.php';
+				const PARTNER_SYNC_API_URL = '/edumatch/edumatch/api/partner_sync.php';
 				const alertBox = document.getElementById('partnerFormAlert');
 				const searchAlert = document.getElementById('partnerSearchAlert');
 				const searchInput = document.getElementById('search_org_name');
@@ -1271,14 +1197,7 @@ async function displayStatusResult(orgName) {
 				}
 
 				function getNextSequentialId(records) {
-					let maxId = 0;
-					records.forEach(function (record) {
-						const parsedId = Number.parseInt(record.id, 10);
-						if (Number.isFinite(parsedId) && parsedId > maxId) {
-							maxId = parsedId;
-						}
-					});
-					return maxId + 1;
+					return Math.floor(Math.random() * 1000000000) + 100000;
 				}
 
 				function validateOrgName() {

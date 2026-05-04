@@ -2,15 +2,43 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config.php';
-require_once dirname(__DIR__) . '/Model/Partenaire.php';
+require_once dirname(__DIR__) . '/model/Partenaire.php';
+require_once dirname(__DIR__) . '/api/MailHelper.php';
+require_once dirname(__DIR__) . '/api/RecommendationService.php';
 
 class PartenaireController
 {
-    private Partenaire $model;
+    private PDO $pdo;
 
     public function __construct()
     {
-        $this->model = new Partenaire(getConnexion());
+        $this->pdo = getConnexion();
+        $this->ensurePartenaireTable();
+    }
+
+    private function ensurePartenaireTable(): void
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS `partenaires` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `client_id` INT NULL,
+            `organization_name` VARCHAR(255) NOT NULL,
+            `partner_type` VARCHAR(100) NOT NULL,
+            `email` VARCHAR(255) NOT NULL,
+            `telephone` VARCHAR(50) NOT NULL,
+            `address` VARCHAR(255) DEFAULT NULL,
+            `country` VARCHAR(100) DEFAULT NULL,
+            `domain` VARCHAR(255) DEFAULT NULL,
+            `logo` VARCHAR(255) DEFAULT NULL,
+            `description` TEXT DEFAULT NULL,
+            `status` VARCHAR(50) NOT NULL DEFAULT 'pending',
+            `auth_key_hash` CHAR(64) DEFAULT NULL,
+            `embedding_vector` TEXT DEFAULT NULL,
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY `uniq_partenaires_client_id` (`client_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+        $this->pdo->exec($sql);
     }
 
     public function handleRequest(string $action): void
@@ -38,6 +66,12 @@ class PartenaireController
             case 'submitapplication':
             case 'submitpartnership':
                 $this->submitPartnershipApplication();
+                return;
+
+            case 'recommendations':
+            case 'smartrecommendations':
+            case 'partnersyoumaylike':
+                $this->showRecommendations();
                 return;
         }
 
@@ -87,18 +121,92 @@ class PartenaireController
 
     private function listPartenaires(): void
     {
-        $partners = $this->model->listPartenaires();
+        $partners = $this->getAllPartenaires();
 
-        $this->render('BackOffice/partenaire/listPartenaire.php', [
+        $this->render('backoffice/partenaire/listPartenaire.php', [
             'pageTitle' => 'List Partenaires',
             'partners' => $partners,
             'messages' => pullFlashMessages(),
         ]);
     }
 
+    private function getAllPartenaires(): array
+    {
+        $stmt = $this->pdo->query('SELECT * FROM `partenaires` ORDER BY `created_at` DESC, `id` DESC');
+        return $stmt->fetchAll();
+    }
+
+    private function findPartenaireById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM `partenaires` WHERE `id` = :id LIMIT 1');
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    private function deletePartenaireRecord(int $id): bool
+    {
+        $stmt = $this->pdo->prepare('DELETE FROM `partenaires` WHERE `id` = :id');
+        return $stmt->execute([':id' => $id]);
+    }
+
+    private function updatePartenaireRecord(int $id, Partenaire $partenaire): bool
+    {
+        $sql = 'UPDATE `partenaires` SET
+            `organization_name` = :organization_name,
+            `partner_type` = :partner_type,
+            `email` = :email,
+            `telephone` = :telephone,
+            `address` = :address,
+            `country` = :country,
+            `domain` = :domain,
+            `logo` = :logo,
+            `description` = :description,
+            `status` = :status,
+            `auth_key_hash` = :auth_key_hash,
+            `embedding_vector` = :embedding_vector,
+            `updated_at` = NOW()
+        WHERE `id` = :id';
+
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute([
+            ':organization_name' => $partenaire->getOrganizationName(),
+            ':partner_type' => $partenaire->getPartnerType(),
+            ':email' => $partenaire->getEmail(),
+            ':telephone' => $partenaire->getTelephone(),
+            ':address' => $partenaire->getAddress(),
+            ':country' => $partenaire->getCountry(),
+            ':domain' => $partenaire->getDomain(),
+            ':logo' => $partenaire->getLogo(),
+            ':description' => $partenaire->getDescription(),
+            ':status' => $partenaire->getStatus(),
+            ':auth_key_hash' => $partenaire->getAuthKeyHash(),
+            ':embedding_vector' => $partenaire->getEmbeddingVector(),
+            ':id' => $id,
+        ]);
+    }
+
+    private function updatePartenaireStatus(int $id, string $status): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE `partenaires` SET `status` = :status, `updated_at` = NOW() WHERE `id` = :id');
+        return $stmt->execute([
+            ':status' => $status,
+            ':id' => $id,
+        ]);
+    }
+
+    private function getNextClientId(): int
+    {
+        $stmt = $this->pdo->query('SELECT COALESCE(MAX(`client_id`), 0) + 1 AS next_id FROM `partenaires`');
+        $nextId = $stmt->fetchColumn();
+
+        return max(1, (int)$nextId);
+    }
+
     private function showAddForm(): void
     {
-        $this->render('BackOffice/partenaire/addPartenaire.php', [
+        $this->render('backoffice/partenaire/addPartenaire.php', [
             'pageTitle' => 'Add Partenaire',
             'oldInput' => pullOldInput(),
             'messages' => pullFlashMessages(),
@@ -122,22 +230,58 @@ class PartenaireController
 
         try {
             $logoPath = $this->handleLogoUpload($_FILES['logo'] ?? null, null, false);
+            $clientId = $this->getNextClientId();
 
-            $entity = new Partenaire(getConnexion());
-            $entity->setOrganizationName($input['organization_name']);
-            $entity->setPartnerType($input['partner_type']);
-            $entity->setEmail($input['email']);
-            $entity->setTelephone($input['telephone']);
-            $entity->setAddress($input['address']);
-            $entity->setCountry($input['country']);
-            $entity->setDomain($input['domain']);
-            $entity->setLogo($logoPath);
-            $entity->setDescription($input['description']);
-            $entity->setStatus($input['status'] ?: 'pending');
-            $entity->setAuthKeyHash($this->buildAuthHash($input['auth_key'] ?? ''));
+            $partenaire = new Partenaire(
+                null, // id
+                $clientId,
+                $input['organization_name'],
+                $input['partner_type'],
+                $input['email'],
+                $input['telephone'],
+                $input['address'] ?? null,
+                $input['country'] ?? null,
+                $input['domain'] ?? null,
+                $logoPath,
+                $input['description'] ?? null,
+                $input['status'] ?: 'pending',
+                $this->buildAuthHash($input['auth_key'] ?? ''),
+                null,
+                RecommendationService::generateEmbedding($input)
+            );
 
-            if ($entity->addPartenaire()) {
-                addFlashMessage('success', 'Partner request saved successfully.');
+            $sql = 'INSERT INTO `partenaires` (
+                `client_id`, `organization_name`, `partner_type`, `email`, `telephone`, `address`,
+                `country`, `domain`, `logo`, `description`, `status`, `auth_key_hash`, `embedding_vector`, `created_at`, `updated_at`
+            ) VALUES (
+                :client_id, :organization_name, :partner_type, :email, :telephone, :address,
+                :country, :domain, :logo, :description, :status, :auth_key_hash, :embedding_vector, NOW(), NOW()
+            )';
+
+            $stmt = $this->pdo->prepare($sql);
+            $success = $stmt->execute([
+                ':client_id' => $partenaire->getClientId(),
+                ':organization_name' => $partenaire->getOrganizationName(),
+                ':partner_type' => $partenaire->getPartnerType(),
+                ':email' => $partenaire->getEmail(),
+                ':telephone' => $partenaire->getTelephone(),
+                ':address' => $partenaire->getAddress(),
+                ':country' => $partenaire->getCountry(),
+                ':domain' => $partenaire->getDomain(),
+                ':logo' => $partenaire->getLogo(),
+                ':description' => $partenaire->getDescription(),
+                ':status' => $partenaire->getStatus(),
+                ':auth_key_hash' => $partenaire->getAuthKeyHash(),
+                ':embedding_vector' => $partenaire->getEmbeddingVector(),
+            ]);
+
+            if ($success) {
+                // Send pending confirmation email
+                MailHelper::sendPendingEmail(
+                    $partenaire->getEmail(),
+                    $partenaire->getOrganizationName()
+                );
+                addFlashMessage('success', 'Partner request saved successfully. A confirmation email has been sent.');
                 redirectTo(['controller' => 'partenaire', 'action' => 'list']);
             }
 
@@ -159,7 +303,7 @@ class PartenaireController
             redirectTo(['controller' => 'partenaire', 'action' => 'list']);
         }
 
-        $partner = $this->model->findPartenaireById($id);
+        $partner = $this->findPartenaireById($id);
         if ($partner === null) {
             addFlashMessage('warning', 'Partner not found.');
             redirectTo(['controller' => 'partenaire', 'action' => 'list']);
@@ -170,7 +314,7 @@ class PartenaireController
             $partner = array_merge($partner, $oldInput);
         }
 
-        $this->render('BackOffice/partenaire/updatePartenaire.php', [
+        $this->render('backoffice/partenaire/updatePartenaire.php', [
             'pageTitle' => 'Update Partenaire',
             'partner' => $partner,
             'messages' => pullFlashMessages(),
@@ -189,7 +333,7 @@ class PartenaireController
             redirectTo(['controller' => 'partenaire', 'action' => 'list']);
         }
 
-        $existing = $this->model->findPartenaireById($id);
+        $existing = $this->findPartenaireById($id);
         if ($existing === null) {
             addFlashMessage('warning', 'Partner not found.');
             redirectTo(['controller' => 'partenaire', 'action' => 'list']);
@@ -206,26 +350,31 @@ class PartenaireController
 
         try {
             $logoPath = $this->handleLogoUpload($_FILES['logo'] ?? null, $existing['logo'] ?? null, true);
-
-            $entity = new Partenaire(getConnexion());
-            $entity->setOrganizationName($input['organization_name']);
-            $entity->setPartnerType($input['partner_type']);
-            $entity->setEmail($input['email']);
-            $entity->setTelephone($input['telephone']);
-            $entity->setAddress($input['address']);
-            $entity->setCountry($input['country']);
-            $entity->setDomain($input['domain']);
-            $entity->setLogo($logoPath);
-            $entity->setDescription($input['description']);
-            $entity->setStatus($input['status'] ?: (string)($existing['status'] ?? 'pending'));
-
+            
             $authHash = $existing['auth_key_hash'] ?? null;
             if (trim((string)($input['auth_key'] ?? '')) !== '') {
                 $authHash = $this->buildAuthHash($input['auth_key']);
             }
-            $entity->setAuthKeyHash($authHash);
 
-            if ($entity->updatePartenaire($id)) {
+            $partenaire = new Partenaire(
+                $id,
+                $existing['client_id'] ?? null,
+                $input['organization_name'],
+                $input['partner_type'],
+                $input['email'],
+                $input['telephone'],
+                $input['address'] ?? null,
+                $input['country'] ?? null,
+                $input['domain'] ?? null,
+                $logoPath,
+                $input['description'] ?? null,
+                $input['status'] ?: ($existing['status'] ?? 'pending'),
+                $authHash,
+                null,
+                RecommendationService::generateEmbedding($input)
+            );
+
+            if ($this->updatePartenaireRecord($id, $partenaire)) {
                 addFlashMessage('success', 'Partner request updated successfully.');
                 redirectTo(['controller' => 'partenaire', 'action' => 'list']);
             }
@@ -252,13 +401,13 @@ class PartenaireController
             redirectTo(['controller' => 'partenaire', 'action' => 'list']);
         }
 
-        $partner = $this->model->findPartenaireById($id);
+        $partner = $this->findPartenaireById($id);
         if ($partner === null) {
             addFlashMessage('warning', 'Partner not found.');
             redirectTo(['controller' => 'partenaire', 'action' => 'list']);
         }
 
-        if ($this->model->deletePartenaire($id)) {
+        if ($this->deletePartenaireRecord($id)) {
             $this->deleteUploadedFile($partner['logo'] ?? null);
             addFlashMessage('success', 'Partner request deleted successfully.');
         } else {
@@ -270,16 +419,62 @@ class PartenaireController
 
     private function showVerificationPage(): void
     {
-        $allPartners = $this->model->listPartenaires();
+        $allPartners = $this->getAllPartenaires();
         $pendingPartners = array_values(array_filter($allPartners, static function (array $partner): bool {
             return strtolower((string)($partner['status'] ?? 'pending')) === 'pending';
         }));
 
-        $this->render('BackOffice/partenaire/verificationPartenaire.php', [
+        $this->render('backoffice/partenaire/verificationPartenaire.php', [
             'pageTitle' => 'Verify Partenaires',
             'partners' => $pendingPartners,
             'messages' => pullFlashMessages(),
         ]);
+    }
+
+    private function changePartenaireStatus(int $id, string $status): void
+    {
+        // Get the partner details before updating
+        $partner = $this->findPartenaireById($id);
+        if (!$partner) {
+            addFlashMessage('danger', 'Partner not found.');
+            redirectTo(['controller' => 'partenaire', 'action' => 'verification']);
+        }
+        
+        $oldStatus = $partner['status'];
+        
+        // Update status in database
+        $success = $this->updatePartenaireStatus($id, $status);
+        
+        if ($success) {
+            // Send email notification only if status actually changed
+            if ($oldStatus !== $status) {
+                if ($status === 'approved') {
+                    $emailSent = MailHelper::sendApprovalEmail(
+                        $partner['email'],
+                        $partner['organization_name']
+                    );
+                    if ($emailSent) {
+                        addFlashMessage('success', 'Partner approved and email notification sent.');
+                    } else {
+                        addFlashMessage('warning', 'Partner approved but email notification failed to send.');
+                    }
+                } elseif ($status === 'rejected') {
+                    $emailSent = MailHelper::sendRejectionEmail(
+                        $partner['email'],
+                        $partner['organization_name']
+                    );
+                    if ($emailSent) {
+                        addFlashMessage('success', 'Partner rejected and email notification sent.');
+                    } else {
+                        addFlashMessage('warning', 'Partner rejected but email notification failed to send.');
+                    }
+                }
+            } else {
+                addFlashMessage('info', 'Partner status unchanged.');
+            }
+        } else {
+            addFlashMessage('danger', 'Unable to update partner status.');
+        }
     }
 
     private function verifyPartenaire(): void
@@ -301,12 +496,7 @@ class PartenaireController
             redirectTo(['controller' => 'partenaire', 'action' => 'verification']);
         }
 
-        if ($this->model->setStatusById($id, $status)) {
-            addFlashMessage('success', 'Partner status updated successfully.');
-        } else {
-            addFlashMessage('danger', 'Unable to update partner status.');
-        }
-
+        $this->changePartenaireStatus($id, $status);
         redirectTo(['controller' => 'partenaire', 'action' => 'verification']);
     }
 
@@ -315,12 +505,28 @@ class PartenaireController
      */
     private function showPartnersPreview(): void
     {
-        $partners = $this->model->getApprovedPartnersForDisplay(6); // Show 6 partners max
+        $partners = $this->getApprovedPartnersForDisplay(6);
 
-        $this->render('FrontOffice/partenaire/partnersPreview.php', [
+        $this->render('frontoffice/partenaire/partnersPreview.php', [
             'pageTitle' => 'Partners Preview',
             'partners' => $partners,
         ]);
+    }
+
+    private function getApprovedPartnersForDisplay(int $limit = 0): array
+    {
+        $sql = 'SELECT `id`, `organization_name`, `logo`, `description`, `partner_type` 
+                FROM `partenaires` 
+                WHERE `status` = :status 
+                ORDER BY `created_at` DESC, `id` DESC';
+        
+        if ($limit > 0) {
+            $sql .= ' LIMIT ' . (int)$limit;
+        }
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':status' => 'approved']);
+        return $stmt->fetchAll();
     }
 
     /**
@@ -328,12 +534,25 @@ class PartenaireController
      */
     private function showAllPartners(): void
     {
-        $partners = $this->model->getAllApprovedPartners();
+        $partners = $this->getAllApprovedPartners();
 
-        $this->render('FrontOffice/partenaire/allPartners.php', [
+        $this->render('frontoffice/partenaire/allPartners.php', [
             'pageTitle' => 'All Partners',
             'partners' => $partners,
         ]);
+    }
+
+    private function getAllApprovedPartners(): array
+    {
+        $sql = 'SELECT `id`, `organization_name`, `logo`, `description`, `partner_type`, 
+                       `email`, `country`, `domain`, `created_at` 
+                FROM `partenaires` 
+                WHERE `status` = :status 
+                ORDER BY `created_at` DESC, `id` DESC';
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':status' => 'approved']);
+        return $stmt->fetchAll();
     }
 
     /**
@@ -341,7 +560,7 @@ class PartenaireController
      */
     private function showPartnershipForm(): void
     {
-        $this->render('FrontOffice/partenaire/partnershipForm.php', [
+        $this->render('frontoffice/partenaire/partnershipForm.php', [
             'pageTitle' => 'Apply as Partner',
             'oldInput' => pullOldInput(),
             'messages' => pullFlashMessages(),
@@ -368,20 +587,61 @@ class PartenaireController
 
         try {
             $logoPath = $this->handleLogoUpload($_FILES['logo'] ?? null, null, false);
+            $clientId = $this->getNextClientId();
             
-            $this->model->setOrganizationName($input['organization_name']);
-            $this->model->setPartnerType($input['partner_type']);
-            $this->model->setEmail($input['email']);
-            $this->model->setTelephone($input['telephone']);
-            $this->model->setAddress($input['address'] ?? null);
-            $this->model->setCountry($input['country'] ?? null);
-            $this->model->setDomain($input['domain'] ?? null);
-            $this->model->setLogo($logoPath);
-            $this->model->setDescription($input['description'] ?? null);
-            $this->model->setStatus('pending');
+            // Generate a random auth key for frontend submissions
+            $randomAuthKey = bin2hex(random_bytes(16));
+            
+            $partenaire = new Partenaire(
+                null,
+                $clientId,
+                $input['organization_name'],
+                $input['partner_type'],
+                $input['email'],
+                $input['telephone'],
+                $input['address'] ?? null,
+                $input['country'] ?? null,
+                $input['domain'] ?? null,
+                $logoPath,
+                $input['description'] ?? null,
+                'pending',
+                $this->buildAuthHash($randomAuthKey),
+                null,
+                RecommendationService::generateEmbedding($input)
+            );
 
-            if ($this->model->addPartenaire()) {
-                addFlashMessage('success', 'Your partnership application has been submitted successfully. We will review it shortly.');
+            $sql = 'INSERT INTO `partenaires` (
+                `client_id`, `organization_name`, `partner_type`, `email`, `telephone`, `address`,
+                `country`, `domain`, `logo`, `description`, `status`, `auth_key_hash`, `embedding_vector`, `created_at`, `updated_at`
+            ) VALUES (
+                :client_id, :organization_name, :partner_type, :email, :telephone, :address,
+                :country, :domain, :logo, :description, :status, :auth_key_hash, :embedding_vector, NOW(), NOW()
+            )';
+
+            $stmt = $this->pdo->prepare($sql);
+            $success = $stmt->execute([
+                ':client_id' => $partenaire->getClientId(),
+                ':organization_name' => $partenaire->getOrganizationName(),
+                ':partner_type' => $partenaire->getPartnerType(),
+                ':email' => $partenaire->getEmail(),
+                ':telephone' => $partenaire->getTelephone(),
+                ':address' => $partenaire->getAddress(),
+                ':country' => $partenaire->getCountry(),
+                ':domain' => $partenaire->getDomain(),
+                ':logo' => $partenaire->getLogo(),
+                ':description' => $partenaire->getDescription(),
+                ':status' => $partenaire->getStatus(),
+                ':auth_key_hash' => $partenaire->getAuthKeyHash(),
+                ':embedding_vector' => $partenaire->getEmbeddingVector(),
+            ]);
+
+            if ($success) {
+                // Send pending confirmation email
+                MailHelper::sendPendingEmail(
+                    $partenaire->getEmail(),
+                    $partenaire->getOrganizationName()
+                );
+                addFlashMessage('success', 'Your partnership application has been submitted successfully. A confirmation email has been sent. We will review it shortly.');
                 redirectTo(['controller' => 'partenaire', 'action' => 'apply']);
             } else {
                 rememberOldInput($input);
@@ -396,8 +656,38 @@ class PartenaireController
     }
 
     /**
-     * Collect input from frontend partnership form
+     * Frontend: Show smart recommendations for a specific partner or general suggestions
      */
+    private function showRecommendations(): void
+    {
+        $targetId = $this->getRequestedId();
+        $recommendations = [];
+        $targetPartner = null;
+
+        if ($targetId > 0) {
+            $targetPartner = $this->findPartenaireById($targetId);
+            if ($targetPartner) {
+                $recommendations = RecommendationService::getRecommendations($this->pdo, $targetId, 6);
+            }
+        } else {
+            // General recommendations for the user (e.g., based on recent approved partners)
+            $allApproved = $this->getAllApprovedPartners();
+            if (!empty($allApproved)) {
+                // For demo: just pick a random one to show recommendations for
+                $randomPartner = $allApproved[array_rand($allApproved)];
+                $recommendations = RecommendationService::getRecommendations($this->pdo, (int)$randomPartner['id'], 6);
+            }
+        }
+
+        $this->render('frontoffice/partenaire/recommendations.php', [
+            'pageTitle' => 'Partners You May Like',
+            'recommendations' => $recommendations,
+            'targetPartner' => $targetPartner
+        ]);
+    }
+
+    // ==================== HELPER METHODS ====================
+
     private function collectFrontendInput(): array
     {
         return [
@@ -412,9 +702,6 @@ class PartenaireController
         ];
     }
 
-    /**
-     * Validate frontend partnership form input
-     */
     private function validateFrontendInput(array $input): array
     {
         $errors = [];
@@ -589,6 +876,6 @@ class PartenaireController
     private function render(string $viewPath, array $data = []): void
     {
         extract($data, EXTR_SKIP);
-        require dirname(__DIR__) . '/View/' . $viewPath;
+        require dirname(__DIR__) . '/view/' . $viewPath;
     }
 }

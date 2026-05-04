@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<!-- Meta -->
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<title>Partners You May Like - EduMatch AI</title>			
+		<!-- Latest Bootstrap min CSS -->
+		<link rel="stylesheet" href="../../assets/bootstrap/css/bootstrap.min.css">		
+		<!-- Google Font -->
+		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+		<!-- Font Awesome CSS -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+		<link rel="stylesheet" href="../../assets/fonts/themify-icons.css">
+		<!-- Style CSS -->					
+		<link rel="stylesheet" href="../../assets/css/style.css">
+        <style>
+            .ai-badge {
+                background: rgba(255, 127, 80, 0.1);
+                color: #ff7f50;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-weight: 600;
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                margin-bottom: 15px;
+                display: inline-block;
+            }
+            .partner-card {
+                background: white;
+                border-radius: 15px;
+                padding: 25px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+                transition: all 0.3s ease;
+                height: 100%;
+                border: 1px solid rgba(0,0,0,0.05);
+                display: flex;
+                flex-direction: column;
+            }
+            .partner-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            }
+            .partner-logo {
+                width: 70px;
+                height: 70px;
+                border-radius: 12px;
+                object-fit: cover;
+                margin-bottom: 15px;
+                background: #f8f9fa;
+            }
+            .partner-name {
+                font-size: 1.2rem;
+                font-weight: 700;
+                margin-bottom: 5px;
+            }
+            .partner-type {
+                color: #ff7f50;
+                font-size: 0.85rem;
+                font-weight: 600;
+                margin-bottom: 15px;
+            }
+            .partner-desc {
+                font-size: 0.9rem;
+                color: #666;
+                flex-grow: 1;
+            }
+            .match-score {
+                font-size: 0.75rem;
+                font-weight: 700;
+                color: #4caf50;
+                background: rgba(76, 175, 80, 0.1);
+                padding: 2px 8px;
+                border-radius: 10px;
+                float: right;
+            }
+            #partners-grid {
+                padding-top: 40px;
+            }
+            .loader-container {
+                text-align: center;
+                padding: 100px 0;
+            }
+        </style>
+	</head>
+	
+    <body data-spy="scroll" data-offset="80">
+
+		<!-- START NAVBAR -->
+		<div id="navigation" class="navbar-light bg-faded site-navigation">
+			<div class="container-fluid">
+				<div class="row">
+					<div class="col-20 align-self-center">
+						<div class="site-logo">
+							<a href="index.html"><img src="../../assets/img/logo.png" alt="logo edumatch" width="500" height="100"/></a>
+						</div>
+					</div>
+					<div class="col-60 d-flex">
+						<nav id="main-menu">
+							<ul>
+								<li><a href="index.html">Home</a></li>
+								<li><a href="about.html">About</a></li>
+								<li><a href="partenariat.html">Partenariat</a></li>
+								<li><a href="evenement.html">Événement</a></li>
+								<li><a href="quiz.html">Quiz</a></li>
+								<li><a href="offre-emploi.html">Offre d'emploi</a></li>
+							</ul>
+						</nav>
+					</div>
+					<div class="col-20 d-none d-xl-block text-end align-self-center">
+						<a href="#" class="header-btn">Sign In</a>
+						<a href="contact.html" class="btn_one">Sign Up</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- END NAVBAR -->
+
+		<!-- START SECTION TOP -->
+		<section class="section-top" style="background-image: url(../../assets/img/bg/section-bg.jpg);  background-size:cover; background-position: center center;">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-10 offset-lg-1 text-center">
+						<div class="section-top-title wow fadeInRight" data-wow-duration="1s" data-wow-delay="0.3s" data-wow-offset="0">
+							<h1>Partners You May Like</h1>
+							<ul>
+								<li><a href="index.html">Home</a></li>
+								<li> / AI Recommendations</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>	
+		<!-- END SECTION TOP -->
+
+		<!-- START PARTNERS GRID -->
+		<section class="partners_grid_area section-padding">
+			<div class="container">
+                <div class="row text-center mb-5">
+                    <div class="col-12">
+                        <span class="ai-badge">AI Intelligence</span>
+                        <h2>Smart Recommendations</h2>
+                        <p>Discover organizations and institutions that align with your mission.</p>
+                    </div>
+                </div>
+
+                <div id="loader" class="loader-container">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-3">Analyzing partner profiles...</p>
+                </div>
+
+				<div class="row g-4" id="partners-grid" style="display: none;">
+                    <!-- Partners will be loaded here -->
+                </div>
+			</div>
+		</section>
+		<!-- END PARTNERS GRID -->
+
+		<!-- START FOOTER -->
+		<footer class="footer section-padding" style="background: #1a1a1a; color: white;">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-12 text-center">
+						<p>&copy; 2024 EduMatch. All Rights Reserved.</p>
+					</div>
+				</div>
+			</div>
+		</footer>
+		<!-- END FOOTER -->
+
+		<!-- Scripts -->
+		<script src="../../assets/js/jquery-1.12.4.min.js"></script>
+		<script src="../../assets/bootstrap/js/bootstrap.min.js"></script>
+        
+        <script>
+            $(document).ready(function() {
+                // Fetch recommendations from API
+                // For general suggestions, we'll try to find a random ID or just list top approved
+                fetch('../../api/get_recommendations.php?limit=9') 
+                    .then(response => response.json())
+                    .then(data => {
+                        $('#loader').hide();
+                        const grid = $('#partners-grid');
+                        grid.show();
+
+                        if (data.success && data.data.length > 0) {
+                            let currentTheme = '';
+                            data.data.forEach(partner => {
+                                // Add theme header if it changes
+                                if (partner.theme && partner.theme !== currentTheme) {
+                                    currentTheme = partner.theme;
+                                    grid.append(`
+                                        <div class="col-12 mt-5 mb-3">
+                                            <h2 style="font-size: 24px; font-weight: 700; border-left: 5px solid #ff7f50; padding-left: 15px;">${currentTheme}</h2>
+                                            <hr>
+                                        </div>
+                                    `);
+                                }
+
+                                const logo = partner.logo ? '../../' + partner.logo : 'https://via.placeholder.com/150';
+                                const card = `
+                                    <div class="col-lg-4 col-md-6 mb-4">
+                                        <div class="partner-card">
+                                            <div>
+                                                ${partner.similarity_score < 100 ? `<span class="match-score">${Math.round(partner.similarity_score)}% Match</span>` : ''}
+                                                <img src="${logo}" alt="${partner.organization_name}" class="partner-logo">
+                                            </div>
+                                            <h3 class="partner-name">${partner.organization_name}</h3>
+                                            <div class="partner-type">${partner.partner_type}</div>
+                                            <p class="partner-desc">${partner.description || 'No description available.'}</p>
+                                            <a href="#" class="btn btn-outline-dark btn-sm mt-3">Learn More</a>
+                                        </div>
+                                    </div>
+                                `;
+                                grid.append(card);
+                            });
+                        } else {
+                            grid.html('<div class="col-12 text-center"><p>No recommendations available at the moment. Please check back later!</p></div>');
+                        }
+                    })
+                    .catch(error => {
+                        $('#loader').hide();
+                        $('#partners-grid').show().html('<div class="col-12 text-center text-danger"><p>Error loading recommendations. Please try again later.</p></div>');
+                        console.error('Error:', error);
+                    });
+            });
+        </script>
+	</body>
+</html>

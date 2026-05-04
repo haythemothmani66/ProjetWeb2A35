@@ -114,6 +114,7 @@ try {
         `description` TEXT DEFAULT NULL,
         `status` VARCHAR(50) NOT NULL DEFAULT 'pending',
         `auth_key_hash` CHAR(64) DEFAULT NULL,
+        `embedding_vector` TEXT DEFAULT NULL,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
@@ -124,6 +125,7 @@ try {
 
     ensure_column($conn, 'partenaires', 'client_id', 'INT NULL');
     ensure_column($conn, 'partenaires', 'auth_key_hash', 'CHAR(64) DEFAULT NULL');
+    ensure_column($conn, 'partenaires', 'embedding_vector', 'TEXT DEFAULT NULL');
     ensure_column($conn, 'partenaires', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
     ensure_unique_index($conn, 'partenaires', 'uniq_partenaires_client_id', 'client_id');
 
@@ -173,10 +175,19 @@ try {
         ]);
     }
 
+    // Calculate embedding vector
+    require_once __DIR__ . '/RecommendationService.php';
+    $embeddingVector = RecommendationService::generateEmbedding([
+        'organization_name' => $organizationName,
+        'partner_type' => $partnerType,
+        'description' => $description,
+        'country' => $country
+    ]);
+
     $upsertSql = 'INSERT INTO `partenaires` (
-        `client_id`, `organization_name`, `partner_type`, `email`, `telephone`, `address`, `country`, `domain`, `logo`, `description`, `status`, `auth_key_hash`, `created_at`, `updated_at`
+        `client_id`, `organization_name`, `partner_type`, `email`, `telephone`, `address`, `country`, `domain`, `logo`, `description`, `status`, `auth_key_hash`, `embedding_vector`, `created_at`, `updated_at`
     ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
     ) ON DUPLICATE KEY UPDATE
         `organization_name` = VALUES(`organization_name`),
         `partner_type` = VALUES(`partner_type`),
@@ -189,6 +200,7 @@ try {
         `description` = VALUES(`description`),
         `status` = VALUES(`status`),
         `auth_key_hash` = VALUES(`auth_key_hash`),
+        `embedding_vector` = VALUES(`embedding_vector`),
         `updated_at` = NOW()';
 
     $upsertStmt = $conn->prepare($upsertSql);
@@ -197,7 +209,7 @@ try {
     }
 
     $upsertStmt->bind_param(
-        'isssssssssss',
+        'issssssssssss',
         $clientId,
         $organizationName,
         $partnerType,
@@ -209,15 +221,23 @@ try {
         $logo,
         $description,
         $status,
-        $authKeyHash
+        $authKeyHash,
+        $embeddingVector
     );
 
     if (!$upsertStmt->execute()) {
         throw new RuntimeException('Failed to sync partner record: ' . $upsertStmt->error);
     }
+    
+    $affectedRows = $upsertStmt->affected_rows;
 
     $upsertStmt->close();
     $conn->close();
+
+    if ($affectedRows === 1 && $status === 'pending') {
+        require_once dirname(__DIR__) . '/api/MailHelper.php';
+        MailHelper::sendPendingEmail($email, $organizationName);
+    }
 
     send_json(200, [
         'success' => true,
