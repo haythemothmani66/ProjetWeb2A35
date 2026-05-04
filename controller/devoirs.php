@@ -1,6 +1,8 @@
 <?php
 ob_start();
 session_start(); // Pour les messages de succès/erreur
+
+define('GROQ_API_KEY', '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');
 require_once __DIR__ . '/../model/devoirs_class.php';
 require_once __DIR__ . '/../model/correction_class.php';
 require_once __DIR__ . '/../config/database.php';
@@ -83,6 +85,60 @@ class Devoirs
         }
         exit;
     }
+
+    // ============================================================
+// CHATBOT ÉDUCATIF AVEC GROQ
+// ============================================================
+
+
+public function chatbot($message) {
+    if (empty($message)) {
+        return "Bonjour ! Je suis EduBot, votre assistant éducatif. Posez-moi une question !";
+    }
+    
+    $prompt = "Tu es EduBot, un assistant pédagogique intelligent pour la plateforme EduMatch.
+    Tu aides les élèves à comprendre leurs cours, leurs devoirs, et les concepts éducatifs.
+    
+    Règles :
+    - Réponds de manière claire, précise et pédagogique
+    - Si tu ne sais pas, propose des ressources ou conseille de demander au professeur
+    - Sois encourageant et patient
+    - Adapte ton langage au niveau de l'élève (collège/lycée/supérieur)
+    
+    Voici la question de l'élève : " . $message . "
+    
+    Réponds de façon naturelle, en français, sans structure particulière.";
+    
+    $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . GROQ_API_KEY
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'model' => 'llama-3.3-70b-versatile',
+        'messages' => [
+            ['role' => 'system', 'content' => 'Tu es un assistant pédagogique bienveillant.'],
+            ['role' => 'user', 'content' => $prompt]
+        ],
+        'temperature' => 0.7,
+        'max_tokens' => 500
+    ]));
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200) {
+        return "Désolé, je rencontre une difficulté technique. Veuillez réessayer ou contacter votre professeur.";
+    }
+    
+    $data = json_decode($response, true);
+    $reply = $data['choices'][0]['message']['content'] ?? "Je n'ai pas compris votre question. Pouvez-vous reformuler ?";
+    
+    return $reply;
+}
 
     // ============================================================
     //   SOUMETTRE UN DEVOIR
@@ -629,7 +685,11 @@ if ($action === 'submit') {
     $devoir->updateCorrection();
 } elseif ($action === 'sentimentStats') {
     $devoir->getSentimentStats();
-} else {
+}elseif ($action === 'chat') {
+    $message = $_GET['message'] ?? $_POST['message'] ?? '';
+    $reply = $devoir->chatbot($message);
+    echo json_encode(['reply' => $reply]);
+}else {
     echo "Action non reconnue";
 }
 ?>
