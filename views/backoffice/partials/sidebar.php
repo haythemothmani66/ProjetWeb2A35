@@ -24,6 +24,12 @@ $navItems = [
         'icon' => 'fa-question-circle',
         'href' => $quizzesHref,
     ],
+    [
+        'key' => 'certificates',
+        'label' => 'Certificates',
+        'icon' => 'fa-certificate',
+        'href' => backofficeRoute('certificates', 'index'),
+    ],
 ];
 ?>
 <aside class="sidebar">

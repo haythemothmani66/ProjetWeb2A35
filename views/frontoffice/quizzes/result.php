@@ -279,6 +279,20 @@
                                 <i class="fas fa-book"></i> Back to Course
                             </a>
                         </div>
+
+                        <?php if ($passed): ?>
+                        <div class="mt-5 p-4" style="background: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+                            <h4 style="color: #2e7d32; margin-bottom: 15px;"><i class="fas fa-award"></i> Claim Your Certificate</h4>
+                            <p style="color: #1b5e20;">You've successfully passed the quiz! Enter your name below to generate your certificate.</p>
+                            <form action="<?= htmlspecialchars(frontofficeRoute('certificates', 'generate')); ?>" method="POST" class="d-flex align-items-center justify-content-center gap-2 mt-3" style="flex-wrap: wrap;">
+                                <input type="hidden" name="quiz_id" value="<?= (int) $quiz['id']; ?>">
+                                <input type="text" name="student_name" placeholder="Enter your full name" required class="form-control" style="max-width: 300px; padding: 12px; border-radius: 6px; border: 1px solid #c8e6c9;">
+                                <button type="submit" class="btn-action" style="background: #4caf50; color: white; border: none;">
+                                    <i class="fas fa-certificate"></i> Generate Certificate
+                                </button>
+                            </form>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
