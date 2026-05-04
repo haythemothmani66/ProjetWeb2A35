@@ -133,6 +133,68 @@ $successType = $_GET['success'] ?? '';
     <style>
 
         /* ============================================================ */
+/* STYLES POUR LA LECTURE AUDIO (TEXT-TO-SPEECH) */
+/* ============================================================ */
+
+.btn-audio {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.5rem;
+}
+
+.btn-audio:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.btn-audio.playing {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    animation: pulse-audio 1s infinite;
+}
+
+@keyframes pulse-audio {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.btn-audio-small {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+}
+
+.audio-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.speech-tooltip {
+    position: absolute;
+    background: #1e293b;
+    color: white;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    z-index: 100;
+    transform: translateY(-30px);
+    pointer-events: none;
+}
+
+        /* ============================================================ */
 /* CHATBOT STYLES */
 /* ============================================================ */
 
@@ -1493,6 +1555,11 @@ $successType = $_GET['success'] ?? '';
                         <h4 class="card-title">
                             <i class="fas fa-heading" style="color:var(--primary);margin-right:0.4rem;"></i>
                             <?= htmlspecialchars($d['titre']) ?>
+                             <button class="btn-audio speak-description" 
+            data-text="<?= htmlspecialchars(strip_tags($d['description'])) ?>"
+            title="Lire la description à voix haute">
+        <i class="fas fa-volume-up"></i>
+    </button>
                         </h4>
                         <p class="card-description">
                             <?= nl2br(htmlspecialchars($d['description'])) ?>
@@ -1557,6 +1624,11 @@ $successType = $_GET['success'] ?? '';
                                     <div class="correction-title">
                                         <i class="fas fa-chalkboard-teacher"></i>
                                         Correction 
+                                        <button class="btn-audio btn-audio-small speak-text" 
+                data-text="<?= htmlspecialchars(strip_tags($c['commentaire'])) ?>"
+                title="Lire le commentaire">
+            <i class="fas fa-volume-up"></i>
+        </button>
                                     </div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <button class="btn-delete btn-sm" data-id="<?= $c['id_correction'] ?>" data-type="correction">
@@ -1614,6 +1686,12 @@ $successType = $_GET['success'] ?? '';
                                 <div class="extra-block">
                                     <strong><i class="fas fa-lightbulb"></i> Suggestions personnalisées</strong>
                                     <?= nl2br(htmlspecialchars($c['suggestions_personnalisees'])) ?>
+                                    <button class="btn-audio btn-audio-small speak-text" 
+            data-text="<?= htmlspecialchars(strip_tags($c['suggestions_personnalisees'])) ?>"
+            title="Lire les suggestions"
+            style="margin-left: 0.75rem;">
+        <i class="fas fa-volume-up"></i>
+    </button>
                                 </div>
                                 <?php endif; ?>
 
@@ -2666,6 +2744,190 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+<script>
+    // ============================================================
+// TEXT-TO-SPEECH (Synthèse vocale)
+// ============================================================
+
+class TextToSpeech {
+    constructor() {
+        this.synthesis = window.speechSynthesis;
+        this.currentUtterance = null;
+        this.isPlaying = false;
+        this.currentButton = null;
+    }
+    
+    speak(text, buttonElement) {
+        // Arrêter la lecture en cours
+        this.stop();
+        
+        if (!text || text.trim() === '') {
+            this.showToast("Aucun texte à lire", "warning");
+            return;
+        }
+        
+        // Nettoyer le texte des balises HTML
+        const cleanText = this.cleanText(text);
+        
+        // Créer une nouvelle utterance
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        
+        // Configurer la voix (français par défaut)
+        utterance.lang = 'fr-FR';
+        utterance.rate = 0.9;  // Vitesse légèrement plus lente
+        utterance.pitch = 1.0;
+        utterance.volume = 1;
+        
+        // Événements
+        utterance.onstart = () => {
+            this.isPlaying = true;
+            this.currentButton = buttonElement;
+            if (buttonElement) {
+                buttonElement.classList.add('playing');
+                buttonElement.innerHTML = '<i class="fas fa-stop"></i>';
+                this.showToast("Lecture en cours...", "info");
+            }
+        };
+        
+        utterance.onend = () => {
+            this.isPlaying = false;
+            if (this.currentButton) {
+                this.currentButton.classList.remove('playing');
+                this.currentButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+            }
+            this.currentButton = null;
+        };
+        
+        utterance.onerror = (event) => {
+            console.error('Erreur de synthèse vocale:', event);
+            this.isPlaying = false;
+            if (this.currentButton) {
+                this.currentButton.classList.remove('playing');
+                this.currentButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+            }
+            this.showToast("Erreur de lecture audio", "error");
+        };
+        
+        this.currentUtterance = utterance;
+        this.synthesis.speak(utterance);
+    }
+    
+    stop() {
+        if (this.synthesis.speaking || this.synthesis.pending) {
+            this.synthesis.cancel();
+        }
+        this.isPlaying = false;
+        if (this.currentButton) {
+            this.currentButton.classList.remove('playing');
+            this.currentButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+            this.currentButton = null;
+        }
+    }
+    
+    cleanText(text) {
+        // Supprimer les balises HTML
+        let clean = text.replace(/<[^>]*>/g, '');
+        // Supprimer les emojis et caractères spéciaux
+        clean = clean.replace(/[^\w\s\u00C0-\u00FF.,!?;:()\-]/g, '');
+        // Nettoyer les espaces multiples
+        clean = clean.replace(/\s+/g, ' ');
+        return clean.trim();
+    }
+    
+    showToast(message, type) {
+        // Créer un toast temporaire
+        const toast = document.createElement('div');
+        toast.className = 'audio-toast';
+        toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-volume-up'}"></i> ${message}`;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'error' ? '#ef4444' : '#3b82f6'};
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 10000;
+            animation: fadeOut 2s ease forwards;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+}
+
+// Initialiser le TTS
+const tts = new TextToSpeech();
+
+// Arrêter la lecture quand on quitte la page
+window.addEventListener('beforeunload', () => {
+    if (tts.synthesis) {
+        tts.synthesis.cancel();
+    }
+});
+</script>
+
+<script>
+
+    // ============================================================
+// ATTACHER LES ÉVÉNEMENTS DE LECTURE AUDIO
+// ============================================================
+
+function initTextToSpeech() {
+    // Boutons pour lire la description du devoir
+    document.querySelectorAll('.speak-description').forEach(btn => {
+        // Enlever l'ancien écouteur s'il existe
+        btn.removeEventListener('click', handleDescriptionClick);
+        btn.addEventListener('click', handleDescriptionClick);
+    });
+    
+    // Boutons pour lire n'importe quel texte
+    document.querySelectorAll('.speak-text').forEach(btn => {
+        btn.removeEventListener('click', handleTextClick);
+        btn.addEventListener('click', handleTextClick);
+    });
+}
+
+function handleDescriptionClick(e) {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    const text = btn.getAttribute('data-text');
+    
+    if (tts.isPlaying && tts.currentButton === btn) {
+        tts.stop();
+    } else {
+        tts.speak(text, btn);
+    }
+}
+
+function handleTextClick(e) {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    const text = btn.getAttribute('data-text');
+    
+    if (tts.isPlaying && tts.currentButton === btn) {
+        tts.stop();
+    } else {
+        tts.speak(text, btn);
+    }
+}
+
+// Réinitialiser les événements quand le DOM change (après chargement des cartes)
+const observer = new MutationObserver(() => {
+    initTextToSpeech();
+});
+
+observer.observe(document.getElementById('feedContainer'), { 
+    childList: true, 
+    subtree: true 
+});
+
+// Initialiser au chargement
+document.addEventListener('DOMContentLoaded', initTextToSpeech);
+</script>
+
 
 </body>
 </html>
