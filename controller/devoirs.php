@@ -3,7 +3,6 @@ ob_start();
 session_start(); // Pour les messages de succès/erreur
 require_once __DIR__ . '/../model/devoirs_class.php';
 require_once __DIR__ . '/../model/correction_class.php';
-
 require_once __DIR__ . '/../config/database.php';
 
 class Devoirs
@@ -49,7 +48,7 @@ class Devoirs
         return $path . $query;
     }
 
-    private function respond(bool $success, string $message, int $statusCode = 200)
+    private function respond(bool $success, string $message, int $statusCode = 200, string $redirectUrl = null)
     {
         if ($this->isAjaxRequest()) {
             if (!headers_sent()) {
@@ -72,11 +71,12 @@ class Devoirs
             $_SESSION['form_data'] = $_POST;
         }
 
-        $target = $this->getReturnUrl();
-        $separator = strpos($target, '?') === false ? '?' : '&';
-        $target .= $separator
-            . 'flash_status=' . ($success ? 'success' : 'error')
-            . '&flash_message=' . rawurlencode($message);
+        $target = $redirectUrl ?? $this->getReturnUrl();
+        if (strpos($target, '?') === false) {
+            $target .= '?flash_status=' . ($success ? 'success' : 'error') . '&flash_message=' . rawurlencode($message);
+        } else {
+            $target .= '&flash_status=' . ($success ? 'success' : 'error') . '&flash_message=' . rawurlencode($message);
+        }
 
         if (!headers_sent()) {
             header('Location: ' . $target);
@@ -94,57 +94,56 @@ class Devoirs
         }
 
         $devoirObj = new Devoir(
-    null,
-    trim($_POST['titre'] ?? ''),
-    trim($_POST['description'] ?? ''),
-    '', // fichier (sera rempli après upload)
-    trim($_POST['date_soumission'] ?? ''),
-    trim($_POST['niveau_difficulte'] ?? ''),
-    trim($_POST['type_erreur_predominant'] ?? ''),
-    (int)($_POST['temps_estime_resolution'] ?? 0),
-    (int)($_POST['progression_eleve'] ?? 0),
-    trim($_POST['mots_cles'] ?? ''),
-    trim($_POST['urgence'] ?? ''),
-    null // id_eleve (à gérer plus tard)
-);
+            null,
+            trim($_POST['titre'] ?? ''),
+            trim($_POST['description'] ?? ''),
+            '',
+            trim($_POST['date_soumission'] ?? ''),
+            trim($_POST['niveau_difficulte'] ?? ''),
+            trim($_POST['type_erreur_predominant'] ?? ''),
+            (int)($_POST['temps_estime_resolution'] ?? 0),
+            (int)($_POST['progression_eleve'] ?? 0),
+            trim($_POST['mots_cles'] ?? ''),
+            trim($_POST['urgence'] ?? ''),
+            null
+        );
 
-// récupérer les valeurs (pour ne rien casser)
-$titre = $devoirObj->getTitre();
-$description = $devoirObj->getDescription();
-$date_soumission = $devoirObj->getDateSoumission();
-$niveau_difficulte = $devoirObj->getNiveauDifficulte();
-$type_erreur_predominant = $devoirObj->getTypeErreur();
-$temps_estime_resolution = $devoirObj->getTempsEstime();
-$progression_eleve = $devoirObj->getProgression();
-$mots_cles = $devoirObj->getMotsCles();
-$urgence = $devoirObj->getUrgence();
+        $titre = $devoirObj->getTitre();
+        $description = $devoirObj->getDescription();
+        $date_soumission = $devoirObj->getDateSoumission();
+        $niveau_difficulte = $devoirObj->getNiveauDifficulte();
+        $type_erreur_predominant = $devoirObj->getTypeErreur();
+        $temps_estime_resolution = $devoirObj->getTempsEstime();
+        $progression_eleve = $devoirObj->getProgression();
+        $mots_cles = $devoirObj->getMotsCles();
+        $urgence = $devoirObj->getUrgence();
 
-        // --- Validation serveur ---
+        // Validation serveur
         $errors = [];
-        if (empty($titre))                   $errors[] = 'Le titre est requis.';
-        if (empty($description))             $errors[] = 'La description est requise.';
-        if (empty($niveau_difficulte))       $errors[] = 'Le niveau de difficulté est requis.';
-        if (empty($date_soumission))         $errors[] = 'La date de soumission est requise.';
+        if (empty($titre)) $errors[] = 'Le titre est requis.';
+        if (empty($description)) $errors[] = 'La description est requise.';
+        if (empty($niveau_difficulte)) $errors[] = 'Le niveau de difficulté est requis.';
+        if (empty($date_soumission)) $errors[] = 'La date de soumission est requise.';
         if (empty($type_erreur_predominant)) $errors[] = "Le type d'erreur est requis.";
         if ($temps_estime_resolution < 1 || $temps_estime_resolution > 480) 
             $errors[] = 'Le temps estimé doit être entre 1 et 480 minutes.';
         if ($progression_eleve < 0 || $progression_eleve > 100) 
             $errors[] = 'La progression doit être entre 0 et 100%.';
-        if (empty($mots_cles))               $errors[] = 'Les mots clés sont requis.';
-        if (empty($urgence))                 $errors[] = "L'urgence est requise.";
+        if (empty($mots_cles)) $errors[] = 'Les mots clés sont requis.';
+        if (empty($urgence)) $errors[] = "L'urgence est requise.";
 
         if (!empty($errors)) {
             $this->respond(false, implode(', ', $errors), 422);
         }
 
-        // --- Upload fichier ---
+        // Upload fichier
         $fileName = '';
         if (isset($_FILES['file1']) && $_FILES['file1']['error'] === UPLOAD_ERR_OK) {
             $uploadDir = __DIR__ . '/../uploads/devoirs/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
 
-            $ext      = strtolower(pathinfo($_FILES['file1']['name'], PATHINFO_EXTENSION));
-            $allowed  = ['py', 'js', 'java', 'cpp', 'c', 'png', 'jpg', 'jpeg'];
+            $ext = strtolower(pathinfo($_FILES['file1']['name'], PATHINFO_EXTENSION));
+            $allowed = ['py', 'js', 'java', 'cpp', 'c', 'png', 'jpg', 'jpeg'];
 
             if (in_array($ext, $allowed)) {
                 $fileName = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($_FILES['file1']['name']));
@@ -152,7 +151,7 @@ $urgence = $devoirObj->getUrgence();
             }
         }
 
-        // --- Insertion en base de données ---
+        // Insertion
         $stmt = $this->conn->prepare("
             INSERT INTO devoirs
                 (titre, description, fichier, date_soumission,
@@ -168,13 +167,14 @@ $urgence = $devoirObj->getUrgence();
             $temps_estime_resolution, $progression_eleve,
             $mots_cles, $urgence
         ])) {
+            $devoirId = $this->conn->lastInsertId();
+            $this->updateSentiment($devoirId, $description);
             $this->respond(true, "Devoir '{$titre}' ajouté avec succès !");
         } else {
             $info = $stmt->errorInfo();
             $this->respond(false, "Erreur base de données : " . $info[2], 500);
         }
     }
-
 
     // ============================================================
     //   SOUMETTRE UNE CORRECTION
@@ -186,71 +186,74 @@ $urgence = $devoirObj->getUrgence();
         }
 
         $correctionObj = new Correction(
-    null,
-    trim($_POST['commentaire'] ?? ''),
-    '', // fichier corrigé
-    trim($_POST['date_correction'] ?? ''),
-    trim($_POST['type_feedback'] ?? ''),
-    (float)($_POST['note_estimee'] ?? 0),
-    trim($_POST['competences_evaluees'] ?? ''),
-    (int)($_POST['nombre_iterations'] ?? 1),
-    trim($_POST['suggestions_personnalisees'] ?? ''),
-    trim($_POST['ressources_recommandees'] ?? ''),
-    (int)($_POST['rapidite_correction'] ?? 0),
-    trim($_POST['ton_feedback'] ?? ''),
-    (int)($_POST['id_devoir'] ?? 0),
-    null // id_encadrant
-);
+            null,
+            trim($_POST['commentaire'] ?? ''),
+            '',
+            trim($_POST['date_correction'] ?? ''),
+            trim($_POST['type_feedback'] ?? ''),
+            (float)($_POST['note_estimee'] ?? 0),
+            trim($_POST['competences_evaluees'] ?? ''),
+            (int)($_POST['nombre_iterations'] ?? 1),
+            trim($_POST['suggestions_personnalisees'] ?? ''),
+            trim($_POST['ressources_recommandees'] ?? ''),
+            (int)($_POST['rapidite_correction'] ?? 0),
+            trim($_POST['ton_feedback'] ?? ''),
+            (int)($_POST['id_devoir'] ?? 0),
+            null
+        );
 
-// récupérer les valeurs sans casser ton code
-$id_devoir = $correctionObj->getIdDevoir();
-$commentaire = $correctionObj->getCommentaire();
-$date_correction = $correctionObj->getDateCorrection();
-$type_feedback = $correctionObj->getTypeFeedback();
-$note_estimee = $correctionObj->getNote();
-$competences_evaluees = $correctionObj->getCompetences();
-$nombre_iterations = $correctionObj->getIterations();
-$suggestions_personnalisees = $correctionObj->getSuggestions();
-$ressources_recommandees = $correctionObj->getRessources();
-$rapidite_correction = $correctionObj->getRapidite();
-$ton_feedback = $correctionObj->getTon();
+        $id_devoir = $correctionObj->getIdDevoir();
+        $commentaire = $correctionObj->getCommentaire();
+        $date_correction = $correctionObj->getDateCorrection();
+        $type_feedback = $correctionObj->getTypeFeedback();
+        $note_estimee = $correctionObj->getNote();
+        $competences_evaluees = $correctionObj->getCompetences();
+        $nombre_iterations = $correctionObj->getIterations();
+        $suggestions_personnalisees = $correctionObj->getSuggestions();
+        $ressources_recommandees = $correctionObj->getRessources();
+        $rapidite_correction = $correctionObj->getRapidite();
+        $ton_feedback = $correctionObj->getTon();
 
-        // --- Validation serveur ---
+        // Validation
         $errors = [];
-        if ($id_devoir <= 0)            $errors[] = 'Veuillez sélectionner un devoir.';
-        if (empty($commentaire))        $errors[] = 'Le commentaire est requis.';
-        if (strlen($commentaire) < 10)  $errors[] = 'Le commentaire doit faire au moins 10 caractères.';
-        if (empty($date_correction))    $errors[] = 'La date de correction est requise.';
-        if (empty($type_feedback))      $errors[] = 'Le type de feedback est requis.';
-        if ($note_estimee < 0 || $note_estimee > 20) 
-            $errors[] = 'La note doit être entre 0 et 20.';
+        if ($id_devoir <= 0) $errors[] = 'Veuillez sélectionner un devoir.';
+        if (empty($commentaire)) $errors[] = 'Le commentaire est requis.';
+        if (strlen($commentaire) < 10) $errors[] = 'Le commentaire doit faire au moins 10 caractères.';
+        if (empty($date_correction)) $errors[] = 'La date de correction est requise.';
+        if (empty($type_feedback)) $errors[] = 'Le type de feedback est requis.';
+        if ($note_estimee < 0 || $note_estimee > 20) $errors[] = 'La note doit être entre 0 et 20.';
         if (empty($competences_evaluees)) $errors[] = 'Les compétences sont requises.';
-        if ($nombre_iterations < 1 || $nombre_iterations > 10) 
-            $errors[] = 'Le nombre d\'itérations doit être entre 1 et 10.';
-        if ($rapidite_correction < 1 || $rapidite_correction > 480) 
-            $errors[] = 'La rapidité doit être entre 1 et 480 minutes.';
-        if (empty($ton_feedback))       $errors[] = 'Le ton du feedback est requis.';
+        if ($nombre_iterations < 1 || $nombre_iterations > 10) $errors[] = 'Le nombre d\'itérations doit être entre 1 et 10.';
+        if ($rapidite_correction < 1 || $rapidite_correction > 480) $errors[] = 'La rapidité doit être entre 1 et 480 minutes.';
+        if (empty($ton_feedback)) $errors[] = 'Le ton du feedback est requis.';
 
         if (!empty($errors)) {
             $this->respond(false, implode(', ', $errors), 422);
         }
 
-        // --- Upload fichier corrigé ---
+        // Upload fichier corrigé
         $fichier_corrige = '';
         if (isset($_FILES['file2']) && $_FILES['file2']['error'] === UPLOAD_ERR_OK) {
-            $uploadDir = __DIR__ . '/../uploads/corrections/';
-            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
-
-            $ext     = strtolower(pathinfo($_FILES['file2']['name'], PATHINFO_EXTENSION));
-            $allowed = ['py', 'js', 'java', 'cpp', 'c'];
-
+            $uploadDir = __DIR__ . '/../uploads/correction/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+            
+            $ext = strtolower(pathinfo($_FILES['file2']['name'], PATHINFO_EXTENSION));
+            $allowed = ['py', 'js', 'java', 'cpp', 'c', 'png', 'jpg', 'jpeg', 'pdf'];
+            
             if (in_array($ext, $allowed)) {
-                $fichier_corrige = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', basename($_FILES['file2']['name']));
-                move_uploaded_file($_FILES['file2']['tmp_name'], $uploadDir . $fichier_corrige);
+                $fichier_corrige = 'correction_' . time() . '_' . uniqid() . '.' . $ext;
+                $destination = $uploadDir . $fichier_corrige;
+                move_uploaded_file($_FILES['file2']['tmp_name'], $destination);
+            } else {
+                $this->respond(false, "Type de fichier non autorisé. Types acceptés: " . implode(', ', $allowed), 422, '/eduleb/submit.html');
+                return;
             }
+        } else {
+            $this->respond(false, "Veuillez sélectionner un fichier corrigé", 422, '/eduleb/submit.html');
+            return;
         }
 
-        // --- Insertion en base de données ---
+        // Insertion
         $stmt = $this->conn->prepare("
             INSERT INTO correction
                 (commentaire, fichier_corrige, date_correction, type_feedback,
@@ -266,22 +269,40 @@ $ton_feedback = $correctionObj->getTon();
             $suggestions_personnalisees, $ressources_recommandees,
             $rapidite_correction, $ton_feedback, $id_devoir
         ])) {
-            $this->respond(true, "Correction ajoutée avec succès pour le devoir #{$id_devoir} !");
+            $this->respond(true, "Correction ajoutée avec succès !", 200, '/eduleb/feed.html?success=correction');
         } else {
             $info = $stmt->errorInfo();
             $this->respond(false, "Erreur base de données : " . $info[2], 500);
         }
     }
- 
-// ============================================================
+
+    // ============================================================
 //   SUPPRIMER UN DEVOIR
 // ============================================================
 public function delete()
 {
     $id_devoir = (int)($_GET['id'] ?? 0);
-
+    
     if ($id_devoir <= 0) {
-        echo "ID invalide";
+        if ($this->isAjaxRequest()) {
+            echo json_encode(['success' => false, 'message' => 'ID invalide']);
+        } else {
+            echo "ID invalide";
+        }
+        return;
+    }
+
+    // Vérifier si le devoir existe
+    $stmt = $this->conn->prepare("SELECT id_devoir FROM devoirs WHERE id_devoir = ?");
+    $stmt->execute([$id_devoir]);
+    $devoir = $stmt->fetch();
+    
+    if (!$devoir) {
+        if ($this->isAjaxRequest()) {
+            echo json_encode(['success' => false, 'message' => 'Devoir non trouvé']);
+        } else {
+            echo "Devoir non trouvé";
+        }
         return;
     }
 
@@ -293,170 +314,300 @@ public function delete()
     $stmt = $this->conn->prepare("DELETE FROM devoirs WHERE id_devoir = ?");
     
     if ($stmt->execute([$id_devoir])) {
-        echo "succès";
+        if ($this->isAjaxRequest()) {
+            echo json_encode(['success' => true, 'message' => 'Devoir et ses corrections supprimés avec succès']);
+        } else {
+            echo "succès";
+        }
     } else {
-        echo "erreur";
+        if ($this->isAjaxRequest()) {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la suppression']);
+        } else {
+            echo "erreur";
+        }
     }
 }
 
-// ============================================================
+    // ============================================================
 //   SUPPRIMER UNE CORRECTION
 // ============================================================
 public function deleteCorrection()
 {
     $id_correction = (int)($_GET['id'] ?? 0);
-
+    
     if ($id_correction <= 0) {
-        echo "ID invalide";
+        if ($this->isAjaxRequest()) {
+            echo json_encode(['success' => false, 'message' => 'ID invalide']);
+        } else {
+            echo "ID invalide";
+        }
+        return;
+    }
+
+    // Vérifier si la correction existe
+    $stmt = $this->conn->prepare("SELECT id_correction FROM correction WHERE id_correction = ?");
+    $stmt->execute([$id_correction]);
+    $correction = $stmt->fetch();
+    
+    if (!$correction) {
+        if ($this->isAjaxRequest()) {
+            echo json_encode(['success' => false, 'message' => 'Correction non trouvée']);
+        } else {
+            echo "Correction non trouvée";
+        }
         return;
     }
 
     $stmt = $this->conn->prepare("DELETE FROM correction WHERE id_correction = ?");
     
     if ($stmt->execute([$id_correction])) {
-        echo "succès";
+        if ($this->isAjaxRequest()) {
+            echo json_encode(['success' => true, 'message' => 'Correction supprimée avec succès']);
+        } else {
+            echo "succès";
+        }
     } else {
-        echo "erreur";
+        if ($this->isAjaxRequest()) {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la suppression']);
+        } else {
+            echo "erreur";
+        }
+    }
+}
+    // ============================================================
+    //   RÉCUPÉRER UN DEVOIR POUR MODIFICATION
+    // ============================================================
+    public function getDevoir()
+    {
+        header('Content-Type: application/json');
+        
+        $id_devoir = (int)($_GET['id'] ?? 0);
+        if ($id_devoir <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID invalide']);
+            return;
+        }
+        
+        $stmt = $this->conn->prepare("SELECT * FROM devoirs WHERE id_devoir = ?");
+        $stmt->execute([$id_devoir]);
+        $devoir = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($devoir) {
+            echo json_encode(['success' => true, 'devoir' => $devoir]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Devoir non trouvé']);
+        }
+    }
+
+    // ============================================================
+    //   MODIFIER UN DEVOIR
+    // ============================================================
+    public function updateDevoir()
+    {
+        header('Content-Type: application/json');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+            return;
+        }
+        
+        $id_devoir = (int)($_POST['id_devoir'] ?? 0);
+        $titre = trim($_POST['titre'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $niveau_difficulte = trim($_POST['niveau_difficulte'] ?? '');
+        $date_soumission = trim($_POST['date_soumission'] ?? '');
+        $type_erreur_predominant = trim($_POST['type_erreur_predominant'] ?? '');
+        $temps_estime_resolution = (int)($_POST['temps_estime_resolution'] ?? 0);
+        $progression_eleve = (int)($_POST['progression_eleve'] ?? 0);
+        $mots_cles = trim($_POST['mots_cles'] ?? '');
+        $urgence = trim($_POST['urgence'] ?? '');
+        
+        $stmt = $this->conn->prepare("
+            UPDATE devoirs SET 
+                titre = ?, description = ?, niveau_difficulte = ?,
+                date_soumission = ?, type_erreur_predominant = ?,
+                temps_estime_resolution = ?, progression_eleve = ?,
+                mots_cles = ?, urgence = ?
+            WHERE id_devoir = ?
+        ");
+        
+        if ($stmt->execute([$titre, $description, $niveau_difficulte, $date_soumission,
+            $type_erreur_predominant, $temps_estime_resolution, $progression_eleve,
+            $mots_cles, $urgence, $id_devoir])) {
+            
+            // Mettre à jour le sentiment après modification
+            $this->updateSentiment($id_devoir, $description);
+            
+            echo json_encode(['success' => true, 'message' => 'Devoir modifié avec succès']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la modification']);
+        }
+    }
+
+    // ============================================================
+    //   RÉCUPÉRER UNE CORRECTION POUR MODIFICATION
+    // ============================================================
+    public function getCorrection()
+    {
+        header('Content-Type: application/json');
+        
+        $id_correction = (int)($_GET['id'] ?? 0);
+        if ($id_correction <= 0) {
+            echo json_encode(['success' => false, 'message' => 'ID invalide']);
+            return;
+        }
+        
+        $stmt = $this->conn->prepare("SELECT * FROM correction WHERE id_correction = ?");
+        $stmt->execute([$id_correction]);
+        $correction = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($correction) {
+            echo json_encode(['success' => true, 'data' => $correction]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Correction non trouvée']);
+        }
+    }
+
+    // ============================================================
+    //   MODIFIER UNE CORRECTION
+    // ============================================================
+    public function updateCorrection()
+    {
+        header('Content-Type: application/json');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
+            return;
+        }
+        
+        $id_correction = (int)($_POST['id_correction'] ?? 0);
+        $commentaire = trim($_POST['commentaire'] ?? '');
+        $date_correction = trim($_POST['date_correction'] ?? '');
+        $type_feedback = trim($_POST['type_feedback'] ?? '');
+        $note_estimee = (float)($_POST['note_estimee'] ?? 0);
+        $competences_evaluees = trim($_POST['competences_evaluees'] ?? '');
+        $nombre_iterations = (int)($_POST['nombre_iterations'] ?? 1);
+        $suggestions_personnalisees = trim($_POST['suggestions_personnalisees'] ?? '');
+        $ressources_recommandees = trim($_POST['ressources_recommandees'] ?? '');
+        $rapidite_correction = (int)($_POST['rapidite_correction'] ?? 0);
+        $ton_feedback = trim($_POST['ton_feedback'] ?? '');
+        
+        $stmt = $this->conn->prepare("
+            UPDATE correction SET 
+                commentaire = ?, date_correction = ?, type_feedback = ?,
+                note_estimee = ?, competences_evaluees = ?,
+                nombre_iterations = ?, suggestions_personnalisees = ?,
+                ressources_recommandees = ?, rapidite_correction = ?,
+                ton_feedback = ?
+            WHERE id_correction = ?
+        ");
+        
+        if ($stmt->execute([$commentaire, $date_correction, $type_feedback,
+            $note_estimee, $competences_evaluees, $nombre_iterations,
+            $suggestions_personnalisees, $ressources_recommandees,
+            $rapidite_correction, $ton_feedback, $id_correction])) {
+            echo json_encode(['success' => true, 'message' => 'Correction modifiée avec succès']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de la modification']);
+        }
+    }
+
+    // ============================================================
+    // ANALYSE DE SENTIMENT
+    // ============================================================
+    public function analyzeSentiment($commentaire) {
+        if (empty($commentaire)) {
+            return ['sentiment' => 'neutre', 'score' => 0.5, 'urgence' => false];
+        }
+        
+        $commentaireLower = strtolower($commentaire);
+        
+        $motsPositifs = ['bien', 'excellent', 'super', 'génial', 'parfait', 'content', 'heureux', 'facile', 'réussi', 'merci'];
+        $motsNegatifs = ['difficile', 'comprends pas', 'frustrant', 'trop dur', 'aide', 'perdu', 'bloqué'];
+        $motsStress = ['stress', 'urgence', 'examen', 'important', 'délai', 'pressé', 'note', 'réussir'];
+        $motsConfusion = ['comprends rien', 'sais pas', 'ou est ce que', 'comment faire', 'expliquez'];
+        
+        $score = 0.5;
+        $sentiment = 'neutre';
+        $urgence = false;
+        
+        foreach ($motsPositifs as $mot) {
+            if (strpos($commentaireLower, $mot) !== false) $score += 0.1;
+        }
+        foreach ($motsNegatifs as $mot) {
+            if (strpos($commentaireLower, $mot) !== false) {
+                $score -= 0.1;
+                $sentiment = 'negatif';
+            }
+        }
+        foreach ($motsStress as $mot) {
+            if (strpos($commentaireLower, $mot) !== false) {
+                $urgence = true;
+                $sentiment = 'stress';
+            }
+        }
+        foreach ($motsConfusion as $mot) {
+            if (strpos($commentaireLower, $mot) !== false) $sentiment = 'confusion';
+        }
+        
+        $score = max(0, min(1, $score));
+        if ($score > 0.7) $sentiment = 'positif';
+        if ($score < 0.3 && $sentiment != 'stress' && $sentiment != 'confusion') $sentiment = 'negatif';
+        
+        return [
+            'sentiment' => $sentiment,
+            'score' => round($score, 2),
+            'urgence' => $urgence
+        ];
+    }
+
+    public function updateSentiment($id_devoir, $commentaire) {
+        $analysis = $this->analyzeSentiment($commentaire);
+        
+        $stmt = $this->conn->prepare("
+            UPDATE devoirs 
+            SET sentiment = ?, sentiment_score = ?, alerte_urgence = ?, date_analyse = NOW()
+            WHERE id_devoir = ?
+        ");
+        
+        $stmt->execute([
+            $analysis['sentiment'],
+            $analysis['score'],
+            $analysis['urgence'] ? 1 : 0,
+            $id_devoir
+        ]);
+        
+        return $analysis;
+    }
+
+    public function getSentimentStats()
+    {
+        header('Content-Type: application/json');
+        
+        $stmt = $this->conn->query("
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN sentiment = 'positif' THEN 1 ELSE 0 END) as positif,
+                SUM(CASE WHEN sentiment = 'negatif' THEN 1 ELSE 0 END) as negatif,
+                SUM(CASE WHEN sentiment = 'neutre' THEN 1 ELSE 0 END) as neutre,
+                SUM(CASE WHEN sentiment = 'frustration' THEN 1 ELSE 0 END) as frustration,
+                SUM(CASE WHEN sentiment = 'confusion' THEN 1 ELSE 0 END) as confusion,
+                SUM(CASE WHEN sentiment = 'stress' THEN 1 ELSE 0 END) as stress,
+                SUM(CASE WHEN alerte_urgence = 1 THEN 1 ELSE 0 END) as urgences
+            FROM devoirs
+        ");
+        
+        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        echo json_encode([
+            'success' => true,
+            'stats' => $stats
+        ]);
     }
 }
 
 // ============================================================
-//   RÉCUPÉRER UN DEVOIR POUR MODIFICATION
+// APPEL SELON L'ACTION
 // ============================================================
-public function getDevoir()
-{
-    header('Content-Type: application/json');
-    
-    $id_devoir = (int)($_GET['id'] ?? 0);
-    
-    if ($id_devoir <= 0) {
-        echo json_encode(['success' => false, 'message' => 'ID invalide']);
-        return;
-    }
-    
-    $stmt = $this->conn->prepare("SELECT * FROM devoirs WHERE id_devoir = ?");
-    $stmt->execute([$id_devoir]);
-    $devoir = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($devoir) {
-        echo json_encode(['success' => true, 'data' => $devoir]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Devoir non trouvé']);
-    }
-}
-
-// ============================================================
-//   MODIFIER UN DEVOIR
-// ============================================================
-public function updateDevoir()
-{
-    header('Content-Type: application/json');
-    
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
-        return;
-    }
-    
-    $id_devoir = (int)($_POST['id_devoir'] ?? 0);
-    $titre = trim($_POST['titre'] ?? '');
-    $description = trim($_POST['description'] ?? '');
-    $niveau_difficulte = trim($_POST['niveau_difficulte'] ?? '');
-    $date_soumission = trim($_POST['date_soumission'] ?? '');
-    $type_erreur_predominant = trim($_POST['type_erreur_predominant'] ?? '');
-    $temps_estime_resolution = (int)($_POST['temps_estime_resolution'] ?? 0);
-    $progression_eleve = (int)($_POST['progression_eleve'] ?? 0);
-    $mots_cles = trim($_POST['mots_cles'] ?? '');
-    $urgence = trim($_POST['urgence'] ?? '');
-    
-    $stmt = $this->conn->prepare("
-        UPDATE devoirs SET 
-            titre = ?, description = ?, niveau_difficulte = ?,
-            date_soumission = ?, type_erreur_predominant = ?,
-            temps_estime_resolution = ?, progression_eleve = ?,
-            mots_cles = ?, urgence = ?
-        WHERE id_devoir = ?
-    ");
-    
-    if ($stmt->execute([$titre, $description, $niveau_difficulte, $date_soumission,
-        $type_erreur_predominant, $temps_estime_resolution, $progression_eleve,
-        $mots_cles, $urgence, $id_devoir])) {
-        echo json_encode(['success' => true, 'message' => 'Devoir modifié avec succès']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Erreur lors de la modification']);
-    }
-}
-
-// ============================================================
-//   RÉCUPÉRER UNE CORRECTION POUR MODIFICATION
-// ============================================================
-public function getCorrection()
-{
-    header('Content-Type: application/json');
-    
-    $id_correction = (int)($_GET['id'] ?? 0);
-    
-    if ($id_correction <= 0) {
-        echo json_encode(['success' => false, 'message' => 'ID invalide']);
-        return;
-    }
-    
-    $stmt = $this->conn->prepare("SELECT * FROM correction WHERE id_correction = ?");
-    $stmt->execute([$id_correction]);
-    $correction = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($correction) {
-        echo json_encode(['success' => true, 'data' => $correction]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Correction non trouvée']);
-    }
-}
-
-// ============================================================
-//   MODIFIER UNE CORRECTION
-// ============================================================
-public function updateCorrection()
-{
-    header('Content-Type: application/json');
-    
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['success' => false, 'message' => 'Méthode non autorisée']);
-        return;
-    }
-    
-    $id_correction = (int)($_POST['id_correction'] ?? 0);
-    $commentaire = trim($_POST['commentaire'] ?? '');
-    $date_correction = trim($_POST['date_correction'] ?? '');
-    $type_feedback = trim($_POST['type_feedback'] ?? '');
-    $note_estimee = (float)($_POST['note_estimee'] ?? 0);
-    $competences_evaluees = trim($_POST['competences_evaluees'] ?? '');
-    $nombre_iterations = (int)($_POST['nombre_iterations'] ?? 1);
-    $suggestions_personnalisees = trim($_POST['suggestions_personnalisees'] ?? '');
-    $ressources_recommandees = trim($_POST['ressources_recommandees'] ?? '');
-    $rapidite_correction = (int)($_POST['rapidite_correction'] ?? 0);
-    $ton_feedback = trim($_POST['ton_feedback'] ?? '');
-    
-    $stmt = $this->conn->prepare("
-        UPDATE correction SET 
-            commentaire = ?, date_correction = ?, type_feedback = ?,
-            note_estimee = ?, competences_evaluees = ?,
-            nombre_iterations = ?, suggestions_personnalisees = ?,
-            ressources_recommandees = ?, rapidite_correction = ?,
-            ton_feedback = ?
-        WHERE id_correction = ?
-    ");
-    
-    if ($stmt->execute([$commentaire, $date_correction, $type_feedback,
-        $note_estimee, $competences_evaluees, $nombre_iterations,
-        $suggestions_personnalisees, $ressources_recommandees,
-        $rapidite_correction, $ton_feedback, $id_correction])) {
-        echo json_encode(['success' => true, 'message' => 'Correction modifiée avec succès']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Erreur lors de la modification']);
-    }
-}
-}
-
-// --- Appel selon l'action ---
 $devoir = new Devoirs();
 $action = $_GET['action'] ?? '';
 
@@ -476,7 +627,9 @@ if ($action === 'submit') {
     $devoir->getCorrection();
 } elseif ($action === 'updatecorrection') {
     $devoir->updateCorrection();
-}else {
+} elseif ($action === 'sentimentStats') {
+    $devoir->getSentimentStats();
+} else {
     echo "Action non reconnue";
 }
 ?>

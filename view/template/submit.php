@@ -1,6 +1,13 @@
 ﻿<?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 session_start();
+
+
+
+
 
 // Récupérer et effacer les messages
 $successMessage = $_SESSION['success_message'] ?? '';
@@ -79,7 +86,122 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
 
     return '';
 }
+
+define('GROQ_API_KEY', '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');
+
+// ============================================================
+// FONCTION ASSISTANT CORRECTION IA (GROQ - Version complète)
+// ============================================================
+
+
+function callAICorrection($titre, $description, $niveau) {
+    $prompt = "Tu es un professeur expert en programmation et pédagogie. 
+    Génère une correction complète et détaillée pour le devoir suivant :
+    
+    TITRE: " . $titre . "
+    DESCRIPTION: " . $description . "
+    NIVEAU: " . $niveau . "
+    
+    
+    Tu dois répondre UNIQUEMENT avec un objet JSON valide contenant EXACTEMENT ces 6 champs :
+    {
+        \"commentaire\": \"Commentaire détaillé de la correction (min 100 caractères)\",
+        \"note_estimee\": 14,
+        \"suggestions\": \"Suggestions d'amélioration concrètes (min 50 caractères)\",
+        \"competences\": [\"compétence1\", \"compétence2\", \"compétence3\"],
+        \"type_feedback\": \"explicatif\",
+        \"ton_feedback\": \"encourageant\"
+    }
+    
+    Règles importantes :
+    - commentaire : entre 100 et 300 caractères, formaté avec des retours à la ligne
+    - note_estimee : nombre entier entre 8 et 18
+    - suggestions : entre 50 et 150 caractères
+    - competences : tableau de 2 à 4 compétences (ex: Logique algorithmique, Syntaxe, SQL)
+    - type_feedback : \"explicatif\", \"direct\" ou \"guide\"
+    - ton_feedback : \"encourageant\", \"strict\" ou \"neutre\"
+    
+    Ne mets AUCUN texte avant ou après le JSON.";
+    
+    $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . GROQ_API_KEY
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'model' => 'llama-3.3-70b-versatile',
+        'messages' => [
+            ['role' => 'system', 'content' => 'Tu es un assistant pédagogique. Tu réponds UNIQUEMENT en JSON valide.'],
+            ['role' => 'user', 'content' => $prompt]
+        ],
+        'temperature' => 0.5,
+        'max_tokens' => 1000
+    ]));
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200) {
+        // Fallback avec valeurs par défaut
+        return getDefaultCorrection($titre, $description);
+    }
+    
+    $data = json_decode($response, true);
+    $content = $data['choices'][0]['message']['content'] ?? '';
+    
+    // Nettoyer le JSON
+    $content = preg_replace('/```json\s*|\s*```/', '', trim($content));
+    
+    // Extraire le JSON complet
+    preg_match('/\{[^{}]*"commentaire"[^{}]*"ton_feedback"[^{}]*\}/s', $content, $matches);
+    if (isset($matches[0])) {
+        $result = json_decode($matches[0], true);
+    } else {
+        $result = json_decode($content, true);
+    }
+    
+    if (!$result) {
+        return getDefaultCorrection($titre, $description);
+    }
+    
+    // Retourner avec TOUS les champs (même si manquants, on met des valeurs par défaut)
+    return [
+        'commentaire' => $result['commentaire'] ?? getDefaultCommentaire($titre),
+        'note_estimee' => $result['note_estimee'] ?? 13,
+        'suggestions' => $result['suggestions'] ?? getDefaultSuggestions(),
+        'competences' => is_array($result['competences'] ?? null) ? $result['competences'] : ['Logique algorithmique', 'Résolution de problèmes', 'Analyse critique'],
+        'type_feedback' => $result['type_feedback'] ?? 'explicatif',
+        'ton_feedback' => $result['ton_feedback'] ?? 'encourageant'
+    ];
+}
+
+
+
+// ============================================================
+// TRAITEMENT AJAX POUR L'ASSISTANT IA (À AJOUTER ICI)
+// ============================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+    header('Content-Type: application/json');
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    if ($input && isset($input['action']) && $input['action'] === 'generate_correction') {
+        $result = callAICorrection(
+            $input['titre'] ?? '',
+            $input['description'] ?? '',
+            $input['niveau'] ?? 'moyen'
+        );
+        echo json_encode($result);
+        exit;
+    }
+}
+
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -102,6 +224,75 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
     <link rel="stylesheet" href="../../assets/css/style.css">
 
     <style>
+
+        /* Toast IA */
+.ai-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 10000;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: slideInRight 0.3s ease forwards;
+}
+.ai-toast.success {
+    background: #10B981;
+    color: white;
+}
+.ai-toast.error {
+    background: #EF4444;
+    color: white;
+}
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+        /* Bouton IA */
+.btn-ai {
+    background: linear-gradient(135deg, #8B5CF6, #6C63FF);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.8rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-ai:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+}
+
+.btn-ai.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-ai.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
         .popup-message {
     position: fixed;
     top: 20px;
@@ -993,6 +1184,14 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
                                 <span class="field-feedback" id="fb-ton_feedback"></span>
                             </div>
 
+                            <!-- Ajouter après le champ commentaire ou avant le bouton submit -->
+<div class="form-group">
+    <button type="button" id="aiAssistBtn" class="btn btn-ai">
+        <i class="fas fa-magic"></i> 🤖 Générer correction avec IA
+    </button>
+    <small class="hint">L'IA va analyser le devoir sélectionné et proposer une correction automatique</small>
+</div>
+
                             <button type="submit" class="btn btn-submit btn-submit-correction" id="btn-correction">
                                 <span class="spinner"></span>
                                 <span class="btn-text">
@@ -1464,6 +1663,129 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
         });
 });
     
+    </script>
+
+    <script>
+       // ============================================================
+// ASSISTANT CORRECTION IA (Version améliorée)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const aiBtn = document.getElementById('aiAssistBtn');
+    if (!aiBtn) return;
+    
+    aiBtn.addEventListener('click', async function() {
+        const devoirSelect = document.getElementById('id_devoir');
+        const devoirId = devoirSelect.value;
+        
+        if (!devoirId) {
+            showAIToast('Veuillez d\'abord sélectionner un devoir à corriger', 'error');
+            return;
+        }
+        
+        const btn = this;
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse du devoir...';
+        
+        try {
+            // Récupérer les infos du devoir
+            const devoirResponse = await fetch(`/eduleb/controller/devoirs.php?action=getdevoir&id=${devoirId}`);
+            
+            if (!devoirResponse.ok) {
+                throw new Error(`Erreur HTTP: ${devoirResponse.status}`);
+            }
+            
+            const devoirData = await devoirResponse.json();
+            
+            if (!devoirData.success || !devoirData.devoir) {
+                throw new Error(devoirData.message || 'Devoir non trouvé');
+            }
+            
+            const devoir = devoirData.devoir;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération de la correction...';
+            
+            const aiResponse = await fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: 'generate_correction',
+                    titre: devoir.titre,
+                    description: devoir.description,
+                    niveau: devoir.niveau_difficulte
+                })
+            });
+            
+            const aiData = await aiResponse.json();
+            
+            // TOUS les champs avec valeurs par défaut
+            const fields = {
+                'commentaire': aiData.commentaire || getDefaultCommentaire(devoir.titre),
+                'note_estimee': aiData.note_estimee || 13,
+                'suggestions_personnalisees': aiData.suggestions || getDefaultSuggestions(),
+                'competences_evaluees': Array.isArray(aiData.competences) ? aiData.competences.join(', ') : 'Logique, Algorithmique, Syntaxe',
+                'type_feedback': aiData.type_feedback || 'explicatif',
+                'ton_feedback': aiData.ton_feedback || 'encourageant',
+                'nombre_iterations': 2,  // Valeur par défaut
+                'rapidite_correction': 30  // Valeur par défaut
+            };
+            
+            // Remplir tous les champs
+            let filledCount = 0;
+            for (const [fieldId, value] of Object.entries(fields)) {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.value = value;
+                    field.dispatchEvent(new Event('blur'));
+                    field.dispatchEvent(new Event('change'));
+                    filledCount++;
+                }
+            }
+            
+            showAIToast(`✅ ${filledCount} champs remplis automatiquement !`, 'success');
+            
+        } catch (error) {
+            console.error('Erreur détaillée:', error);
+            showAIToast('❌ ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    });
+});
+
+function getDefaultCommentaire(titre) {
+    return "📝 Correction pour le devoir \"" + titre + "\"\n\n" +
+           "L'étudiant a démontré une bonne compréhension des concepts. " +
+           "Le code est bien structuré, mais quelques améliorations sont possibles pour optimiser les performances.\n\n" +
+           "Points positifs : Logique claire et bonne organisation.\n" +
+           "Points à améliorer : Ajouter plus de commentaires et gérer les cas limites.";
+}
+
+function getDefaultSuggestions() {
+    return "1. Ajoutez des commentaires pour expliquer les étapes importantes\n" +
+           "2. Testez votre code avec différentes entrées (valeurs extrêmes)\n" +
+           "3. Utilisez des noms de variables plus explicites\n" +
+           "4. Pensez à la réutilisabilité de vos fonctions";
+}
+
+function showAIToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = 'ai-toast ' + (type === 'warning' ? 'success' : type);
+    const icon = type === 'success' ? 'fa-check-circle' : (type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-triangle');
+    const bgColor = type === 'warning' ? '#F59E0B' : (type === 'success' ? '#10B981' : '#EF4444');
+    toast.style.background = bgColor;
+    toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
+}
     </script>
 </body>
 </html>

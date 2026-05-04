@@ -13,7 +13,8 @@ $sqlDevoirs = "
     SELECT id_devoir, titre, description, fichier, date_soumission,
            niveau_difficulte, type_erreur_predominant,
            temps_estime_resolution, progression_eleve,
-           mots_cles, urgence
+           mots_cles, urgence,
+           sentiment, sentiment_score, alerte_urgence
     FROM devoirs
     WHERE 1=1
 ";
@@ -130,6 +131,57 @@ $successType = $_GET['success'] ?? '';
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <style>
+
+        /* Badges de sentiment */
+.sentiment-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.sentiment-positif { background: #D1FAE5; color: #065F46; }
+.sentiment-negatif { background: #FEE2E2; color: #991B1B; }
+.sentiment-neutre { background: #F1F5F9; color: #475569; }
+.sentiment-frustration { background: #FEF3C7; color: #92400E; }
+.sentiment-confusion { background: #E0E7FF; color: #3730A3; }
+.sentiment-stress { 
+    background: #FEE2E2; 
+    color: #DC2626; 
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; background: #FECACA; }
+    100% { opacity: 0.7; }
+}
+
+.sentiment-urgent {
+    border: 2px solid #DC2626;
+}
+
+        .btn-export-pdf {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.btn-export-pdf:hover {
+    background: linear-gradient(135deg, #b91c1c, #991b1b);
+    transform: scale(1.05);
+}
 
         /* Styles pour les statistiques */
 .stats-dashboard {
@@ -868,9 +920,7 @@ $successType = $_GET['success'] ?? '';
                 </div>
             </div>
                         <div class="d-flex gap-2 align-self-center">
-                <button id="exportPDFBtn" class="btn-pdf">
-                    <i class="fas fa-file-pdf"></i> Exporter PDF
-                </button>
+                
                 <a href="/eduleb/submit.html" class="btn-submit-link">
                     <i class="fas fa-plus"></i> Nouveau devoir
                 </a>
@@ -1011,6 +1061,33 @@ $successType = $_GET['success'] ?? '';
             </div>
         </div>
     </div>
+    <!-- Carte des étudiants en difficulté -->
+     <div>
+<div class="col-md-6 col-lg-3">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">
+            <i class="fas fa-chart-simple"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="statSentimentNegatif">0</h3>
+            <p>Étudiants en difficulté</p>
+        </div>
+    </div>
+</div>
+
+<!-- Carte des urgences -->
+<div class="col-md-6 col-lg-3">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #dc2626, #991b1b);">
+            <i class="fas fa-bell"></i>
+        </div>
+        <div class="stat-info">
+            <h3 id="statUrgences">0</h3>
+            <p>Devoirs urgents</p>
+        </div>
+    </div>
+</div>
+</div>
 </div>
     
 
@@ -1032,6 +1109,8 @@ $successType = $_GET['success'] ?? '';
                 <div class="feed-card" style="animation-delay: <?= $i * 0.07 ?>s" data-devoir-id="<?= $d['id_devoir'] ?>">
 
                     <!-- Header Devoir -->
+
+                    
                     <div class="card-header-bar devoir-header">
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             <span class="card-type-badge badge-devoir">
@@ -1039,6 +1118,21 @@ $successType = $_GET['success'] ?? '';
                             </span>
                             <!-- ID caché mais accessible via data attribute si besoin -->
                         </div>
+                        <!-- Dans la section card-header-bar, après l'urgence-pill -->
+<span class="sentiment-badge sentiment-<?= htmlspecialchars($d['sentiment'] ?? 'neutre') ?> <?= ($d['alerte_urgence'] ?? 0) ? 'sentiment-urgent' : '' ?>">
+    <?php
+    $icons = [
+        'positif' => '😊 Très motivé',
+        'negatif' => '😟 En difficulté',
+        'neutre' => '😐 Neutre',
+        'frustration' => '😤 Frustré',
+        'confusion' => '😕 Perdu',
+        'stress' => '😰 Stressé'
+    ];
+    $sentiment = $d['sentiment'] ?? 'neutre';
+    echo $icons[$sentiment];
+    ?>
+</span>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
                             <a href="/eduleb/submit.html?add_correction_for=<?= $d['id_devoir'] ?>&title=<?= urlencode($d['titre']) ?>" 
                                class="btn-add-correction btn-sm">
@@ -1047,6 +1141,9 @@ $successType = $_GET['success'] ?? '';
                             <button class="btn-delete btn-sm" data-id="<?= $d['id_devoir'] ?>" data-type="devoir">
                                 <i class="fas fa-trash-alt"></i> Supprimer
                             </button>
+                            <button class="btn-export-pdf btn-sm" data-devoir-id="<?= $d['id_devoir'] ?>">
+    <i class="fas fa-file-pdf"></i> Exporter PDF
+</button>
                             <a href="/eduleb/submit.html?edit=devoir&id=<?= $d['id_devoir'] ?>" class="btn-edit btn-sm">
                                 <i class="fas fa-edit"></i> Modifier
                             </a>
@@ -1129,7 +1226,7 @@ $successType = $_GET['success'] ?? '';
                         </div>
                         
                         <?php foreach ($correctionsByDevoir[$d['id_devoir']] as $c): ?>
-                            <div class="correction-subcard">
+                            <div class="correction-subcard" data-fichier-corrige="<?= htmlspecialchars($c['fichier_corrige'] ?? '') ?>">
                                 <div class="correction-header">
                                     <div class="correction-title">
                                         <i class="fas fa-chalkboard-teacher"></i>
@@ -1207,14 +1304,16 @@ $successType = $_GET['success'] ?? '';
                                 <?php endif; ?>
 
                                 <?php if (!empty($c['fichier_corrige'])): ?>
-                                <div class="mt-2">
-                                    <a href="/eduleb/uploads/correction/<?= htmlspecialchars($c['fichier_corrige']) ?>"
-                                       class="file-link" target="_blank">
-                                        <i class="fas fa-file-code"></i>
-                                        Télécharger le fichier corrigé
-                                    </a>
-                                </div>
-                                <?php endif; ?>
+<div class="mt-2">
+    <a href="/eduleb/uploads/correction/<?= htmlspecialchars($c['fichier_corrige']) ?>"
+       class="file-link" 
+       data-fichier-corrige="<?= htmlspecialchars($c['fichier_corrige']) ?>"
+       target="_blank">
+        <i class="fas fa-file-code"></i>
+        <?= htmlspecialchars($c['fichier_corrige']) ?>
+    </a>
+</div>
+<?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
@@ -1316,31 +1415,43 @@ $successType = $_GET['success'] ?? '';
 
     <script>
     // Fonction pour supprimer
-    function deleteItem(id, type) {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer ce ' + (type === 'devoir' ? 'devoir' : 'correction') + ' ?')) {
-            return;
+function deleteItem(id, type) {
+    const label = type === 'devoir' ? 'devoir et ses corrections' : 'correction';
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ce ${type === 'devoir' ? 'devoir' : 'correction'} ?`)) {
+        return;
+    }
+    
+    const action = type === 'devoir' ? 'delete' : 'deletecorrection';
+    
+    fetch('/eduleb/controller/devoirs.php?action=' + action + '&id=' + id, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
         }
-        
-        const action = type === 'devoir' ? 'delete' : 'deletecorrection';
-        
-        fetch('/eduleb/controller/devoirs.php?action=' + action + '&id=' + id, {
-            method: 'GET'
-        })
-        .then(response => response.text())
-        .then(data => {
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Afficher un toast de succès
             const toast = document.createElement('div');
             toast.className = 'toast-success';
-            toast.innerHTML = '<i class="fas fa-check-circle"></i> Supprimé avec succès';
+            toast.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 2000);
             
-            // Recharger la page pour mettre à jour l'affichage
-            location.reload();
-        })
-        .catch(error => {
-            alert('Erreur: ' + error.message);
-        });
-    }
+            // Recharger la page après 1 seconde
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Erreur: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la suppression: ' + error.message);
+    });
+}
 
     // Ajouter les écouteurs sur tous les boutons supprimer
     document.querySelectorAll('.btn-delete').forEach(button => {
@@ -1374,108 +1485,434 @@ function resetFilters() {
 }
 </script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const exportBtn = document.getElementById('exportPDFBtn');
-    if (!exportBtn) return;
+// ============================================================
+// export_devoir_pdf_v2.js — Export PDF amélioré
+// ============================================================
 
-    exportBtn.addEventListener('click', async function (e) {
-        e.preventDefault();
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, function(m) {
+        return { '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[m];
+    });
+}
 
-        const cards = document.querySelectorAll('.feed-card');
-        if (!cards.length) { alert("Aucune carte trouvée."); return; }
+// Convertit une URL relative en URL absolue propre
+function resolveUrl(url) {
+    if (!url) return null;
+    let u = url.trim();
+    if (u.startsWith('uploads/') || u.startsWith('./uploads/')) u = '/eduleb/' + u;
+    if (!u.startsWith('http') && !u.startsWith('/')) u = '/' + u;
+    return u;
+}
 
-        const loader = document.createElement('div');
-        loader.className = 'pdf-loader';
-        loader.innerHTML = '<div class="spinner"></div><div id="pdf-progress">Préparation...</div>';
-        document.body.appendChild(loader);
+// Charge et rend un fichier (image ou PDF) dans un conteneur
+// Retourne une promesse résolue quand le média est prêt
+function renderMedia(container, rawUrl, label) {
+    return new Promise((resolve) => {
+        if (!rawUrl) {
+            container.innerHTML = `<p style="color:#94a3b8;font-size:13px;margin:0;">Aucun fichier joint</p>`;
+            return resolve();
+        }
 
-        const styleAnim = document.createElement('style');
-        styleAnim.id = 'pdf-no-anim';
-        styleAnim.textContent = `
-            *, *::before, *::after {
-                animation: none !important;
-                transition: none !important;
-                opacity: 1 !important;
-            }
-            .feed-card {
-                overflow: visible !important;
-                box-shadow: none !important;
-                background-color: #ffffff !important;
-                border: 1px solid #E2E8F0 !important;
-                margin-bottom: 0 !important;
-            }
-            .card-header-bar.devoir-header { background: #ede9ff !important; }
-            .badge-devoir { background: #ede9ff !important; color: #6C63FF !important; }
-            .badge-correction { background: #d1fae5 !important; color: #10B981 !important; }
-            .detail-chip { background-color: #F0F4FF !important; color: #1E293B !important; }
-            .btn-pdf, .btn-refresh, .btn-delete, .btn-edit,
-            .btn-add-correction, .btn-submit-link { display: none !important; }
-        `;
-        document.head.appendChild(styleAnim);
+        const url = resolveUrl(rawUrl);
+        const ext = url.split('?')[0].split('.').pop().toLowerCase();
+        const imgExts = ['jpg','jpeg','png','gif','webp','bmp','svg'];
 
-        await new Promise(r => setTimeout(r, 400));
-
-        try {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-            const pageW = 210;
-            const pageH = 297;
-            const margin = 10;
-            const maxImgW = pageW - margin * 2;
-            const gap = 5;
-
-            let currentY = margin;
-            let isFirstPage = true;
-
-            for (let i = 0; i < cards.length; i++) {
-                document.getElementById('pdf-progress').textContent =
-                    `Carte ${i + 1} / ${cards.length}...`;
-
-                const canvas = await html2canvas(cards[i], {
-                    scale: 2,
-                    backgroundColor: '#ffffff',
-                    useCORS: true,
-                    logging: false,
-                    allowTaint: false,
-                    letterRendering: true
-                });
-
-                const imgData = canvas.toDataURL('image/jpeg', 0.92);
-                const ratio = canvas.height / canvas.width;
-                const imgW = maxImgW;
-                const imgH = imgW * ratio;
-
-                // Si la carte ne rentre plus sur la page → nouvelle page
-                if (!isFirstPage && currentY + imgH > pageH - margin) {
-                    pdf.addPage();
-                    currentY = margin;
-                }
-
-                if (isFirstPage) isFirstPage = false;
-
-                pdf.addImage(imgData, 'JPEG', margin, currentY, imgW, imgH);
-                currentY += imgH + gap;
-            }
-
-            pdf.save('EduFeed_' + new Date().toISOString().slice(0, 10) + '.pdf');
-
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#10b981;color:white;padding:12px 20px;border-radius:8px;z-index:10000;font-weight:bold;';
-            toast.innerHTML = '✓ PDF exporté avec succès !';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-
-        } catch (err) {
-            console.error(err);
-            alert('Erreur PDF: ' + err.message);
-        } finally {
-            document.getElementById('pdf-no-anim')?.remove();
-            loader.remove();
+        if (imgExts.includes(ext)) {
+            const img = new Image();
+            img.onload = () => {
+                // Limiter la hauteur de l'image pour ne pas saturer la page
+                container.innerHTML = `
+                    <img src="${url}" alt="${label}"
+                         style="max-width:100%;max-height:260px;width:auto;
+                                display:block;margin:0 auto;
+                                border-radius:10px;border:1px solid #e2e8f0;">`;
+                resolve();
+            };
+            img.onerror = () => {
+                container.innerHTML = fileLink(url, label);
+                resolve();
+            };
+            img.src = url;
+        } else if (ext === 'pdf') {
+            // Aperçu PDF compact avec lien
+            container.innerHTML = `
+                <div style="display:flex;align-items:center;gap:12px;
+                            background:#f8faff;border:1px solid #dde6ff;
+                            border-radius:10px;padding:14px 18px;">
+                    <div style="font-size:28px;line-height:1;">📄</div>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:#3b4cca;margin-bottom:4px;">${label}</div>
+                        <a href="${url}" target="_blank"
+                           style="font-size:12px;color:#6C63FF;text-decoration:none;">
+                           Ouvrir le fichier PDF ↗
+                        </a>
+                    </div>
+                </div>`;
+            resolve();
+        } else {
+            container.innerHTML = fileLink(url, label);
+            resolve();
         }
     });
+}
+
+function fileLink(url, label) {
+    return `<a href="${url}" target="_blank"
+               style="display:inline-flex;align-items:center;gap:8px;
+                      padding:10px 18px;background:#6C63FF;color:white;
+                      text-decoration:none;border-radius:8px;font-size:13px;">
+                📁 Télécharger — ${escapeHtml(label)}
+            </a>`;
+}
+
+// Crée un div hors-écran stylisé, le rend via html2canvas, l'injecte dans le PDF
+// puis le retire du DOM. Retourne le nouveau Y.
+async function stampSection(pdf, htmlContent, yPos, pageH = 277, margin = 12) {
+    const wrapper = document.createElement('div');
+    Object.assign(wrapper.style, {
+        position: 'absolute', top: '-9999px', left: '0',
+        width: '720px',                // ~190 mm @ 96 dpi
+        backgroundColor: '#ffffff',
+        fontFamily: "'Segoe UI', Arial, sans-serif",
+        boxSizing: 'border-box'
+    });
+    wrapper.innerHTML = htmlContent;
+    document.body.appendChild(wrapper);
+
+    // Attente rendu navigateur
+    await new Promise(r => setTimeout(r, 80));
+
+    const canvas = await html2canvas(wrapper, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+        allowTaint: false
+    });
+    document.body.removeChild(wrapper);
+
+    const imgW  = 190 - margin * 0; // utilise toute la largeur utile
+    const imgH  = (canvas.height * imgW) / canvas.width;
+
+    if (yPos + imgH > pageH) {
+        pdf.addPage();
+        yPos = 12;
+    }
+
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG',
+                 10, yPos, imgW, imgH);
+    return yPos + imgH + 6;
+}
+
+// ─── Fonctions HTML de rendu ─────────────────────────────────
+
+function htmlHeader(titre, niveau, erreur, temps, description) {
+    return `
+    <div style="padding:24px 28px 0;">
+
+      <!-- Bandeau titre -->
+      <div style="background:linear-gradient(135deg,#6C63FF,#9B8FFF);
+                  border-radius:14px;padding:20px 24px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+              <div style="background:rgba(255,255,255,.2);border-radius:10px;
+                          width:44px;height:44px;display:flex;align-items:center;
+                          justify-content:center;font-size:22px;">📘</div>
+              <div>
+                  <h1 style="margin:0;font-size:20px;font-weight:700;color:#fff;">
+                      ${escapeHtml(titre)}
+                  </h1>
+                  <p style="margin:4px 0 0;font-size:12px;color:rgba(255,255,255,.75);">
+                      Soumis le ${new Date().toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'})}
+                  </p>
+              </div>
+          </div>
+      </div>
+
+      <!-- Chips infos -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+          ${chip('🎓', 'Niveau', niveau, '#EEF2FF', '#4F46E5')}
+          ${chip('⚠️', 'Erreur', erreur,  '#FFF7ED', '#C2410C')}
+          ${chip('⏱️', 'Durée',  temps + ' min', '#F0FDF4', '#15803D')}
+      </div>
+
+      <!-- Description -->
+      ${description ? `
+      <div style="background:#F8FAFC;border-left:4px solid #6C63FF;
+                  border-radius:0 10px 10px 0;padding:14px 16px;margin-bottom:4px;">
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#6C63FF;
+                    text-transform:uppercase;letter-spacing:.5px;">Description</p>
+          <p style="margin:0;font-size:13px;color:#374151;line-height:1.6;">
+              ${escapeHtml(description)}
+          </p>
+      </div>` : ''}
+
+    </div>`;
+}
+
+function chip(icon, label, value, bg, color) {
+    return `
+    <div style="background:${bg};border-radius:8px;padding:8px 14px;
+                display:inline-flex;align-items:center;gap:6px;min-width:0;">
+        <span style="font-size:14px;">${icon}</span>
+        <span style="font-size:11px;color:#6B7280;">${label} :</span>
+        <span style="font-size:13px;font-weight:600;color:${color};">${escapeHtml(value || '—')}</span>
+    </div>`;
+}
+
+function htmlSectionTitle(icon, title, color = '#6C63FF') {
+    return `
+    <div style="display:flex;align-items:center;gap:10px;
+                border-bottom:2px solid ${color}20;padding-bottom:8px;margin-bottom:16px;">
+        <div style="background:${color}15;border-radius:8px;padding:6px 10px;
+                    font-size:16px;">${icon}</div>
+        <h2 style="margin:0;font-size:15px;font-weight:700;color:${color};">${title}</h2>
+    </div>`;
+}
+
+function htmlCorrectionCard(index, note, commentaire) {
+    const pct = parseInt(note) || 0;
+    const noteNum = note.split('/')[0] || '—';
+    const noteTotal = note.split('/')[1] || '20';
+
+    // Couleur dynamique selon la note
+    let noteBg, noteColor;
+    if (pct >= 14) { noteBg = '#D1FAE5'; noteColor = '#065F46'; }
+    else if (pct >= 10) { noteBg = '#FEF3C7'; noteColor = '#92400E'; }
+    else { noteBg = '#FEE2E2'; noteColor = '#991B1B'; }
+
+    return `
+    <div style="border:1.5px solid #E2E8F0;border-radius:14px;
+                padding:18px 20px;background:#FAFAFA;">
+
+        <div style="display:flex;justify-content:space-between;
+                    align-items:center;margin-bottom:14px;">
+            <div style="background:#6C63FF;color:#fff;border-radius:20px;
+                        padding:5px 14px;font-size:12px;font-weight:700;">
+                Correction ${index}
+            </div>
+            <div style="background:${noteBg};border-radius:20px;
+                        padding:5px 14px;font-size:13px;font-weight:700;color:${noteColor};">
+                ${escapeHtml(noteNum)} / ${escapeHtml(noteTotal)}
+            </div>
+        </div>
+
+        ${commentaire ? `
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;
+                    padding:12px 14px;margin-bottom:14px;">
+            <p style="margin:0 0 6px;font-size:11px;font-weight:700;color:#6C63FF;
+                      text-transform:uppercase;letter-spacing:.5px;">💬 Commentaire</p>
+            <p style="margin:0;font-size:13px;color:#374151;line-height:1.6;">
+                ${escapeHtml(commentaire)}
+            </p>
+        </div>` : ''}
+    </div>`;
+}
+
+// ─── Export principal ────────────────────────────────────────
+
+async function exportDevoirToPDF(devoirCard, devoirId) {
+
+    // ── 1. Récupération des données ──────────────────────────
+    const titreElem = devoirCard.querySelector('.card-title');
+    const titre = titreElem ? titreElem.innerText.replace(/[📘]/g,'').trim() : 'Devoir';
+
+    const descElem = devoirCard.querySelector('.card-description');
+    const description = descElem ? descElem.innerText.trim() : '';
+
+    const chips = devoirCard.querySelectorAll('.detail-chip');
+    const getText = (el, prefix) => {
+        const s = el?.querySelector('span');
+        return s ? s.innerText.replace(prefix,'').replace('min','').trim() : '';
+    };
+    const niveau = getText(chips[0], 'Niveau :');
+    const erreur = getText(chips[1], 'Erreur :');
+    const temps  = getText(chips[2], 'Temps :');
+
+    const devoirFileLink = devoirCard.querySelector('.file-link');
+    const devoirFileUrl  = devoirFileLink?.href || null;
+
+    const correctionSubcards = devoirCard.querySelectorAll('.correction-subcard');
+    const correctionsData = [];
+    for (const sub of correctionSubcards) {
+        const commentaire  = sub.querySelector('.card-description')?.innerText.replace('Commentaire :','').trim() || '';
+        const note         = sub.querySelector('.note-badge')?.innerText.trim() || '';
+        let fichierUrl     = sub.querySelector('.file-link')?.href || null;
+        if (!fichierUrl) {
+            const attr = sub.getAttribute('data-fichier-corrige');
+            if (attr) fichierUrl = '/eduleb/uploads/correction/' + attr;
+        }
+        correctionsData.push({ commentaire, note, fichierUrl });
+    }
+
+    // ── 2. Loader ────────────────────────────────────────────
+    const loader = document.createElement('div');
+    loader.className = 'pdf-loader';
+    loader.innerHTML = `
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);
+                    display:flex;flex-direction:column;align-items:center;
+                    justify-content:center;z-index:99999;gap:16px;">
+            <div style="width:48px;height:48px;border:4px solid #fff3;
+                        border-top-color:#6C63FF;border-radius:50%;
+                        animation:spin 1s linear infinite;"></div>
+            <p style="color:#fff;font-size:14px;margin:0;">Génération du PDF…</p>
+        </div>
+        <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+    document.body.appendChild(loader);
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+        let y = 10;
+
+        // ── PAGE 1 : En-tête + méta ──────────────────────────
+        y = await stampSection(pdf,
+            htmlHeader(titre, niveau, erreur, temps, description),
+            y);
+
+        // ── Fichier du devoir ────────────────────────────────
+        const mediaWrap = document.createElement('div');
+        Object.assign(mediaWrap.style, {
+            position:'absolute', top:'-9999px', left:'0',
+            width:'720px', backgroundColor:'#ffffff',
+            fontFamily:"'Segoe UI', Arial, sans-serif",
+            padding:'0 28px 24px', boxSizing:'border-box'
+        });
+        mediaWrap.innerHTML = `
+            <div style="padding:20px 0 0;">
+                ${htmlSectionTitle('📎', 'Fichier du devoir')}
+                <div id="__devoir_file__" style="text-align:center;min-height:40px;"></div>
+            </div>`;
+        document.body.appendChild(mediaWrap);
+        await renderMedia(mediaWrap.querySelector('#__devoir_file__'), devoirFileUrl, titre);
+        await new Promise(r => setTimeout(r, 400));
+
+        const cvs = await html2canvas(mediaWrap, {
+            scale:2, backgroundColor:'#ffffff',
+            useCORS:true, logging:false, allowTaint:false
+        });
+        document.body.removeChild(mediaWrap);
+
+        const imgW = 190, imgH = (cvs.height * imgW) / cvs.width;
+        if (y + imgH > 277) { pdf.addPage(); y = 12; }
+        pdf.addImage(cvs.toDataURL('image/jpeg', 0.92), 'JPEG', 10, y, imgW, imgH);
+        y += imgH + 8;
+
+        // ── PAGE(S) CORRECTIONS ──────────────────────────────
+        if (correctionsData.length > 0) {
+            // Titre de section corrections sur nouvelle page
+            pdf.addPage(); y = 12;
+
+            y = await stampSection(pdf, `
+                <div style="padding:8px 28px 16px;">
+                    ${htmlSectionTitle('✅', `${correctionsData.length} correction(s) reçue(s)`, '#10B981')}
+                </div>`, y);
+
+            for (let i = 0; i < correctionsData.length; i++) {
+                const corr = correctionsData[i];
+
+                // Carte textuelle
+                y = await stampSection(pdf,
+                    `<div style="padding:0 28px 4px;">
+                        ${htmlCorrectionCard(i + 1, corr.note, corr.commentaire)}
+                     </div>`, y);
+
+                // Fichier corrigé
+                if (corr.fichierUrl) {
+                    const cWrap = document.createElement('div');
+                    Object.assign(cWrap.style, {
+                        position:'absolute', top:'-9999px', left:'0',
+                        width:'720px', backgroundColor:'#ffffff',
+                        fontFamily:"'Segoe UI', Arial, sans-serif",
+                        padding:'0 28px 16px', boxSizing:'border-box'
+                    });
+                    cWrap.innerHTML = `
+                        <div style="margin-top:4px;">
+                            <p style="margin:0 0 8px;font-size:11px;font-weight:700;
+                                      color:#6C63FF;text-transform:uppercase;
+                                      letter-spacing:.5px;">📎 Fichier corrigé</p>
+                            <div id="__cf_${i}__" style="text-align:center;min-height:40px;"></div>
+                        </div>`;
+                    document.body.appendChild(cWrap);
+                    await renderMedia(cWrap.querySelector(`#__cf_${i}__`), corr.fichierUrl, `Correction ${i+1}`);
+                    await new Promise(r => setTimeout(r, 400));
+
+                    const cCvs = await html2canvas(cWrap, {
+                        scale:2, backgroundColor:'#ffffff',
+                        useCORS:true, logging:false, allowTaint:false
+                    });
+                    document.body.removeChild(cWrap);
+
+                    const cW = 190, cH = (cCvs.height * cW) / cCvs.width;
+                    if (y + cH > 277) { pdf.addPage(); y = 12; }
+                    pdf.addImage(cCvs.toDataURL('image/jpeg', 0.92), 'JPEG', 10, y, cW, cH);
+                    y += cH + 10;
+                }
+
+                // Séparateur léger entre corrections
+                if (i < correctionsData.length - 1) y += 4;
+            }
+        } else {
+            pdf.addPage(); y = 12;
+            y = await stampSection(pdf, `
+                <div style="padding:16px 28px;">
+                    ${htmlSectionTitle('✅', 'Corrections', '#10B981')}
+                    <div style="text-align:center;padding:32px;color:#94a3b8;font-size:14px;">
+                        Aucune correction disponible pour ce devoir.
+                    </div>
+                </div>`, y);
+        }
+
+        // ── Pied de page sur chaque page ─────────────────────
+        const totalPages = pdf.internal.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+            pdf.setPage(p);
+            pdf.setFontSize(8);
+            pdf.setTextColor(160, 160, 160);
+            pdf.text(`Page ${p} / ${totalPages}`, 105, 291, { align:'center' });
+            pdf.text(`Devoir #${devoirId} — ${new Date().toLocaleDateString('fr-FR')}`, 10, 291);
+        }
+
+        // ── Sauvegarde ───────────────────────────────────────
+        const filename = `Devoir_${devoirId}_${new Date().toISOString().slice(0,10)}.pdf`;
+        pdf.save(filename);
+
+        // Toast succès
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position:fixed;bottom:24px;right:24px;
+            background:#10B981;color:#fff;
+            padding:12px 20px;border-radius:12px;
+            z-index:100000;font-weight:600;font-size:14px;
+            box-shadow:0 4px 16px rgba(16,185,129,.3);
+            display:flex;align-items:center;gap:8px;`;
+        toast.innerHTML = `<span>✓</span> PDF exporté avec succès !`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
+
+    } catch (err) {
+        console.error('[ExportPDF]', err);
+        alert('Erreur lors de la génération du PDF :\n' + err.message);
+    } finally {
+        loader.remove();
+    }
+}
+
+// ─── Attacher les événements ─────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-export-pdf').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const card = this.closest('.feed-card');
+            const id   = this.getAttribute('data-devoir-id');
+            if (card && id) {
+                exportDevoirToPDF(card, id);
+            } else {
+                alert("Erreur : impossible d'identifier le devoir.");
+            }
+        });
+    });
 });
-
-
 </script>
 
 <script>
@@ -1619,6 +2056,22 @@ function updatePieChart(devoirs, period = 'month') {
     });
 }
 
+function loadSentimentStats() {
+    fetch('/eduleb/controller/devoirs.php?action=sentimentStats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.stats;
+                // Total des étudiants en difficulté (negatif + frustration + confusion + stress)
+                const enDifficulte = (stats.negatif || 0) + (stats.frustration || 0) + (stats.confusion || 0) + (stats.stress || 0);
+                document.getElementById('statSentimentNegatif').textContent = enDifficulte;
+                document.getElementById('statUrgences').textContent = stats.urgences || 0;
+            }
+        })
+        .catch(error => console.error('Erreur chargement stats sentiments:', error));
+}
+
+
 // Mettre à jour le graphique en courbe
 function updateLineChart(devoirs, periodRange = '6months') {
     const { labels, data } = countDevoirsByPeriod(devoirs, periodRange);
@@ -1677,6 +2130,8 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePieChart(devoirsData, 'month');
         updateLineChart(devoirsData, '6months');
     }
+
+    loadSentimentStats();
     
     // Écouteur pour le camembert
     const chartPeriodSelect = document.getElementById('chartPeriodSelect');
