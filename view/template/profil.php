@@ -6,7 +6,7 @@ $success = $_SESSION['success'] ?? '';
 unset($_SESSION['errors'], $_SESSION['success']);
 
 $db = Config::getConnexion();
-$stmt = $db->prepare("SELECT u.*, p.bio_text, p.niveau, p.specialite FROM user u LEFT JOIN profil p ON p.user_id = u.id WHERE u.id = ? LIMIT 1");
+$stmt = $db->prepare("SELECT u.*, p.bio_text, p.niveau, p.specialite, p.classe, p.email_universitaire, p.card_image, p.adresse, p.etablissement_ecole, p.identifiant_card, p.annee_universitaire FROM user u LEFT JOIN profil p ON p.user_id = u.id WHERE u.id = ? LIMIT 1");
 $stmt->execute([$_SESSION['user_id']]);
 $userData = $stmt->fetch();
 
@@ -16,6 +16,11 @@ if ($userData) {
     $_SESSION['user_prenom'] = $userData['prenom'];
     $_SESSION['user_photo']  = $userData['photo'];
 }
+
+/* Last 5 connexions */
+$cxStmt = $db->prepare("SELECT connected_at, disconnected_at, ip_address FROM connexion_history WHERE user_id=? ORDER BY connected_at DESC LIMIT 5");
+$cxStmt->execute([$_SESSION['user_id']]);
+$connexions = $cxStmt->fetchAll();
 ?>
 <!doctype html>
 <html lang="en">
@@ -189,14 +194,75 @@ if ($userData) {
                   </div>
                   <div class="mb-3">
                     <label class="form-label fw-semibold">Bio</label>
-                    <textarea name="bio_text" class="form-control" rows="3" placeholder="Parlez de vous..."><?= htmlspecialchars($userData['bio_text'] ?? '') ?></textarea>
+                    <textarea name="bio_text" id="profilBio" class="form-control" rows="3" placeholder="Parlez de vous..."><?= htmlspecialchars($userData['bio_text'] ?? '') ?></textarea>
+                    <button type="button" id="btnGenBio" class="btn btn-sm btn-outline-primary mt-2">
+                      <i class="fas fa-magic me-1"></i>Generer bio par IA
+                    </button>
+                    <span id="bioLoading" class="text-primary small ms-2" style="display:none;"><i class="fas fa-spinner fa-spin me-1"></i>Generation...</span>
+                    <div id="bioError" class="text-danger small mt-1" style="display:none;"></div>
                   </div>
                   <?php if (($userData['role'] ?? '') === 'etudiant'): ?>
+                  <hr>
+                  <h6 class="fw-bold text-primary mb-3"><i class="fas fa-graduation-cap me-2"></i>Informations Etudiant</h6>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Niveau</label>
+                      <input type="text" name="niveau" class="form-control" value="<?= htmlspecialchars($userData['niveau'] ?? '') ?>" placeholder="Ex: 2eme annee">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Classe</label>
+                      <input type="text" name="classe" id="profilClasse" class="form-control" value="<?= htmlspecialchars($userData['classe'] ?? '') ?>" placeholder="Ex: 2A35">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Email universitaire</label>
+                      <input type="text" name="email_universitaire" id="profilEmailUniv" class="form-control" value="<?= htmlspecialchars($userData['email_universitaire'] ?? '') ?>" placeholder="prenom.nom@esprit.tn">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Etablissement / Ecole</label>
+                      <input type="text" name="etablissement_ecole" id="profilEtablissement" class="form-control" value="<?= htmlspecialchars($userData['etablissement_ecole'] ?? '') ?>" placeholder="Ex: ESPRIT">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Identifiant carte</label>
+                      <input type="text" name="identifiant_card" id="profilIdCard" class="form-control" value="<?= htmlspecialchars($userData['identifiant_card'] ?? '') ?>" placeholder="Ex: 2A35-12345">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Annee universitaire</label>
+                      <input type="text" name="annee_universitaire" id="profilAnneeUniv" class="form-control" value="<?= htmlspecialchars($userData['annee_universitaire'] ?? '') ?>" placeholder="Ex: 2025-2026">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Specialite</label>
+                      <input type="text" name="specialite" class="form-control" value="<?= htmlspecialchars($userData['specialite'] ?? '') ?>" placeholder="Ex: Informatique">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label fw-semibold">Adresse</label>
+                      <input type="text" name="adresse" id="profilAdresse" class="form-control" value="<?= htmlspecialchars($userData['adresse'] ?? '') ?>" placeholder="Ex: Tunis, Ariana">
+                    </div>
+                  </div>
+                  <!-- Carte etudiant upload -->
                   <div class="mb-3">
-                    <label class="form-label fw-semibold">Niveau</label>
-                    <input type="text" name="niveau" class="form-control" value="<?= htmlspecialchars($userData['niveau'] ?? '') ?>" placeholder="Ex: 2eme annee">
+                    <label class="form-label fw-semibold">Carte etudiant</label>
+                    <input type="file" name="card_image" id="cardImageInput" class="form-control" accept=".jpg,.jpeg,.png">
+                    <small class="text-muted">Uploadez votre carte etudiant (JPG, PNG)</small>
+                  </div>
+                  <?php if (!empty($userData['card_image'])): ?>
+                  <div class="mb-3">
+                    <label class="form-label fw-semibold">Carte actuelle</label>
+                    <div><img src="/gestion_users/uploads/photos/<?= htmlspecialchars($userData['card_image']) ?>" class="img-fluid rounded border" style="max-height:200px;" onerror="this.style.display='none';"></div>
                   </div>
                   <?php endif; ?>
+                  <!-- OCR + IA button -->
+                  <div class="mb-3">
+                    <button type="button" id="btnOcrIA" class="btn btn-outline-primary fw-semibold" style="display:none;">
+                      <i class="fas fa-magic me-2"></i>Generer par IA (OCR + Gemini)
+                    </button>
+                    <div id="ocrLoading" class="text-primary small mt-2" style="display:none;">
+                      <i class="fas fa-spinner fa-spin me-1"></i>Analyse en cours...
+                    </div>
+                    <div id="ocrResult" class="text-success small mt-2" style="display:none;"></div>
+                    <div id="ocrError" class="text-danger small mt-2" style="display:none;"></div>
+                  </div>
+                  <?php endif; ?>
+
                   <?php if (($userData['role'] ?? '') === 'encadrant'): ?>
                   <div class="mb-3">
                     <label class="form-label fw-semibold">Specialite</label>
@@ -250,6 +316,48 @@ if ($userData) {
               </div>
             </div>
           </div>
+
+          <!-- Historique des connexions -->
+          <div class="col-md-8">
+            <div class="card shadow-sm border-0" style="border-radius:16px;">
+              <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
+                <h5 class="fw-bold"><i class="fas fa-history me-2 text-info"></i>Historique des connexions (5 dernieres)</h5>
+              </div>
+              <div class="card-body p-4">
+                <?php if (empty($connexions)): ?>
+                  <p class="text-muted text-center py-3">Aucune connexion enregistree.</p>
+                <?php else: ?>
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th class="small text-uppercase text-secondary">Connecte le</th>
+                        <th class="small text-uppercase text-secondary">Deconnecte le</th>
+                        <th class="small text-uppercase text-secondary">IP</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($connexions as $cx): ?>
+                      <tr>
+                        <td class="small"><?= date('d/m/Y H:i', strtotime($cx['connected_at'])) ?></td>
+                        <td class="small">
+                          <?php if ($cx['disconnected_at']): ?>
+                            <?= date('d/m/Y H:i', strtotime($cx['disconnected_at'])) ?>
+                          <?php else: ?>
+                            <span class="badge bg-success">Encore connecte</span>
+                          <?php endif; ?>
+                        </td>
+                        <td class="small font-monospace"><?= htmlspecialchars($cx['ip_address'] ?? '-') ?></td>
+                      </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
+                <?php endif; ?>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -301,6 +409,173 @@ if ($userData) {
         document.addEventListener('click', function() { menu.classList.remove('show'); });
       }
     })();
+
+    /* ========== Show OCR+IA button when card_image is selected ========== */
+    var cardInput = document.getElementById('cardImageInput');
+    var btnOcr = document.getElementById('btnOcrIA');
+    if (cardInput && btnOcr) {
+      cardInput.addEventListener('change', function() {
+        btnOcr.style.display = this.files.length > 0 ? 'inline-block' : 'none';
+      });
+    }
+
+    /* ========== OCR + Gemini : extract data from student card ========== */
+    if (btnOcr) {
+      btnOcr.addEventListener('click', function() {
+        var file = cardInput.files[0];
+        if (!file) return;
+
+        var loading = document.getElementById('ocrLoading');
+        var result = document.getElementById('ocrResult');
+        var errDiv = document.getElementById('ocrError');
+        loading.style.display = 'block';
+        result.style.display = 'none';
+        errDiv.style.display = 'none';
+        btnOcr.disabled = true;
+
+        /* Step 1: OCR.space API */
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('apikey', 'helloworld');
+        formData.append('language', 'fre');
+        formData.append('isOverlayRequired', 'false');
+
+        fetch('https://api.ocr.space/parse/image', { method: 'POST', body: formData })
+          .then(function(r) { return r.json(); })
+          .then(function(ocrData) {
+            if (!ocrData.ParsedResults || ocrData.ParsedResults.length === 0 || ocrData.IsErroredOnProcessing) {
+              throw new Error(ocrData.ErrorMessage || 'OCR a echoue.');
+            }
+            var ocrText = ocrData.ParsedResults[0].ParsedText;
+            if (!ocrText || ocrText.trim().length < 5) {
+              throw new Error('Aucun texte detecte sur la carte.');
+            }
+
+            /* Step 2: Gemini API - analyze OCR text */
+            var prompt = "Voici le texte extrait par OCR d'une carte etudiant :\n\n" + ocrText +
+              "\n\nAnalyse ce texte et extrais les informations suivantes au format JSON strict (sans markdown, sans ```json) :" +
+              "\n{\"nom\": \"\", \"prenom\": \"\", \"classe\": \"\", \"email_universitaire\": \"\", \"etablissement_ecole\": \"\", \"identifiant_card\": \"\", \"annee_universitaire\": \"\", \"specialite\": \"\", \"adresse\": \"\", \"niveau\": \"\"}" +
+              "\n\nRegles :" +
+              "\n- Remplis uniquement les champs que tu peux identifier avec certitude dans le texte." +
+              "\n- Laisse vide (\"\") les champs non trouvables." +
+              "\n- Reponds UNIQUEMENT avec le JSON, rien d'autre.";
+
+            return fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBltWo3CN7W6JJTVEKqwMzf3dok27imtnA', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+              })
+            });
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(geminiData) {
+            var text = geminiData.candidates[0].content.parts[0].text;
+            /* Clean potential markdown wrapper */
+            text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+            var data = JSON.parse(text);
+
+            /* Step 3: Pre-fill form fields (only empty ones) */
+            var filled = [];
+            var fields = {
+              'profilNom': data.nom,
+              'profilPrenom': data.prenom,
+              'profilClasse': data.classe,
+              'profilEmailUniv': data.email_universitaire,
+              'profilEtablissement': data.etablissement_ecole,
+              'profilIdCard': data.identifiant_card,
+              'profilAnneeUniv': data.annee_universitaire,
+              'profilAdresse': data.adresse
+            };
+
+            for (var id in fields) {
+              var el = document.getElementById(id);
+              if (el && fields[id] && (!el.value || el.value.trim() === '')) {
+                el.value = fields[id];
+                el.style.borderColor = '#10b981';
+                setTimeout((function(e){ return function(){ e.style.borderColor = ''; }; })(el), 3000);
+                filled.push(id);
+              }
+            }
+
+            /* Also fill specialite/niveau by name attribute if empty */
+            var specInput = document.querySelector('input[name="specialite"]');
+            if (specInput && data.specialite && (!specInput.value || specInput.value.trim() === '')) {
+              specInput.value = data.specialite; filled.push('specialite');
+            }
+            var nivInput = document.querySelector('input[name="niveau"]');
+            if (nivInput && data.niveau && (!nivInput.value || nivInput.value.trim() === '')) {
+              nivInput.value = data.niveau; filled.push('niveau');
+            }
+
+            loading.style.display = 'none';
+            result.style.display = 'block';
+            result.textContent = filled.length > 0
+              ? 'IA a pre-rempli ' + filled.length + ' champ(s). Verifiez et enregistrez.'
+              : 'Aucun nouveau champ a remplir (tous deja remplis).';
+          })
+          .catch(function(err) {
+            loading.style.display = 'none';
+            errDiv.style.display = 'block';
+            errDiv.textContent = 'Erreur: ' + err.message;
+          })
+          .finally(function() {
+            btnOcr.disabled = false;
+          });
+      });
+    }
+
+    /* ========== Suggestion bio IA (Gemini) ========== */
+    var btnBio = document.getElementById('btnGenBio');
+    if (btnBio) {
+      btnBio.addEventListener('click', function() {
+        var bioField = document.getElementById('profilBio');
+        var loadingEl = document.getElementById('bioLoading');
+        var errEl = document.getElementById('bioError');
+        loadingEl.style.display = 'inline';
+        errEl.style.display = 'none';
+        btnBio.disabled = true;
+
+        var nom = document.getElementById('profilNom') ? document.getElementById('profilNom').value : '';
+        var prenom = document.getElementById('profilPrenom') ? document.getElementById('profilPrenom').value : '';
+        var role = '<?= htmlspecialchars($userData['role'] ?? '') ?>';
+        var niveau = document.querySelector('input[name="niveau"]') ? document.querySelector('input[name="niveau"]').value : '';
+        var specialite = document.querySelector('input[name="specialite"]') ? document.querySelector('input[name="specialite"]').value : '';
+        var classe = document.getElementById('profilClasse') ? document.getElementById('profilClasse').value : '';
+        var etablissement = document.getElementById('profilEtablissement') ? document.getElementById('profilEtablissement').value : '';
+
+        var prompt = "Genere une courte bio professionnelle (2-3 phrases max, en francais) pour un profil sur une plateforme educative." +
+          "\nPrenom: " + prenom + "\nNom: " + nom + "\nRole: " + role +
+          (niveau ? "\nNiveau: " + niveau : "") +
+          (specialite ? "\nSpecialite: " + specialite : "") +
+          (classe ? "\nClasse: " + classe : "") +
+          (etablissement ? "\nEtablissement: " + etablissement : "") +
+          "\n\nReponds uniquement avec le texte de la bio, sans guillemets, sans markdown.";
+
+        fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBltWo3CN7W6JJTVEKqwMzf3dok27imtnA', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var bio = data.candidates[0].content.parts[0].text.trim();
+          bioField.value = bio;
+          bioField.style.borderColor = '#10b981';
+          setTimeout(function() { bioField.style.borderColor = ''; }, 3000);
+        })
+        .catch(function(err) {
+          errEl.style.display = 'block';
+          errEl.textContent = 'Erreur IA: ' + err.message;
+        })
+        .finally(function() {
+          loadingEl.style.display = 'none';
+          btnBio.disabled = false;
+        });
+      });
+    }
     </script>
   </body>
 </html>

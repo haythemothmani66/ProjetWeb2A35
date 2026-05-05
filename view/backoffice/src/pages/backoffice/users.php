@@ -93,6 +93,11 @@ foreach ($pdfAllUsers as $u) {
 }
 $pdfJson = json_encode($pdfRows, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS);
 
+/* Get parametres */
+$paramStmt = $db->prepare("SELECT valeur FROM parametres WHERE cle = 'expiration_verification_jours' LIMIT 1");
+$paramStmt->execute();
+$trialDays = (int)($paramStmt->fetchColumn() ?: 7);
+
 $BO = '/gestion_users/view/backoffice/src';
 /* Build query string for pagination links */
 $qs = http_build_query(array_filter(['search'=>$search,'role'=>$role]));
@@ -154,6 +159,26 @@ $qs = http_build_query(array_filter(['search'=>$search,'role'=>$role]));
           </div>
         </div>
 
+        <!-- Parametres -->
+        <div class="card card-lg mb-4" style="border-left:4px solid #6366f1 !important;">
+          <div class="card-body">
+            <form action="/gestion_users/user/updateParametres" method="POST" class="row g-3 align-items-end">
+              <div class="col-auto">
+                <label class="form-label fw-semibold"><i class="ti ti-settings me-1"></i>Parametres verification etudiant</label>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="text-secondary small">Periode d'essai :</span>
+                  <select name="expiration_verification_jours" class="form-select form-select-sm" style="width:auto;">
+                    <?php foreach ([3,5,7,10,14,21,30,60,90] as $d): ?>
+                    <option value="<?= $d ?>" <?= $trialDays===$d?'selected':'' ?>><?= $d ?> jours</option>
+                    <?php endforeach; ?>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-check me-1"></i>Sauvegarder</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
         <!-- Search -->
         <div class="card card-lg mb-4">
           <div class="card-body">
@@ -169,6 +194,7 @@ $qs = http_build_query(array_filter(['search'=>$search,'role'=>$role]));
                   <option value="admin" <?= $role==='admin'?'selected':'' ?>>Admin</option>
                   <option value="encadrant" <?= $role==='encadrant'?'selected':'' ?>>Encadrant</option>
                   <option value="etudiant" <?= $role==='etudiant'?'selected':'' ?>>Etudiant</option>
+                  <option value="partenariat" <?= $role==='partenariat'?'selected':'' ?>>Partenariat</option>
                 </select>
               </div>
               <div class="col-lg-4 col-12 d-flex gap-2">
@@ -205,7 +231,10 @@ $qs = http_build_query(array_filter(['search'=>$search,'role'=>$role]));
                 <tr>
                   <td>
                     <div class="d-flex align-items-center gap-3">
-                      <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($u['photo']) ?>" class="rounded-circle" width="40" height="40" style="object-fit:cover;" onerror="this.src='/gestion_users/uploads/photos/default.png';">
+                      <div class="position-relative">
+                        <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($u['photo']) ?>" class="rounded-circle" width="40" height="40" style="object-fit:cover;" onerror="this.src='/gestion_users/uploads/photos/default.png';">
+                        <span class="position-absolute bottom-0 end-0 rounded-circle border border-2 border-white" style="width:12px;height:12px;background:<?= ($u['etat'] ?? 'offline')==='online'?'#10b981':'#9ca3af' ?>;" title="<?= ($u['etat'] ?? 'offline')==='online'?'En ligne':'Hors ligne' ?>"></span>
+                      </div>
                       <div>
                         <div class="fw-semibold"><?= htmlspecialchars($u['prenom'].' '.$u['nom']) ?></div>
                         <?php if($u['telephone']): ?><small class="text-secondary"><i class="ti ti-phone" style="font-size:11px;"></i> <?= htmlspecialchars($u['telephone']) ?></small><?php endif; ?>
@@ -214,7 +243,7 @@ $qs = http_build_query(array_filter(['search'=>$search,'role'=>$role]));
                   </td>
                   <td class="text-secondary"><?= htmlspecialchars($u['email']) ?></td>
                   <td>
-                    <?php $colors = ['admin'=>'danger','encadrant'=>'warning','etudiant'=>'info']; ?>
+                    <?php $colors = ['admin'=>'danger','encadrant'=>'warning','etudiant'=>'info','partenariat'=>'primary']; ?>
                     <span class="badge bg-<?= $colors[$u['role']] ?? 'secondary' ?> text-capitalize"><?= htmlspecialchars($u['role']) ?></span>
                   </td>
                   <td>

@@ -10,6 +10,8 @@ class User {
     private string  $telephone   = '';
     private string  $role        = 'etudiant';
     private int     $statut      = 1;
+    private string  $etat        = 'offline';
+    private int     $verification_student = 0;
     private string  $photo       = 'default.png';
     private ?string $token_verif = null;
     private ?string $created_at  = null;
@@ -46,6 +48,14 @@ class User {
 
     public function getStatut(): int {
         return $this->statut;
+    }
+
+    public function getEtat(): string {
+        return $this->etat;
+    }
+
+    public function getVerificationStudent(): int {
+        return $this->verification_student;
     }
 
     public function getPhoto(): string {
@@ -87,12 +97,20 @@ class User {
     }
 
     public function setRole(string $role): void {
-        $allowed = ['admin', 'encadrant', 'etudiant'];
+        $allowed = ['admin', 'encadrant', 'etudiant', 'partenariat'];
         $this->role = in_array($role, $allowed) ? $role : 'etudiant';
     }
 
     public function setStatut(int $statut): void {
         $this->statut = ($statut === 1) ? 1 : 0;
+    }
+
+    public function setEtat(string $etat): void {
+        $this->etat = in_array($etat, ['online', 'offline']) ? $etat : 'offline';
+    }
+
+    public function setVerificationStudent(int $v): void {
+        $this->verification_student = ($v === 1) ? 1 : 0;
     }
 
     public function setPhoto(string $photo): void {

@@ -32,6 +32,14 @@ class ProfilController {
         $niveau    = trim($_POST['niveau']     ?? '');
         $specialite= trim($_POST['specialite'] ?? '');
 
+        /* Etudiant extra fields */
+        $classe              = trim($_POST['classe'] ?? '');
+        $email_universitaire = trim($_POST['email_universitaire'] ?? '');
+        $adresse             = trim($_POST['adresse'] ?? '');
+        $etablissement_ecole = trim($_POST['etablissement_ecole'] ?? '');
+        $identifiant_card    = trim($_POST['identifiant_card'] ?? '');
+        $annee_universitaire = trim($_POST['annee_universitaire'] ?? '');
+
         // --- Nom ---
         if (empty($nom))                         $errors[] = "Le nom est obligatoire.";
         elseif (mb_strlen($nom) < 2)             $errors[] = "Le nom doit contenir au moins 2 caractères.";
@@ -82,9 +90,34 @@ class ProfilController {
             $profil->setBioText($bio_text ?: null);
             $profil->setNiveau($niveau ?: null);
             $profil->setSpecialite($specialite ?: null);
+            $profil->setClasse($classe ?: null);
+            $profil->setEmailUniversitaire($email_universitaire ?: null);
+            $profil->setAdresse($adresse ?: null);
+            $profil->setEtablissementEcole($etablissement_ecole ?: null);
+            $profil->setIdentifiantCard($identifiant_card ?: null);
+            $profil->setAnneeUniversitaire($annee_universitaire ?: null);
 
-            $stmt2 = $this->db->prepare("UPDATE profil SET bio_text=?, niveau=?, specialite=? WHERE user_id=?");
-            $stmt2->execute([$profil->getBioText(), $profil->getNiveau(), $profil->getSpecialite(), $profil->getUserId()]);
+            /* Upload carte etudiant */
+            $cardImage = null;
+            if (!empty($_FILES['card_image']['name'])) {
+                $cardUploaded = $this->uploadPhoto($_FILES['card_image']);
+                if ($cardUploaded) {
+                    $cardImage = $cardUploaded;
+                }
+            }
+
+            $sql = "UPDATE profil SET bio_text=?, niveau=?, specialite=?, classe=?, email_universitaire=?, adresse=?, etablissement_ecole=?, identifiant_card=?, annee_universitaire=?";
+            $params = [$profil->getBioText(), $profil->getNiveau(), $profil->getSpecialite(), $profil->getClasse(), $profil->getEmailUniversitaire(), $profil->getAdresse(), $profil->getEtablissementEcole(), $profil->getIdentifiantCard(), $profil->getAnneeUniversitaire()];
+
+            if ($cardImage) {
+                $sql .= ", card_image=?";
+                $params[] = $cardImage;
+            }
+            $sql .= " WHERE user_id=?";
+            $params[] = $profil->getUserId();
+
+            $stmt2 = $this->db->prepare($sql);
+            $stmt2->execute($params);
 
             $_SESSION['user_nom']    = $user->getNom();
             $_SESSION['user_prenom'] = $user->getPrenom();

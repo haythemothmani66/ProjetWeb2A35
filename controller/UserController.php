@@ -60,7 +60,7 @@ class UserController {
         elseif (!preg_match('/[^A-Za-z0-9]/', $password)) $errors[] = "Le mot de passe doit contenir au moins un caractère spécial.";
 
         // --- Rôle ---
-        if (!in_array($role, ['admin', 'encadrant', 'etudiant'])) $errors[] = "Rôle invalide.";
+        if (!in_array($role, ['admin', 'encadrant', 'etudiant', 'partenariat'])) $errors[] = "Rôle invalide.";
 
         if (empty($errors)) {
             $stmt = $this->db->prepare("SELECT id FROM user WHERE email = ? LIMIT 1");
@@ -144,7 +144,7 @@ class UserController {
             $errors[] = "Le numéro de téléphone doit contenir exactement 8 chiffres.";
 
         // --- Rôle ---
-        if (!in_array($role, ['admin', 'encadrant', 'etudiant'])) $errors[] = "Rôle invalide.";
+        if (!in_array($role, ['admin', 'encadrant', 'etudiant', 'partenariat'])) $errors[] = "Rôle invalide.";
 
         if (empty($errors)) {
             $stmt = $this->db->prepare("SELECT id FROM user WHERE email = ? AND id != ? LIMIT 1");
@@ -233,6 +233,42 @@ class UserController {
             $_SESSION['success'] = $nouveauStatut ? "Utilisateur débloqué." : "Utilisateur bloqué.";
         }
 
+        header('Location: /gestion_users/view/backoffice/src/pages/backoffice/users.php');
+        exit;
+    }
+
+    // POST /user/toggleVerification
+    public function toggleVerification(): void {
+        $id = (int)($_POST['id'] ?? 0);
+        $stmt = $this->db->prepare("SELECT verification_student, role FROM user WHERE id = ? LIMIT 1");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+
+        if ($row && $row['role'] === 'etudiant') {
+            $newVal = ($row['verification_student'] == 1) ? 0 : 1;
+            $this->db->prepare("UPDATE user SET verification_student = ? WHERE id = ?")->execute([$newVal, $id]);
+            if ($newVal === 1) {
+                /* Re-activate if was auto-blocked */
+                $this->db->prepare("UPDATE user SET statut = 1 WHERE id = ? AND statut = 0")->execute([$id]);
+            }
+            $_SESSION['success'] = $newVal ? "Etudiant verifie avec succes." : "Verification etudiant retiree.";
+        }
+
+        $referer = $_SERVER['HTTP_REFERER'] ?? '/gestion_users/view/backoffice/src/pages/backoffice/users.php';
+        header('Location: ' . $referer);
+        exit;
+    }
+
+    // POST /user/updateParametres
+    public function updateParametres(): void {
+        $expiration = (int)($_POST['expiration_verification_jours'] ?? 7);
+        if ($expiration < 1) $expiration = 1;
+        if ($expiration > 365) $expiration = 365;
+
+        $this->db->prepare("UPDATE parametres SET valeur = ? WHERE cle = 'expiration_verification_jours'")
+                 ->execute([(string)$expiration]);
+
+        $_SESSION['success'] = "Parametres mis a jour avec succes (expiration: {$expiration} jours).";
         header('Location: /gestion_users/view/backoffice/src/pages/backoffice/users.php');
         exit;
     }

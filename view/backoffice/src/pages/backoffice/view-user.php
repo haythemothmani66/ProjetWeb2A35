@@ -11,14 +11,37 @@ if (empty($_SESSION['user_prenom'])) {
 
 $db = Config::getConnexion();
 $id = (int)($_GET['id'] ?? 0);
-$stmt = $db->prepare("SELECT u.*, p.bio_text, p.niveau, p.specialite, p.created_at AS profil_created FROM user u LEFT JOIN profil p ON p.user_id=u.id WHERE u.id=? LIMIT 1");
+$stmt = $db->prepare("SELECT u.*, p.bio_text, p.niveau, p.specialite, p.classe, p.email_universitaire, p.card_image, p.adresse, p.etablissement_ecole, p.identifiant_card, p.annee_universitaire, p.created_at AS profil_created FROM user u LEFT JOIN profil p ON p.user_id=u.id WHERE u.id=? LIMIT 1");
 $stmt->execute([$id]);
 $user = $stmt->fetch();
 if (!$user) { $_SESSION['errors'] = ["Utilisateur introuvable."]; header('Location: users.php'); exit; }
 
+/* Get trial expiration parameter */
+$paramStmt = $db->prepare("SELECT valeur FROM parametres WHERE cle = 'expiration_verification_jours' LIMIT 1");
+$paramStmt->execute();
+$trialDays = (int)($paramStmt->fetchColumn() ?: 7);
+
+/* Calculate trial remaining for students */
+$trialRemaining = null;
+if ($user['role'] === 'etudiant' && (int)$user['verification_student'] === 0) {
+    $created = new DateTime($user['created_at']);
+    $now = new DateTime();
+    $daysPassed = (int)$now->diff($created)->days;
+    $trialRemaining = max(0, $trialDays - $daysPassed);
+}
+
+/* Last 5 connexions for this user */
+$cxStmt = $db->prepare("SELECT connected_at, disconnected_at, ip_address FROM connexion_history WHERE user_id=? ORDER BY connected_at DESC LIMIT 5");
+$cxStmt->execute([$id]);
+$connexions = $cxStmt->fetchAll();
+
+$errors = $_SESSION['errors'] ?? [];
+$success = $_SESSION['success'] ?? '';
+unset($_SESSION['errors'], $_SESSION['success']);
+
 $BO = '/gestion_users/view/backoffice/src';
 $isVerified = ($user['token_verif'] === null);
-$roleColors = ['admin'=>'danger','encadrant'=>'warning','etudiant'=>'info'];
+$roleColors = ['admin'=>'danger','encadrant'=>'warning','etudiant'=>'info','partenariat'=>'primary'];
 $roleBg = $roleColors[$user['role']] ?? 'secondary';
 ?>
 <!DOCTYPE html>
@@ -54,6 +77,16 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
       <?php include __DIR__ . '/../../partials_php/topbar.php'; ?>
       <div class="custom-container">
 
+        <?php if ($success): ?>
+        <div class="alert alert-success alert-dismissible fade show"><i class="ti ti-check me-2"></i><?= htmlspecialchars($success) ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php endif; ?>
+        <?php if ($errors): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+          <ul class="mb-0"><?php foreach($errors as $e): ?><li><?= htmlspecialchars($e) ?></li><?php endforeach; ?></ul>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <?php endif; ?>
+
         <!-- Back button -->
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div>
@@ -76,11 +109,23 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
               <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start">
                 <span class="badge bg-<?= $roleBg ?> fs-6"><?= htmlspecialchars(ucfirst($user['role'])) ?></span>
                 <?php if (!$isVerified): ?>
-                  <span class="badge bg-warning fs-6">Non verifie</span>
+                  <span class="badge bg-warning fs-6">Email non verifie</span>
                 <?php elseif ($user['statut'] == 1): ?>
                   <span class="badge bg-success fs-6">Actif</span>
                 <?php else: ?>
                   <span class="badge bg-danger fs-6">Bloque</span>
+                <?php endif; ?>
+                <?php if (($user['etat'] ?? 'offline') === 'online'): ?>
+                  <span class="badge fs-6" style="background:rgba(16,185,129,0.2);color:#10b981;"><i class="ti ti-circle-filled me-1" style="font-size:8px;"></i>En ligne</span>
+                <?php else: ?>
+                  <span class="badge fs-6" style="background:rgba(156,163,175,0.2);color:#6b7280;">Hors ligne</span>
+                <?php endif; ?>
+                <?php if ($user['role'] === 'etudiant'): ?>
+                  <?php if ((int)$user['verification_student'] === 1): ?>
+                    <span class="badge fs-6" style="background:rgba(16,185,129,0.2);color:#10b981;"><i class="ti ti-certificate me-1"></i>Etudiant verifie</span>
+                  <?php else: ?>
+                    <span class="badge fs-6" style="background:rgba(245,158,11,0.2);color:#f59e0b;"><i class="ti ti-alert-triangle me-1"></i>Etudiant non verifie</span>
+                  <?php endif; ?>
                 <?php endif; ?>
               </div>
             </div>
@@ -204,6 +249,92 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
                     <div class="detail-value"><?= htmlspecialchars($user['specialite'] ?: '— Non renseignee —') ?></div>
                   </div>
                   <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <?php if ($user['role'] === 'etudiant'): ?>
+        <!-- Verification Etudiant -->
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <div class="card info-card" style="border-left:4px solid <?= (int)$user['verification_student']===1?'#10b981':'#f59e0b' ?> !important;">
+              <div class="card-header bg-transparent border-0 pb-0 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="ti ti-certificate me-2" style="color:<?= (int)$user['verification_student']===1?'#10b981':'#f59e0b' ?>;"></i>Verification Etudiant</h5>
+                <form action="/gestion_users/user/toggleVerification" method="POST" class="d-inline">
+                  <input type="hidden" name="id" value="<?= $user['id'] ?>">
+                  <?php if ((int)$user['verification_student'] === 1): ?>
+                    <button type="submit" class="btn btn-sm btn-outline-warning"><i class="ti ti-x me-1"></i>Retirer la verification</button>
+                  <?php else: ?>
+                    <button type="submit" class="btn btn-sm btn-success"><i class="ti ti-check me-1"></i>Verifier cet etudiant</button>
+                  <?php endif; ?>
+                </form>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <div class="detail-label">Statut verification</div>
+                    <div class="detail-value">
+                      <?php if ((int)$user['verification_student'] === 1): ?>
+                        <span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i>Verifie</span>
+                      <?php else: ?>
+                        <span class="badge bg-warning-subtle text-warning"><i class="ti ti-clock me-1"></i>Non verifie</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="detail-label">Periode d'essai</div>
+                    <div class="detail-value"><?= $trialDays ?> jours</div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="detail-label">Jours restants</div>
+                    <div class="detail-value">
+                      <?php if ((int)$user['verification_student'] === 1): ?>
+                        <span class="text-success">Illimite (verifie)</span>
+                      <?php elseif ($trialRemaining === 0): ?>
+                        <span class="text-danger fw-bold">Expire !</span>
+                      <?php else: ?>
+                        <span class="text-warning fw-bold"><?= $trialRemaining ?> jour(s)</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Historique connexions -->
+        <div class="row g-4 mb-4">
+          <div class="col-12">
+            <div class="card info-card">
+              <div class="card-header bg-transparent border-0 pb-0">
+                <h5 class="fw-bold mb-0"><i class="ti ti-history me-2 text-info"></i>Historique des connexions (5 dernieres)</h5>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0 align-middle">
+                    <thead>
+                      <tr><th>Connecte le</th><th>Deconnecte le</th><th>Adresse IP</th></tr>
+                    </thead>
+                    <tbody>
+                      <?php if (empty($connexions)): ?>
+                      <tr><td colspan="3" class="text-center py-4 text-secondary">Aucune connexion enregistree</td></tr>
+                      <?php else: ?>
+                      <?php foreach ($connexions as $cx): ?>
+                      <tr>
+                        <td class="small"><?= date('d/m/Y H:i:s', strtotime($cx['connected_at'])) ?></td>
+                        <td class="small">
+                          <?= $cx['disconnected_at'] ? date('d/m/Y H:i:s', strtotime($cx['disconnected_at'])) : '<span class="badge bg-success-subtle text-success">Encore connecte</span>' ?>
+                        </td>
+                        <td class="small font-monospace"><?= htmlspecialchars($cx['ip_address'] ?? '-') ?></td>
+                      </tr>
+                      <?php endforeach; ?>
+                      <?php endif; ?>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
