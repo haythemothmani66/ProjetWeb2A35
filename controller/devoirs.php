@@ -568,53 +568,90 @@ public function deleteCorrection()
     }
 
     // ============================================================
-    // ANALYSE DE SENTIMENT
-    // ============================================================
-    public function analyzeSentiment($commentaire) {
-        if (empty($commentaire)) {
-            return ['sentiment' => 'neutre', 'score' => 0.5, 'urgence' => false];
-        }
-        
-        $commentaireLower = strtolower($commentaire);
-        
-        $motsPositifs = ['bien', 'excellent', 'super', 'génial', 'parfait', 'content', 'heureux', 'facile', 'réussi', 'merci'];
-        $motsNegatifs = ['difficile', 'comprends pas', 'frustrant', 'trop dur', 'aide', 'perdu', 'bloqué'];
-        $motsStress = ['stress', 'urgence', 'examen', 'important', 'délai', 'pressé', 'note', 'réussir'];
-        $motsConfusion = ['comprends rien', 'sais pas', 'ou est ce que', 'comment faire', 'expliquez'];
-        
-        $score = 0.5;
-        $sentiment = 'neutre';
-        $urgence = false;
-        
-        foreach ($motsPositifs as $mot) {
-            if (strpos($commentaireLower, $mot) !== false) $score += 0.1;
-        }
-        foreach ($motsNegatifs as $mot) {
-            if (strpos($commentaireLower, $mot) !== false) {
-                $score -= 0.1;
-                $sentiment = 'negatif';
-            }
-        }
-        foreach ($motsStress as $mot) {
-            if (strpos($commentaireLower, $mot) !== false) {
-                $urgence = true;
-                $sentiment = 'stress';
-            }
-        }
-        foreach ($motsConfusion as $mot) {
-            if (strpos($commentaireLower, $mot) !== false) $sentiment = 'confusion';
-        }
-        
-        $score = max(0, min(1, $score));
-        if ($score > 0.7) $sentiment = 'positif';
-        if ($score < 0.3 && $sentiment != 'stress' && $sentiment != 'confusion') $sentiment = 'negatif';
-        
-        return [
-            'sentiment' => $sentiment,
-            'score' => round($score, 2),
-            'urgence' => $urgence
-        ];
+// ANALYSE DE SENTIMENT CORRIGÉE
+// ============================================================
+public function analyzeSentiment($commentaire) {
+    if (empty($commentaire)) {
+        return ['sentiment' => 'neutre', 'score' => 0.5, 'urgence' => false];
     }
+    
+    $commentaireLower = strtolower($commentaire);
+    
+    // Dictionnaires de mots-clés
+    $motsPositifs = ['bien', 'excellent', 'super', 'génial', 'parfait', 'content', 'heureux', 'facile', 'réussi', 'merci', 'bravo', 'félicitations'];
+    $motsNegatifs = ['difficile', 'compliqué', 'problème', 'erreur', 'faux', 'mal'];
+    $motsStress = ['stress', 'urgence', 'examen', 'important', 'délai', 'pressé', 'note', 'réussir', 'deadline'];
+    $motsConfusion = ['comprends pas', 'sais pas', 'ou est ce que', 'comment faire', 'expliquez', 'je ne comprend', 'pas clair', 'perdu'];
+    $motsFrustration = ['frustré', 'énervé', 'fatiguant', 'trop long', 'marche pas', 'bloqué', 'aide'];
+    
+    // Compter les occurrences
+    $comptePositif = 0;
+    $compteNegatif = 0;
+    $compteStress = 0;
+    $compteConfusion = 0;
+    $compteFrustration = 0;
+    
+    foreach ($motsPositifs as $mot) {
+        if (strpos($commentaireLower, $mot) !== false) $comptePositif++;
+    }
+    foreach ($motsNegatifs as $mot) {
+        if (strpos($commentaireLower, $mot) !== false) $compteNegatif++;
+    }
+    foreach ($motsStress as $mot) {
+        if (strpos($commentaireLower, $mot) !== false) $compteStress++;
+    }
+    foreach ($motsConfusion as $mot) {
+        if (strpos($commentaireLower, $mot) !== false) $compteConfusion++;
+    }
+    foreach ($motsFrustration as $mot) {
+        if (strpos($commentaireLower, $mot) !== false) $compteFrustration++;
+    }
+    
+    // Déterminer le sentiment (ordre de priorité)
+    $sentiment = 'neutre';
+    $urgence = false;
+    
+    // Priorité 1 : Stress (le plus urgent)
+    if ($compteStress > 0) {
+        $sentiment = 'stress';
+        $urgence = true;
+    } 
+    // Priorité 2 : Frustration
+    elseif ($compteFrustration > 0) {
+        $sentiment = 'frustration';
+        $urgence = true;
+    }
+    // Priorité 3 : Confusion
+    elseif ($compteConfusion > 0) {
+        $sentiment = 'confusion';
+    }
+    // Priorité 4 : Négatif (si plus de mots négatifs que positifs)
+    elseif ($compteNegatif > $comptePositif) {
+        $sentiment = 'negatif';
+    }
+    // Priorité 5 : Positif
+    elseif ($comptePositif > $compteNegatif && $comptePositif > 0) {
+        $sentiment = 'positif';
+    }
+    
+    // Calcul du score
+    $score = 0.5;
+    $score += $comptePositif * 0.1;
+    $score -= $compteNegatif * 0.1;
+    $score = max(0, min(1, $score));
+    
+    // Log pour debug
+    error_log("=== ANALYSE SENTIMENT ===");
+    error_log("Texte: " . substr($commentaire, 0, 100));
+    error_log("Positif:$comptePositif Negatif:$compteNegatif Stress:$compteStress Confusion:$compteConfusion Frustration:$compteFrustration");
+    error_log("Sentiment: $sentiment, Score: $score, Urgence: " . ($urgence ? 'OUI' : 'NON'));
+    
+    return [
+        'sentiment' => $sentiment,
+        'score' => round($score, 2),
+        'urgence' => $urgence
+    ];
+}
 
     public function updateSentiment($id_devoir, $commentaire) {
         $analysis = $this->analyzeSentiment($commentaire);

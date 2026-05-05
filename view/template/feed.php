@@ -97,6 +97,80 @@ foreach ($corrections as $corr) {
     $correctionsByDevoir[$devoirId][] = $corr;
 }
 
+// ============================================================
+// STATISTIQUES AVANCÉES (CORRIGÉES)
+// ============================================================
+
+// 1. Nombre de devoirs urgents non corrigés
+$stmtUrgents = $conn->prepare("
+    SELECT COUNT(*) as count 
+    FROM devoirs d 
+    WHERE d.urgence = 'urgente' 
+    AND NOT EXISTS (SELECT 1 FROM correction c WHERE c.id_devoir = d.id_devoir)
+");
+$stmtUrgents->execute();
+$urgentsNonCorriges = $stmtUrgents->fetch(PDO::FETCH_ASSOC)['count'];
+
+// 2. Devoirs sans correction depuis plus de 7 jours
+$stmtSansCorrection = $conn->prepare("
+    SELECT COUNT(*) as count 
+    FROM devoirs d 
+    WHERE NOT EXISTS (SELECT 1 FROM correction c WHERE c.id_devoir = d.id_devoir)
+    AND d.date_soumission < DATE_SUB(NOW(), INTERVAL 7 DAY)
+");
+$stmtSansCorrection->execute();
+$devoirsSansCorrectionLong = $stmtSansCorrection->fetch(PDO::FETCH_ASSOC)['count'];
+
+// 3. Moyenne des notes
+$stmtMoyenneNotes = $conn->query("
+    SELECT AVG(note_estimee) as moyenne 
+    FROM correction 
+    WHERE note_estimee IS NOT NULL
+");
+$moyenneNotes = round($stmtMoyenneNotes->fetch(PDO::FETCH_ASSOC)['moyenne'] ?? 0, 1);
+
+// 4. Devoirs en difficulté (progression < 30% OU note < 8)
+$stmtDevoirsDifficiles = $conn->query("
+    SELECT COUNT(*) as count 
+    FROM devoirs d 
+    WHERE d.progression_eleve < 30 
+    OR d.id_devoir IN (
+        SELECT c.id_devoir 
+        FROM correction c 
+        WHERE c.note_estimee < 8
+    )
+");
+$devoirsDifficiles = $stmtDevoirsDifficiles->fetch(PDO::FETCH_ASSOC)['count'];
+
+// 5. Taux de correction
+$nbDevoirsTotal = count($devoirs);
+$nbCorrectionsTotal = count($corrections);
+$tauxCorrection = $nbDevoirsTotal > 0 ? round(($nbCorrectionsTotal / $nbDevoirsTotal) * 100) : 0;
+
+// 6. Temps moyen de correction (en heures)
+$stmtTempsMoyen = $conn->query("
+    SELECT AVG(TIMESTAMPDIFF(HOUR, d.date_soumission, c.date_correction)) as temps_moyen
+    FROM correction c
+    JOIN devoirs d ON c.id_devoir = d.id_devoir
+    WHERE c.date_correction IS NOT NULL AND d.date_soumission IS NOT NULL
+");
+$tempsMoyenCorrection = round($stmtTempsMoyen->fetch(PDO::FETCH_ASSOC)['temps_moyen'] ?? 0);
+
+// 7. Devoirs avec stress (vérifie la casse)
+$devoirsStress = count(array_filter($devoirs, function($d) {
+    $sentiment = strtolower($d['sentiment'] ?? '');
+    return $sentiment === 'stress' || $sentiment === 'stresse';
+}));
+
+// 8. Devoirs avec sentiment positif
+$devoirsPositifs = count(array_filter($devoirs, function($d) {
+    return strtolower($d['sentiment'] ?? '') === 'positif';
+}));
+
+// 9. Total devoirs urgents
+$stmtUrgentsTotal = $conn->query("SELECT COUNT(*) as count FROM devoirs WHERE urgence = 'urgente'");
+$urgentsTotal = $stmtUrgentsTotal->fetch(PDO::FETCH_ASSOC)['count'];
+
 // Message de succès si redirigé depuis submit
 $successType = $_GET['success'] ?? '';
 
@@ -1449,34 +1523,101 @@ $successType = $_GET['success'] ?? '';
             </div>
         </div>
     </div>
-    <!-- Carte des étudiants en difficulté -->
-     <div>
-<div class="col-md-6 col-lg-3">
-    <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">
-            <i class="fas fa-chart-simple"></i>
+    <!-- ROW 2 : STATISTIQUES DÉTAILLÉES -->
+<div class="row g-4 mb-5">
+    <!-- Carte: Devoirs urgents non corrigés -->
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="stat-info">
+                <h3><?= $urgentsNonCorriges ?></h3>
+                <p>Devoirs urgents non corrigés</p>
+                <small class="text-muted">À traiter en priorité</small>
+            </div>
         </div>
-        <div class="stat-info">
-            <h3 id="statSentimentNegatif">0</h3>
-            <p>Étudiants en difficulté</p>
+    </div>
+    
+    <!-- Carte: Devoirs sans correction (+7 jours) -->
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div class="stat-info">
+                <h3><?= $devoirsSansCorrectionLong ?></h3>
+                <p>Devoirs sans correction > 7j</p>
+                <small class="text-muted">En attente depuis longtemps</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Carte: Taux de correction -->
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <div class="stat-info">
+                <h3><?= $tauxCorrection ?>%</h3>
+                <p>Taux de correction</p>
+                <small class="text-muted"><?= $nbCorrectionsTotal ?> / <?= $nbDevoirsTotal ?> devoirs corrigés</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Carte: Moyenne des notes -->
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-info">
+                <h3><?= $moyenneNotes ?>/20</h3>
+                <p>Moyenne des notes</p>
+                <small class="text-muted">Sur l'ensemble des corrections</small>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Carte des urgences -->
-<div class="col-md-6 col-lg-3">
-    <div class="stat-card">
-        <div class="stat-icon" style="background: linear-gradient(135deg, #dc2626, #991b1b);">
-            <i class="fas fa-bell"></i>
+<!-- ROW 3 : STATISTIQUES DE PERFORMANCE -->
+<div class="row g-4 mb-5">
+    
+    
+    
+    
+    <!-- Carte: Devoirs avec stress détecté -->
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ec489a, #db2777);">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+            <div class="stat-info">
+                <h3><?= $devoirsStress ?></h3>
+                <p>Devoirs avec stress détecté</p>
+                <small class="text-muted">Intervention recommandée</small>
+            </div>
         </div>
-        <div class="stat-info">
-            <h3 id="statUrgences">0</h3>
-            <p>Devoirs urgents</p>
+    </div>
+    
+    <!-- Carte: Devoirs avec sentiment positif -->
+    <div class="col-md-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                <i class="fas fa-smile"></i>
+            </div>
+            <div class="stat-info">
+                <h3><?= $devoirsPositifs ?></h3>
+                <p>Devoirs avec sentiment positif</p>
+                <small class="text-muted">Élèves motivés</small>
+            </div>
         </div>
     </div>
 </div>
-</div>
-</div>
+
+
     
 
     <!-- MAIN CONTENT -->
