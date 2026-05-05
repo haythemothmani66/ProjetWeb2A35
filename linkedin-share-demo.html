@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedIn Share Button Demo</title>
+<style>
+  /* Base reset for demo purposes */
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: #f3f2ef; /* LinkedIn light background */
+  }
+
+  .share-container {
+    text-align: center;
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  /* --- Button CSS --- */
+  .linkedin-share-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: #0A66C2; /* Official LinkedIn Blue */
+    color: white;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 28px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+
+  .linkedin-share-btn:hover {
+    background-color: #004182; /* Darker blue on hover */
+  }
+
+  .linkedin-share-btn:active {
+    transform: scale(0.97); /* Press effect */
+  }
+
+  /* LinkedIn SVG Icon */
+  .linkedin-share-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+  
+  /* --- Fallback Message CSS --- */
+  .error-message {
+    color: #d32f2f;
+    background-color: #fdecea;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 16px;
+    font-size: 14px;
+    display: none; /* Hidden by default */
+    border: 1px solid #f5c2c7;
+  }
+
+  .error-message a {
+    color: #0A66C2;
+    font-weight: bold;
+    text-decoration: none;
+  }
+
+  .error-message a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<div class="share-container">
+  <h2>Certificate Achieved!</h2>
+  <p>Share your success with your network.</p>
+  
+  <!-- The Share Button -->
+  <button id="shareLinkedIn" class="linkedin-share-btn">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/>
+    </svg>
+    Share on LinkedIn
+  </button>
+  
+  <!-- Fallback Container -->
+  <div id="shareError" class="error-message">
+    Popup blocked! Please allow popups, or <a href="#" id="fallbackLink" target="_blank">click here to share</a>.
+  </div>
+</div>
+
+<script>
+  document.getElementById('shareLinkedIn').addEventListener('click', function() {
+    // 1. Define your dynamic variables here
+    const dynamicUrl = 'https://your-domain.com/certificate/123'; 
+    const dynamicTitle = 'Web Development Certificate';
+    const dynamicSummary = 'I just achieved this awesome certificate!';
+
+    // 2. Encode parameters to be URL-safe
+    const encodedUrl = encodeURIComponent(dynamicUrl);
+    const encodedTitle = encodeURIComponent(dynamicTitle);
+    const encodedSummary = encodeURIComponent(dynamicSummary);
+    
+    // NOTE: LinkedIn's modern `share-offsite` endpoint officially ONLY takes the `url` parameter.
+    // It automatically pulls the Title, Summary, and Image from the Open Graph (og:) meta tags of that URL.
+    // However, appending them doesn't break the URL, and if you use the older `shareArticle` endpoint, it can sometimes pick them up.
+    
+    // We construct the URL with the parameters as requested:
+    // This uses the official endpoint. If you strictly want the parameters to be read (legacy support), 
+    // you can swap to: `https://www.linkedin.com/shareArticle?mini=true&url=${encodedUrl}&title=${encodedTitle}&summary=${encodedSummary}`
+    const linkedInShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}&title=${encodedTitle}&summary=${encodedSummary}`;
+
+    // 3. Define popup dimensions and position (center screen)
+    const popupWidth = 600;
+    const popupHeight = 600;
+    // Calculate the left and top coordinates to center the popup
+    const left = (window.innerWidth / 2) - (popupWidth / 2) + window.screenX;
+    const top = (window.innerHeight / 2) - (popupHeight / 2) + window.screenY;
+
+    // 4. Try to open the popup window
+    const popup = window.open(
+      linkedInShareUrl, 
+      'linkedinShareWindow', 
+      `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=${popupWidth},height=${popupHeight},top=${top},left=${left}`
+    );
+
+    // 5. Fallback logic: check if the popup was blocked by the browser
+    const errorDiv = document.getElementById('shareError');
+    const fallbackLink = document.getElementById('fallbackLink');
+
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      // Popup was blocked
+      errorDiv.style.display = 'block';
+      fallbackLink.href = linkedInShareUrl; // Update fallback anchor tag
+    } else {
+      // Popup succeeded
+      errorDiv.style.display = 'none';
+      if (window.focus) {
+        popup.focus(); // Bring popup to the front
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

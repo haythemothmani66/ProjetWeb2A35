@@ -389,7 +389,12 @@
                     </div>
 
                     <div class="quizzes-section">
-                        <h2>Knowledge Check</h2>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2 class="mb-0">Knowledge Check</h2>
+                            <a href="<?= htmlspecialchars(frontofficeRoute('quizzes', 'battle', ['id' => $quizzes[0]['id'] ?? 0])); ?>" class="btn-start-quiz" style="background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);">
+                                <i class="fas fa-robot"></i> Battle vs AI
+                            </a>
+                        </div>
                         
                         <?php if (empty($quizzes)): ?>
                             <div class="no-quizzes">

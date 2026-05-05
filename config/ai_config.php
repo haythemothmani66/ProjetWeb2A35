@@ -3,7 +3,7 @@
 
 return [
     // Replace this with your actual Google Gemini API Key
-    'gemini_api_key' => 'YOUR_GEMINI_API_KEY_HERE',
-    'gemini_model' => 'gemini-1.5-flash',
+    'gemini_api_key' => 'AIzaSyC6z6nBYSMeTZe3zdrfYOdq6QFYssXRkFc',
+    'gemini_model' => 'gemini-flash-latest',
     'api_url' => 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}'
 ];

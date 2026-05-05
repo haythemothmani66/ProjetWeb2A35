@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Certificate of Completion - <?= htmlspecialchars((string) $certificate['student_name']) ?></title>
+    <meta property="og:title" content="Certificate of Completion - <?= htmlspecialchars((string) $certificate['course_title']) ?>" />
+    <meta property="og:description" content="I just achieved the <?= htmlspecialchars((string) $certificate['course_title']) ?> certificate!" />
+    <meta property="og:url" content="<?= 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] ?>" />
+    <!-- LinkedIn requires a direct image URL for the preview. Here we use the site logo, but you could link to a generated image of the certificate if you have one. -->
+    <meta property="og:image" content="<?= 'http://' . $_SERVER['HTTP_HOST'] . '/web/haythemweb/assets/img/logo.png' ?>" />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Great+Vibes&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
@@ -183,6 +188,15 @@
             background: #b5952f;
         }
 
+        .btn-linkedin {
+            background: #0A66C2;
+            color: #fff;
+        }
+        
+        .btn-linkedin:hover {
+            background: #004182;
+        }
+
         @media print {
             body {
                 background: none;
@@ -237,11 +251,74 @@
             <button onclick="window.print()" class="btn btn-print">
                 <i class="fas fa-print"></i> Print / Save as PDF
             </button>
+            <button id="shareLinkedIn" class="btn btn-linkedin">
+                <i class="fab fa-linkedin"></i> Share on LinkedIn
+            </button>
             <a href="<?= frontofficeRoute('courses', 'index') ?>" class="btn">
                 <i class="fas fa-home"></i> Back to Courses
             </a>
         </div>
     </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  document.getElementById('shareLinkedIn').addEventListener('click', function() {
+    const btn = this;
+    const originalText = btn.innerHTML;
+    
+    // Show a loading state on the button
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Preparing Image...';
+    btn.disabled = true;
+
+    // 1. Generate an Image from the HTML certificate using html2canvas
+    const certElement = document.getElementById('certificate');
+    
+    html2canvas(certElement, { scale: 2 }).then(canvas => {
+        // 2. Download the generated image for the user
+        const imgData = canvas.toDataURL('image/jpeg', 0.9);
+        const link = document.createElement('a');
+        link.download = 'My_EduMatch_Certificate.jpg';
+        link.href = imgData;
+        link.click(); // Triggers the download
+        
+        // 3. Prepare the LinkedIn Text (Without the localhost URL as requested!)
+        const courseTitle = <?= json_encode($certificate['course_title']) ?>;
+        const postText = `I am thrilled to announce that I have successfully completed the course and achieved the Certificate of Completion for "${courseTitle}" on EduMatch! 🎓🚀`;
+        const encodedText = encodeURIComponent(postText);
+        
+        // 4. Open LinkedIn Feed to create the post
+        const linkedInShareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodedText}`;
+        const popupWidth = 600;
+        const popupHeight = 600;
+        const left = (window.innerWidth / 2) - (popupWidth / 2) + window.screenX;
+        const top = (window.innerHeight / 2) - (popupHeight / 2) + window.screenY;
+        
+        const popup = window.open(
+          linkedInShareUrl, 
+          'linkedinShareWindow', 
+          `toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=${popupWidth},height=${popupHeight},top=${top},left=${left}`
+        );
+
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+            alert("Popup blocked! Please allow popups to share on LinkedIn.");
+        } else {
+            // Give them a helpful instruction to upload the image
+            alert("✅ We have downloaded your certificate as an image!\n\nPlease attach 'My_EduMatch_Certificate.jpg' from your Downloads folder to your LinkedIn post.");
+            if (window.focus) {
+                popup.focus();
+            }
+        }
+
+        // Restore button state
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }).catch(err => {
+        console.error("Error generating image", err);
+        alert("Failed to generate the certificate image.");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+  });
+</script>
 </body>
 </html>

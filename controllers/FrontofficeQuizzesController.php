@@ -23,6 +23,37 @@ class FrontofficeQuizzesController
         }
     }
 
+    public function battle(array $params = []): void
+    {
+        $quizId = isset($params['id']) ? (int) $params['id'] : 0;
+        $quiz = $this->quizzes->getById($quizId);
+
+        if (!$quiz) {
+            http_response_code(404);
+            echo 'Quiz not found';
+            return;
+        }
+
+        $course = $this->courses->getById((int) $quiz['course_id']);
+        if (!$course || ($course['status'] ?? 'draft') !== 'published') {
+            http_response_code(404);
+            echo 'Course not found';
+            return;
+        }
+
+        $questions = $this->questions->getByQuizId($quizId);
+        foreach ($questions as &$q) {
+            $q['responses'] = $this->responses->getByQuestionId((int) $q['id']);
+        }
+        unset($q);
+        
+        // Pick up to 10 random questions for the battle
+        shuffle($questions);
+        $battleQuestions = array_slice($questions, 0, 10);
+
+        require $this->viewsPath . '/frontoffice/quizzes/battle.php';
+    }
+
     public function take(array $params = []): void
     {
         $quizId = isset($params['id']) ? (int) $params['id'] : 0;
