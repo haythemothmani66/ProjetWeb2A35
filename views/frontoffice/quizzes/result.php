@@ -164,6 +164,67 @@
             background: rgba(255, 255, 255, 0.3);
             color: white;
         }
+        
+        /* Recommendation Section Styles */
+        .recommendation-box {
+            background: #fff;
+            border: 1px solid #e0e7ff;
+            border-radius: 16px;
+            padding: 30px;
+            margin-top: 50px;
+            text-align: left;
+            border-left: 6px solid #525fe1;
+        }
+        .recommendation-box h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        .resource-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            transition: 0.3s;
+            border: 1px solid #f1f5f9;
+            text-decoration: none !important;
+            display: block;
+        }
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            background: white;
+            border-color: #525fe1;
+        }
+        .resource-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .resource-title {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .resource-desc {
+            font-size: 13px;
+            color: #64748b;
+        }
     </style>
 </head>
 
@@ -291,6 +352,48 @@
                                     <i class="fas fa-certificate"></i> Generate Certificate
                                 </button>
                             </form>
+                        </div>
+                        <?php elseif ($percent < 50): ?>
+                        <!-- Recommendation System for Score < 50% -->
+                        <?php 
+                            $query = urlencode($course['title'] ?? $quiz['title']);
+                            $wikiUrl = "https://en.wikipedia.org/wiki/Special:Search?search=" . $query;
+                            $youtubeUrl = "https://www.youtube.com/results?search_query=" . $query . "+tutorial";
+                            $docsUrl = "https://www.google.com/search?q=" . $query . "+documentation+tutorial";
+                        ?>
+                        <div class="recommendation-box animate__animated animate__fadeInUp">
+                            <h3><i class="fas fa-lightbulb" style="color: #f59e0b;"></i> Recommended Resources for You</h3>
+                            <p class="text-muted">Don't worry! Everyone starts somewhere. We've gathered these resources to help you master <strong><?= htmlspecialchars($course['title'] ?? 'this topic') ?></strong>:</p>
+                            
+                            <div class="recommendation-grid">
+                                <a href="<?= $youtubeUrl ?>" target="_blank" class="resource-card">
+                                    <div class="resource-icon" style="background: #fee2e2; color: #ef4444;">
+                                        <i class="fab fa-youtube"></i>
+                                    </div>
+                                    <span class="resource-title">YouTube Tutorials</span>
+                                    <span class="resource-desc">Visual lessons and deep-dives into the subject.</span>
+                                </a>
+
+                                <a href="<?= $wikiUrl ?>" target="_blank" class="resource-card">
+                                    <div class="resource-icon" style="background: #f1f5f9; color: #1e293b;">
+                                        <i class="fab fa-wikipedia-w"></i>
+                                    </div>
+                                    <span class="resource-title">Wikipedia Guide</span>
+                                    <span class="resource-desc">Comprehensive theoretical background and definitions.</span>
+                                </a>
+
+                                <a href="<?= $docsUrl ?>" target="_blank" class="resource-card">
+                                    <div class="resource-icon" style="background: #e0f2fe; color: #0284c7;">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <span class="resource-title">Web Resources</span>
+                                    <span class="resource-desc">Search for top-rated articles and documentation.</span>
+                                </a>
+                            </div>
+                            
+                            <div class="mt-4 p-3 bg-light rounded" style="border-left: 3px solid #6366f1;">
+                                <small><strong>Pro Tip:</strong> Re-watching the course lessons or trying the "Battle vs AI" mode can also help strengthen your knowledge!</small>
+                            </div>
                         </div>
                         <?php endif; ?>
                     </div>
