@@ -8,6 +8,9 @@ const DB_FALLBACK_NAME = 'database_edumatch';
 const DB_USER = 'root';
 const DB_PASSWORD = '';
 
+// External Webhook for partner badges (n8n or Make.com)
+const EXTERNAL_BADGE_WEBHOOK = 'http://localhost:5678/webhook-test/Badges';
+
 function getConnexion(): PDO
 {
     static $pdo = null;
@@ -154,3 +157,23 @@ function h(?string $value): string
 {
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
+
+/**
+ * Loads environment variables from .env file
+ */
+function loadEnv(): void
+{
+    $envFile = __DIR__ . '/.env';
+    if (!file_exists($envFile)) return;
+
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        list($name, $value) = explode('=', $line, 2);
+        $_ENV[trim($name)] = trim($value);
+        putenv(trim($name) . "=" . trim($value));
+    }
+}
+
+// Load .env variables on startup
+loadEnv();

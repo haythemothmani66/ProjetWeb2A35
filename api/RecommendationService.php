@@ -68,7 +68,7 @@ class RecommendationService
         // 2. If no target or no vector, return partners grouped by "theme" discovered from descriptions
         if (!$target || empty($target['embedding_vector'])) {
             self::log("No target. Returning grouped partners by theme.");
-            $stmt = $pdo->prepare("SELECT id, organization_name, logo, description, partner_type, embedding_vector FROM partenaires WHERE status = 'approved' ORDER BY id DESC");
+            $stmt = $pdo->prepare("SELECT id, organization_name, logo, description, partner_type, embedding_vector, created_at, view_count FROM partenaires WHERE status = 'approved' ORDER BY id DESC");
             $stmt->execute();
             $allApproved = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -104,12 +104,13 @@ class RecommendationService
                 return strcmp($a['theme'], $b['theme']);
             });
 
-            return $results;
+            // Enrich with external badges (n8n/Make)
+            return self::enrichWithBadges($results);
         }
 
         // 3. Find similar partners
         $targetVector = $target['embedding_vector'];
-        $stmt = $pdo->prepare("SELECT id, organization_name, logo, description, partner_type, embedding_vector FROM partenaires WHERE id != ? AND status = 'approved'");
+        $stmt = $pdo->prepare("SELECT id, organization_name, logo, description, partner_type, embedding_vector, created_at, view_count FROM partenaires WHERE id != ? AND status = 'approved'");
         $stmt->execute([$targetId]);
         $others = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -135,7 +136,7 @@ class RecommendationService
         // 4. Final Fallback if empty
         if (empty($results)) {
             self::log("No similar partners found. Falling back to latest approved.");
-            $stmt = $pdo->prepare("SELECT id, organization_name, logo, description, partner_type FROM partenaires WHERE id != :id AND status = 'approved' ORDER BY id DESC LIMIT :limit");
+            $stmt = $pdo->prepare("SELECT id, organization_name, logo, description, partner_type, created_at, view_count FROM partenaires WHERE id != :id AND status = 'approved' ORDER BY id DESC LIMIT :limit");
             $stmt->bindValue(':id', $targetId, PDO::PARAM_INT);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
@@ -143,7 +144,62 @@ class RecommendationService
             foreach ($results as &$r) { $r['similarity_score'] = 50; }
         }
 
-        self::log("Returning " . count($results) . " results.");
-        return $results;
+        self::log("Returning " . count($results) . " results after badge enrichment.");
+        
+        // Enrich with external badges (n8n/Make)
+        return self::enrichWithBadges($results);
+    }
+
+    /**
+     * Calculates badges locally (New, Popular) based on creation date and view count.
+     * This provides a reliable alternative to external webhooks.
+     */
+    private static function enrichWithBadges(array $partners): array
+    {
+        if (empty($partners)) return [];
+
+        try {
+            // 1. Determine the "Popular" threshold (top 20% of view counts)
+            $viewCounts = array_column($partners, 'view_count');
+            rsort($viewCounts);
+            $count = count($viewCounts);
+            // Threshold is the value at the top 20% mark
+            $thresholdIndex = max(0, (int)floor($count * 0.2) - 1);
+            $popularThreshold = $viewCounts[$thresholdIndex] ?? 0;
+            
+            // If all views are 0 or negative, disable popular badges for this batch
+            if ($popularThreshold <= 0 && (!isset($viewCounts[0]) || $viewCounts[0] <= 0)) {
+                $popularThreshold = 9999999; 
+            }
+
+            $sevenDaysAgo = (new DateTime())->modify('-7 days');
+
+            foreach ($partners as &$p) {
+                $p['badges'] = [];
+                
+                // Rule 1: Nouveau ✨ (Created in last 7 days)
+                if (isset($p['created_at'])) {
+                    $createdAt = new DateTime($p['created_at']);
+                    if ($createdAt >= $sevenDaysAgo) {
+                        $p['badges'][] = ["label" => "Nouveau", "icon" => "✨"];
+                    }
+                }
+
+                // Rule 2: Populaire 🔥 (Top 20% views and at least 1 view)
+                if (isset($p['view_count']) && $p['view_count'] >= $popularThreshold && $p['view_count'] > 0) {
+                    $p['badges'][] = ["label" => "Populaire", "icon" => "🔥"];
+                }
+            }
+
+            self::log("Successfully calculated native badges for " . count($partners) . " partners.");
+        } catch (Throwable $e) {
+            self::log("Error during native badge calculation: " . $e->getMessage());
+            // Ensure badges key exists to avoid UI errors
+            foreach ($partners as &$p) {
+                if (!isset($p['badges'])) $p['badges'] = [];
+            }
+        }
+
+        return $partners;
     }
 }

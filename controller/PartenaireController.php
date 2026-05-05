@@ -33,6 +33,7 @@ class PartenaireController
             `status` VARCHAR(50) NOT NULL DEFAULT 'pending',
             `auth_key_hash` CHAR(64) DEFAULT NULL,
             `embedding_vector` TEXT DEFAULT NULL,
+            `view_count` INT DEFAULT 0,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             UNIQUE KEY `uniq_partenaires_client_id` (`client_id`)

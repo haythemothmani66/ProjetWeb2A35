@@ -1,0 +1,6 @@
+/vendor/
+.env
+/api/*.log
+/scratch/
+.DS_Store
+Thumbs.db

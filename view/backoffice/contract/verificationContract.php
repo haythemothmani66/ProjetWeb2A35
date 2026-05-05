@@ -41,9 +41,13 @@ $contracts = $contracts ?? [];
                                 <input type="hidden" name="status" value="Suspendu">
                                 <button class="btn btn-sm btn-outline-warning" type="submit">Suspendu</button>
                             </form>
-                            <form class="d-inline" method="post" action="<?= h(appUrl(['controller' => 'contract', 'action' => 'verify', 'id' => (int)$contract['id']])); ?>">
+                             <form class="d-inline" method="post" action="<?= h(appUrl(['controller' => 'contract', 'action' => 'verify', 'id' => (int)$contract['id']])); ?>">
                                 <input type="hidden" name="status" value="Expire">
-                                <button class="btn btn-sm btn-outline-danger" type="submit">Expire</button>
+                                <button class="btn btn-sm btn-outline-secondary" type="submit">Expire</button>
+                            </form>
+                            <form class="d-inline" method="post" action="<?= h(appUrl(['controller' => 'contract', 'action' => 'verify', 'id' => (int)$contract['id']])); ?>">
+                                <input type="hidden" name="status" value="Rejeté">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">Rejeté</button>
                             </form>
                             <a class="btn btn-sm btn-outline-primary" href="<?= h(appUrl(['controller' => 'contract', 'action' => 'edit', 'id' => (int)$contract['id']])); ?>">Review</a>
                         </td>

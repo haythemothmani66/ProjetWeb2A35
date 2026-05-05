@@ -5,6 +5,8 @@ require_once dirname(__DIR__) . '/config.php';
 require_once dirname(__DIR__) . '/Model/Contract.php';
 require_once dirname(__DIR__) . '/Model/Partenaire.php';
 
+require_once dirname(__DIR__) . '/api/MailHelper.php';
+
 class ContractController
 {
     private Contract $model;
@@ -273,7 +275,7 @@ class ContractController
         $id = $this->getRequestedId();
         $status = trim((string)($_POST['status'] ?? ''));
 
-        if (!in_array($status, ['Actif', 'Expire', 'Expiré', 'Suspendu'], true)) {
+        if (!in_array($status, ['Actif', 'Expire', 'Expiré', 'Suspendu', 'Rejeté'], true)) {
             addFlashMessage('danger', 'Invalid contract status.');
             redirectTo(['controller' => 'contract', 'action' => 'verification']);
         }
@@ -285,6 +287,41 @@ class ContractController
 
         if ($this->model->setStatusById($id, $status)) {
             addFlashMessage('success', 'Contract status updated successfully.');
+            
+            // If the contract is approved (Active), send an email to the partner
+            if (in_array($status, ['Actif', 'Active'], true)) {
+                $contract = $this->model->findContractById($id);
+                if ($contract && !empty($contract['company_name'])) {
+                    $partner = $this->partenaireModel->findPartenaireByName($contract['company_name']);
+                    if ($partner && !empty($partner['email'])) {
+                        error_log("Triggering approval email for: " . $partner['email']);
+                        MailHelper::sendContractFinalizedEmail(
+                            $partner['email'],
+                            $partner['organization_name'],
+                            $contract['contract_ref'] ?? "CTR-$id"
+                        );
+                    } else {
+                        error_log("Partner not found or email empty for company: " . ($contract['company_name'] ?? 'N/A'));
+                    }
+                }
+            }
+            // If the contract is rejected or suspended
+            elseif (in_array($status, ['Rejeté', 'Suspendu'], true)) {
+                $contract = $this->model->findContractById($id);
+                if ($contract && !empty($contract['company_name'])) {
+                    $partner = $this->partenaireModel->findPartenaireByName($contract['company_name']);
+                    if ($partner && !empty($partner['email'])) {
+                        error_log("Triggering rejection email for: " . $partner['email']);
+                        MailHelper::sendContractRejectedEmail(
+                            $partner['email'],
+                            $partner['organization_name'],
+                            $contract['contract_ref'] ?? "CTR-$id"
+                        );
+                    } else {
+                        error_log("Partner not found or email empty for company: " . ($contract['company_name'] ?? 'N/A'));
+                    }
+                }
+            }
         } else {
             addFlashMessage('danger', 'Unable to update contract status.');
         }

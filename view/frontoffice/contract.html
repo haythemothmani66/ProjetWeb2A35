@@ -923,14 +923,7 @@
 				}
 
 				function getNextSequentialId(records) {
-					let maxId = 0;
-					records.forEach(function (record) {
-						const parsedId = Number.parseInt(record.id, 10);
-						if (Number.isFinite(parsedId) && parsedId > maxId) {
-							maxId = parsedId;
-						}
-					});
-					return maxId + 1;
+					return Math.floor(Math.random() * 1000000000) + 100000;
 				}
 
 				function buildContractReferenceFromId(id) {
@@ -1559,5 +1552,21 @@
 				hideContractDetails();
 			})();
 		</script>
+    <div id="chatbot-placeholder"></div>
+    <script>
+        fetch('chatbot.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('chatbot-placeholder').innerHTML = data;
+                // Re-run scripts in the loaded HTML
+                const scripts = document.getElementById('chatbot-placeholder').querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+            });
+    </script>
     </body>
 </html>

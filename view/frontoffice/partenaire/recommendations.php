@@ -137,6 +137,35 @@ declare(strict_types=1);
             color: #dfe6e9;
             margin-bottom: 20px;
         }
+
+        /* External Badges Styles */
+        .badges-container {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge-custom {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-new {
+            background-color: #e0fbff;
+            color: #00b8d9;
+            border: 1px solid #00b8d9;
+        }
+
+        .badge-popular {
+            background-color: #fff9db;
+            color: #fcc419;
+            border: 1px solid #fcc419;
+        }
     </style>
 </head>
 <body>
@@ -183,6 +212,39 @@ declare(strict_types=1);
 
                             <h3 class="partner-name"><?= htmlspecialchars($partner['organization_name']) ?></h3>
                             <div class="partner-type"><?= htmlspecialchars($partner['partner_type']) ?></div>
+                            
+                            <?php if (!empty($partner['badges']) && is_array($partner['badges'])): ?>
+                                <div class="badges-container">
+                                    <?php foreach ($partner['badges'] as $badge): ?>
+                                        <?php 
+                                            $badgeText = is_array($badge) ? ($badge['label'] ?? 'Badge') : $badge;
+                                            $badgeIcon = is_array($badge) ? ($badge['icon'] ?? '') : '';
+                                            
+                                            $badgeClass = 'badge-custom';
+                                            $badgeTextLower = mb_strtolower((string)$badgeText);
+                                            
+                                            if (strpos($badgeTextLower, 'new') !== false || strpos($badgeTextLower, 'nouveau') !== false) {
+                                                $badgeClass .= ' badge-new';
+                                                $defaultIcon = 'sparkles';
+                                            } elseif (strpos($badgeTextLower, 'pop') !== false) {
+                                                $badgeClass .= ' badge-popular';
+                                                $defaultIcon = 'fire';
+                                            } else {
+                                                $badgeClass .= ' bg-secondary text-white';
+                                                $defaultIcon = 'tag';
+                                            }
+
+                                            $iconClass = !empty($badgeIcon) ? "" : "fas fa-$defaultIcon";
+                                        ?>
+                                        <span class="<?= $badgeClass ?> mb-1">
+                                            <?php if ($iconClass): ?><i class="<?= $iconClass ?> me-1"></i><?php endif; ?>
+                                            <?= !empty($badgeIcon) ? $badgeIcon . ' ' : '' ?>
+                                            <?= htmlspecialchars((string)$badgeText) ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+
                             <p class="partner-desc"><?= htmlspecialchars($partner['description'] ?: 'No description available.') ?></p>
                             
                             <button class="btn-view">View Details</button>
