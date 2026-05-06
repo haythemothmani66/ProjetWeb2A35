@@ -56,6 +56,28 @@ class ProfilController {
         if (!empty($telephone) && !preg_match('/^[0-9]{8}$/', $telephone))
             $errors[] = "Le numéro de téléphone doit contenir exactement 8 chiffres.";
 
+        // --- Champs etudiant (optionnels, mais si remplis => max length + email format) ---
+        if (!empty($niveau) && mb_strlen($niveau) > 40)
+            $errors[] = "Le niveau ne doit pas depasser 40 caracteres.";
+        if (!empty($classe) && mb_strlen($classe) > 20)
+            $errors[] = "La classe ne doit pas depasser 20 caracteres.";
+        if (!empty($email_universitaire)) {
+            if (mb_strlen($email_universitaire) > 50)
+                $errors[] = "L'email universitaire ne doit pas depasser 50 caracteres.";
+            elseif (!preg_match('/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/', $email_universitaire))
+                $errors[] = "Format d'email universitaire invalide.";
+        }
+        if (!empty($etablissement_ecole) && mb_strlen($etablissement_ecole) > 100)
+            $errors[] = "L'etablissement ne doit pas depasser 100 caracteres.";
+        if (!empty($identifiant_card) && mb_strlen($identifiant_card) > 15)
+            $errors[] = "L'identifiant carte ne doit pas depasser 15 caracteres.";
+        if (!empty($annee_universitaire) && mb_strlen($annee_universitaire) > 20)
+            $errors[] = "L'annee universitaire ne doit pas depasser 20 caracteres.";
+        if (!empty($specialite) && mb_strlen($specialite) > 40)
+            $errors[] = "La specialite ne doit pas depasser 40 caracteres.";
+        if (!empty($adresse) && mb_strlen($adresse) > 100)
+            $errors[] = "L'adresse ne doit pas depasser 100 caracteres.";
+
         if (empty($errors)) {
             $stmt = $this->db->prepare("SELECT photo FROM user WHERE id = ? LIMIT 1");
             $stmt->execute([$id]);
@@ -99,7 +121,7 @@ class ProfilController {
 
             /* Upload carte etudiant */
             $cardImage = null;
-            if (!empty($_FILES['card_image']['name'])) {
+            if (!empty($_FILES['card_image']['name']) && $_FILES['card_image']['error'] === UPLOAD_ERR_OK) {
                 $cardUploaded = $this->uploadPhoto($_FILES['card_image']);
                 if ($cardUploaded) {
                     $cardImage = $cardUploaded;

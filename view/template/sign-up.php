@@ -143,6 +143,7 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
               <select class="form-select" id="signupRole" name="role">
                 <option value="etudiant" <?= ($formData['role']??'')==='etudiant'?'selected':'' ?>>Etudiant</option>
                 <option value="encadrant" <?= ($formData['role']??'')==='encadrant'?'selected':'' ?>>Encadrant</option>
+                <option value="partenariat" <?= ($formData['role']??'')==='partenariat'?'selected':'' ?>>Partenariat</option>
               </select>
             </div>
             <div class="row">

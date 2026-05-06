@@ -16,24 +16,21 @@ $stmt->execute([$id]);
 $user = $stmt->fetch();
 if (!$user) { $_SESSION['errors'] = ["Utilisateur introuvable."]; header('Location: users.php'); exit; }
 
-/* Get trial expiration parameter */
-$paramStmt = $db->prepare("SELECT valeur FROM parametres WHERE cle = 'expiration_verification_jours' LIMIT 1");
-$paramStmt->execute();
-$trialDays = (int)($paramStmt->fetchColumn() ?: 7);
+/* Use per-user trial_days (set at registration) */
+$trialDays = (int)($user['trial_days'] ?: 7);
 
 /* Calculate trial remaining for students */
 $trialRemaining = null;
 if ($user['role'] === 'etudiant' && (int)$user['verification_student'] === 0) {
     $created = new DateTime($user['created_at']);
     $now = new DateTime();
-    $daysPassed = (int)$now->diff($created)->days;
+    /* Precise: hours elapsed / 24, rounded down = full days passed */
+    $hoursElapsed = ($now->getTimestamp() - $created->getTimestamp()) / 3600;
+    $daysPassed = (int)floor($hoursElapsed / 24);
     $trialRemaining = max(0, $trialDays - $daysPassed);
 }
 
-/* Last 5 connexions for this user */
-$cxStmt = $db->prepare("SELECT connected_at, disconnected_at, ip_address FROM connexion_history WHERE user_id=? ORDER BY connected_at DESC LIMIT 5");
-$cxStmt->execute([$id]);
-$connexions = $cxStmt->fetchAll();
+
 
 $errors = $_SESSION['errors'] ?? [];
 $success = $_SESSION['success'] ?? '';
@@ -65,7 +62,7 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
     .detail-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; margin-bottom: 4px; font-weight: 600; }
     .detail-value { font-size: 15px; font-weight: 500; }
     .profile-header { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); border-radius: 16px; padding: 40px; color: white; position: relative; overflow: hidden; }
-    .profile-header::before { content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+    .profile-header::before { content: ''; position: absolute; top: -50%; right: -20%; width: 400px; height: 400px; background: rgba(255,255,255,0.05); border-radius: 50%; pointer-events: none; }
     .profile-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.3); }
     .info-card { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
   </style>
@@ -103,7 +100,7 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
         <div class="profile-header mb-4">
           <div class="d-flex flex-column flex-md-row align-items-center gap-4">
             <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($user['photo']) ?>" class="profile-avatar" onerror="this.src='/gestion_users/uploads/photos/default.png';">
-            <div class="text-center text-md-start">
+            <div class="text-center text-md-start flex-grow-1">
               <h2 class="fw-bold mb-1"><?= htmlspecialchars($user['prenom'].' '.$user['nom']) ?></h2>
               <p class="mb-2 opacity-75"><?= htmlspecialchars($user['email']) ?></p>
               <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-start">
@@ -120,15 +117,30 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
                 <?php else: ?>
                   <span class="badge fs-6" style="background:rgba(156,163,175,0.2);color:#6b7280;">Hors ligne</span>
                 <?php endif; ?>
-                <?php if ($user['role'] === 'etudiant'): ?>
-                  <?php if ((int)$user['verification_student'] === 1): ?>
-                    <span class="badge fs-6" style="background:rgba(16,185,129,0.2);color:#10b981;"><i class="ti ti-certificate me-1"></i>Etudiant verifie</span>
-                  <?php else: ?>
-                    <span class="badge fs-6" style="background:rgba(245,158,11,0.2);color:#f59e0b;"><i class="ti ti-alert-triangle me-1"></i>Etudiant non verifie</span>
-                  <?php endif; ?>
-                <?php endif; ?>
               </div>
             </div>
+            <?php if ($user['role'] === 'etudiant'): ?>
+            <!-- Verification actions — right side of purple header -->
+            <div class="d-flex flex-column flex-sm-row gap-2 align-items-center flex-shrink-0">
+              <?php if ((int)$user['verification_student'] === 1): ?>
+                <!-- Verified: green badge only -->
+                <span class="badge fs-6 px-3 py-2" style="background:rgba(16,185,129,0.25);color:#fff;"><i class="ti ti-certificate me-1"></i>Verifie</span>
+              <?php elseif ((int)$user['statut'] === 0): ?>
+                <!-- Refused/blocked: red badge -->
+                <span class="badge fs-6 px-3 py-2" style="background:rgba(239,68,68,0.25);color:#fff;"><i class="ti ti-ban me-1"></i>Refuse</span>
+              <?php else: ?>
+                <!-- Not verified + active: show action buttons -->
+                <form action="/gestion_users/user/toggleVerification" method="POST" class="d-inline">
+                  <input type="hidden" name="id" value="<?= $user['id'] ?>">
+                  <button type="submit" class="btn btn-success"><i class="ti ti-check me-1"></i>Verifier</button>
+                </form>
+                <form action="/gestion_users/user/rejectStudent" method="POST" class="d-inline">
+                  <input type="hidden" name="id" value="<?= $user['id'] ?>">
+                  <button type="submit" class="btn btn-danger"><i class="ti ti-x me-1"></i>Refuser</button>
+                </form>
+              <?php endif; ?>
+            </div>
+            <?php endif; ?>
           </div>
         </div>
 
@@ -198,6 +210,20 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
                       <?php endif; ?>
                     </div>
                   </div>
+                  <?php if ($user['role'] === 'etudiant'): ?>
+                  <div class="col-6">
+                    <div class="detail-label">Verification etudiant</div>
+                    <div class="detail-value">
+                      <?php if ((int)$user['verification_student'] === 1): ?>
+                        <span class="badge bg-success-subtle text-success"><i class="ti ti-certificate me-1"></i>Verifie</span>
+                      <?php elseif ((int)$user['statut'] === 0): ?>
+                        <span class="badge bg-danger-subtle text-danger"><i class="ti ti-ban me-1"></i>Refuse</span>
+                      <?php else: ?>
+                        <span class="badge bg-warning-subtle text-warning"><i class="ti ti-clock me-1"></i>En attente</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                  <?php endif; ?>
                   <div class="col-6">
                     <div class="detail-label">Date d'inscription</div>
                     <div class="detail-value"><?= date('d/m/Y a H:i', strtotime($user['created_at'])) ?></div>
@@ -237,12 +263,59 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
                     <div class="detail-label">Biographie</div>
                     <div class="detail-value"><?= htmlspecialchars($user['bio_text'] ?: '— Non renseignee —') ?></div>
                   </div>
+
                   <?php if ($user['role'] === 'etudiant'): ?>
                   <div class="col-md-6">
                     <div class="detail-label">Niveau</div>
                     <div class="detail-value"><?= htmlspecialchars($user['niveau'] ?: '— Non renseigne —') ?></div>
                   </div>
+                  <div class="col-md-6">
+                    <div class="detail-label">Classe</div>
+                    <div class="detail-value"><?= htmlspecialchars($user['classe'] ?: '— Non renseignee —') ?></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="detail-label">Specialite</div>
+                    <div class="detail-value"><?= htmlspecialchars($user['specialite'] ?: '— Non renseignee —') ?></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="detail-label">Etablissement / Ecole</div>
+                    <div class="detail-value"><?= htmlspecialchars($user['etablissement_ecole'] ?: '— Non renseigne —') ?></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="detail-label">Email universitaire</div>
+                    <div class="detail-value"><?= htmlspecialchars($user['email_universitaire'] ?: '— Non renseigne —') ?></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="detail-label">Identifiant carte</div>
+                    <div class="detail-value"><?= htmlspecialchars($user['identifiant_card'] ?: '— Non renseigne —') ?></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="detail-label">Annee universitaire</div>
+                    <div class="detail-value"><?= htmlspecialchars($user['annee_universitaire'] ?: '— Non renseignee —') ?></div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="detail-label">Adresse</div>
+                    <div class="detail-value"><?= htmlspecialchars($user['adresse'] ?: '— Non renseignee —') ?></div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="detail-label">Carte etudiant</div>
+                    <div class="detail-value">
+                      <?php if (!empty($user['card_image'])): ?>
+                        <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($user['card_image']) ?>"
+                             class="img-fluid rounded border"
+                             style="max-height:200px; cursor:pointer; transition: opacity 0.2s;"
+                             onmouseover="this.style.opacity='0.85'"
+                             onmouseout="this.style.opacity='1'"
+                             onclick="document.getElementById('cardModalImg').src=this.src; new bootstrap.Modal(document.getElementById('cardZoomModal')).show();"
+                             title="Cliquez pour agrandir"
+                             onerror="this.outerHTML='<span class=\'text-muted\'>— Image introuvable —</span>';">
+                      <?php else: ?>
+                        <span class="text-muted">— Non renseignee —</span>
+                      <?php endif; ?>
+                    </div>
+                  </div>
                   <?php endif; ?>
+
                   <?php if ($user['role'] === 'encadrant'): ?>
                   <div class="col-md-6">
                     <div class="detail-label">Specialite</div>
@@ -255,32 +328,17 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
           </div>
         </div>
 
-        <?php if ($user['role'] === 'etudiant'): ?>
-        <!-- Verification Etudiant -->
+        <?php if ($user['role'] === 'etudiant' && (int)$user['verification_student'] === 0): ?>
+        <!-- Trial info (only shown for unverified students) -->
         <div class="row g-4 mb-4">
           <div class="col-12">
-            <div class="card info-card" style="border-left:4px solid <?= (int)$user['verification_student']===1?'#10b981':'#f59e0b' ?> !important;">
-              <div class="card-header bg-transparent border-0 pb-0 d-flex justify-content-between align-items-center">
-                <h5 class="fw-bold mb-0"><i class="ti ti-certificate me-2" style="color:<?= (int)$user['verification_student']===1?'#10b981':'#f59e0b' ?>;"></i>Verification Etudiant</h5>
-                <form action="/gestion_users/user/toggleVerification" method="POST" class="d-inline">
-                  <input type="hidden" name="id" value="<?= $user['id'] ?>">
-                  <?php if ((int)$user['verification_student'] === 1): ?>
-                    <button type="submit" class="btn btn-sm btn-outline-warning"><i class="ti ti-x me-1"></i>Retirer la verification</button>
-                  <?php else: ?>
-                    <button type="submit" class="btn btn-sm btn-success"><i class="ti ti-check me-1"></i>Verifier cet etudiant</button>
-                  <?php endif; ?>
-                </form>
-              </div>
-              <div class="card-body">
-                <div class="row g-3">
+            <div class="card info-card" style="border-left:4px solid #f59e0b !important;">
+              <div class="card-body py-3">
+                <div class="row g-3 align-items-center">
                   <div class="col-md-4">
                     <div class="detail-label">Statut verification</div>
                     <div class="detail-value">
-                      <?php if ((int)$user['verification_student'] === 1): ?>
-                        <span class="badge bg-success-subtle text-success"><i class="ti ti-check me-1"></i>Verifie</span>
-                      <?php else: ?>
-                        <span class="badge bg-warning-subtle text-warning"><i class="ti ti-clock me-1"></i>Non verifie</span>
-                      <?php endif; ?>
+                      <span class="badge bg-warning-subtle text-warning"><i class="ti ti-clock me-1"></i>Non verifie</span>
                     </div>
                   </div>
                   <div class="col-md-4">
@@ -290,9 +348,7 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
                   <div class="col-md-4">
                     <div class="detail-label">Jours restants</div>
                     <div class="detail-value">
-                      <?php if ((int)$user['verification_student'] === 1): ?>
-                        <span class="text-success">Illimite (verifie)</span>
-                      <?php elseif ($trialRemaining === 0): ?>
+                      <?php if ($trialRemaining === 0): ?>
                         <span class="text-danger fw-bold">Expire !</span>
                       <?php else: ?>
                         <span class="text-warning fw-bold"><?= $trialRemaining ?> jour(s)</span>
@@ -306,40 +362,7 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
         </div>
         <?php endif; ?>
 
-        <!-- Historique connexions -->
-        <div class="row g-4 mb-4">
-          <div class="col-12">
-            <div class="card info-card">
-              <div class="card-header bg-transparent border-0 pb-0">
-                <h5 class="fw-bold mb-0"><i class="ti ti-history me-2 text-info"></i>Historique des connexions (5 dernieres)</h5>
-              </div>
-              <div class="card-body p-0">
-                <div class="table-responsive">
-                  <table class="table table-hover mb-0 align-middle">
-                    <thead>
-                      <tr><th>Connecte le</th><th>Deconnecte le</th><th>Adresse IP</th></tr>
-                    </thead>
-                    <tbody>
-                      <?php if (empty($connexions)): ?>
-                      <tr><td colspan="3" class="text-center py-4 text-secondary">Aucune connexion enregistree</td></tr>
-                      <?php else: ?>
-                      <?php foreach ($connexions as $cx): ?>
-                      <tr>
-                        <td class="small"><?= date('d/m/Y H:i:s', strtotime($cx['connected_at'])) ?></td>
-                        <td class="small">
-                          <?= $cx['disconnected_at'] ? date('d/m/Y H:i:s', strtotime($cx['disconnected_at'])) : '<span class="badge bg-success-subtle text-success">Encore connecte</span>' ?>
-                        </td>
-                        <td class="small font-monospace"><?= htmlspecialchars($cx['ip_address'] ?? '-') ?></td>
-                      </tr>
-                      <?php endforeach; ?>
-                      <?php endif; ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
         <!-- Quick Actions -->
         <div class="card info-card mb-4">
@@ -359,6 +382,18 @@ $roleBg = $roleColors[$user['role']] ?? 'secondary';
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal zoom carte etudiant -->
+  <div class="modal fade" id="cardZoomModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0" style="background:transparent; box-shadow:none;">
+        <div class="modal-body p-0 text-center position-relative">
+          <button type="button" class="btn-close btn-close-white position-absolute" data-bs-dismiss="modal" aria-label="Fermer" style="top:10px; right:10px; z-index:10; background-color:rgba(0,0,0,0.5); border-radius:50%; padding:10px;"></button>
+          <img id="cardModalImg" src="" class="img-fluid rounded" style="max-height:85vh; box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+        </div>
       </div>
     </div>
   </div>

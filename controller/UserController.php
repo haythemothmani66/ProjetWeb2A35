@@ -87,14 +87,22 @@ class UserController {
             $user->setStatut(1);
             $user->setPhoto($photo ?? 'default.png');
 
+            /* Get current trial days for students */
+            $trialDaysForUser = null;
+            if ($role === 'etudiant') {
+                $pStmt = $this->db->prepare("SELECT valeur FROM parametres WHERE cle = 'expiration_verification_jours' LIMIT 1");
+                $pStmt->execute();
+                $trialDaysForUser = (int)($pStmt->fetchColumn() ?: 7);
+            }
+
             $stmt = $this->db->prepare("
-                INSERT INTO user (nom, prenom, email, password, telephone, role, statut, photo, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                INSERT INTO user (nom, prenom, email, password, telephone, role, statut, photo, trial_days, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             $stmt->execute([
                 $user->getNom(), $user->getPrenom(), $user->getEmail(),
                 $user->getPassword(), $user->getTelephone(), $user->getRole(),
-                $user->getStatut(), $user->getPhoto(),
+                $user->getStatut(), $user->getPhoto(), $trialDaysForUser,
             ]);
 
             $userId = $this->db->lastInsertId();
@@ -252,6 +260,23 @@ class UserController {
                 $this->db->prepare("UPDATE user SET statut = 1 WHERE id = ? AND statut = 0")->execute([$id]);
             }
             $_SESSION['success'] = $newVal ? "Etudiant verifie avec succes." : "Verification etudiant retiree.";
+        }
+
+        $referer = $_SERVER['HTTP_REFERER'] ?? '/gestion_users/view/backoffice/src/pages/backoffice/users.php';
+        header('Location: ' . $referer);
+        exit;
+    }
+
+    // POST /user/rejectStudent — block student immediately
+    public function rejectStudent(): void {
+        $id = (int)($_POST['id'] ?? 0);
+        $stmt = $this->db->prepare("SELECT role FROM user WHERE id = ? LIMIT 1");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+
+        if ($row && $row['role'] === 'etudiant') {
+            $this->db->prepare("UPDATE user SET statut = 0 WHERE id = ?")->execute([$id]);
+            $_SESSION['success'] = "Etudiant refuse et bloque avec succes.";
         }
 
         $referer = $_SERVER['HTTP_REFERER'] ?? '/gestion_users/view/backoffice/src/pages/backoffice/users.php';

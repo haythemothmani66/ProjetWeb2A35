@@ -27,16 +27,7 @@ foreach($rolesData as $r){ $roleLabels[] = ucfirst($r['role']); $roleCounts[] = 
 /* Users currently online */
 $onlineUsers = $db->query("SELECT COUNT(*) FROM user WHERE etat='online'")->fetchColumn();
 
-/* Last 10 connexions */
-$last10Stmt = $db->query("
-    SELECT ch.connected_at, ch.disconnected_at, ch.ip_address,
-           u.nom, u.prenom, u.photo, u.role, u.etat
-    FROM connexion_history ch
-    JOIN user u ON u.id = ch.user_id
-    ORDER BY ch.connected_at DESC
-    LIMIT 10
-");
-$last10Connexions = $last10Stmt->fetchAll();
+
 
 /* Users crees par mois (12 derniers mois) */
 $monthsStmt = $db->query("
@@ -183,69 +174,7 @@ $BO = '/gestion_users/view/backoffice/src';
           </div>
         </div>
 
-        <!-- 10 derniers connexions -->
-        <div class="row g-4 mb-6">
-          <div class="col-12">
-            <div class="card border-0 shadow-sm">
-              <div class="card-header bg-transparent border-0 pb-0 d-flex align-items-center gap-2">
-                <i class="ti ti-history fs-4 text-primary"></i>
-                <h5 class="card-title mb-0">10 dernieres connexions</h5>
-              </div>
-              <div class="card-body p-0">
-                <div class="table-responsive">
-                  <table class="table table-hover mb-0 align-middle">
-                    <thead>
-                      <tr>
-                        <th>Utilisateur</th>
-                        <th>Role</th>
-                        <th>Connecte le</th>
-                        <th>Deconnecte le</th>
-                        <th>IP</th>
-                        <th>Etat</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php if (empty($last10Connexions)): ?>
-                      <tr><td colspan="6" class="text-center py-4 text-secondary">Aucune connexion enregistree</td></tr>
-                      <?php else: ?>
-                      <?php foreach ($last10Connexions as $cx): ?>
-                      <tr>
-                        <td>
-                          <div class="d-flex align-items-center gap-2">
-                            <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($cx['photo']) ?>" class="rounded-circle" width="32" height="32" style="object-fit:cover;" onerror="this.src='/gestion_users/uploads/photos/default.png';">
-                            <span class="fw-semibold"><?= htmlspecialchars($cx['prenom'].' '.$cx['nom']) ?></span>
-                          </div>
-                        </td>
-                        <td>
-                          <?php $colors = ['admin'=>'danger','encadrant'=>'warning','etudiant'=>'info','partenariat'=>'primary']; ?>
-                          <span class="badge bg-<?= $colors[$cx['role']] ?? 'secondary' ?> text-capitalize"><?= htmlspecialchars($cx['role']) ?></span>
-                        </td>
-                        <td class="text-secondary small"><?= date('d/m/Y H:i', strtotime($cx['connected_at'])) ?></td>
-                        <td class="text-secondary small">
-                          <?php if ($cx['disconnected_at']): ?>
-                            <?= date('d/m/Y H:i', strtotime($cx['disconnected_at'])) ?>
-                          <?php else: ?>
-                            <span class="badge bg-success-subtle text-success">Encore connecte</span>
-                          <?php endif; ?>
-                        </td>
-                        <td class="text-secondary small font-monospace"><?= htmlspecialchars($cx['ip_address'] ?? '-') ?></td>
-                        <td>
-                          <?php if ($cx['etat'] === 'online'): ?>
-                            <span class="d-inline-block rounded-circle" style="width:10px;height:10px;background:#10b981;" title="En ligne"></span>
-                          <?php else: ?>
-                            <span class="d-inline-block rounded-circle" style="width:10px;height:10px;background:#9ca3af;" title="Hors ligne"></span>
-                          <?php endif; ?>
-                        </td>
-                      </tr>
-                      <?php endforeach; ?>
-                      <?php endif; ?>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+
 
       </div>
     </div>

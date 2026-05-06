@@ -176,6 +176,20 @@
   }
 
   /* ---------- Profile edit form ---------- */
+  /* --- Optional field: max length check (returns '' if empty or OK) --- */
+  function checkOptMax(value, label, max) {
+    if (!value) return '';
+    if (value.length > max) return label + ' ne doit pas depasser ' + max + ' caracteres.';
+    return '';
+  }
+  /* --- Optional email: if filled must be valid + max length --- */
+  function checkOptEmail(value, label, max) {
+    if (!value) return '';
+    if (value.length > max) return label + ' ne doit pas depasser ' + max + ' caracteres.';
+    if (!isEmail(value)) return "Format d'email invalide.";
+    return '';
+  }
+
   var formProfil = document.getElementById('formProfil');
   if (formProfil) {
     formProfil.addEventListener('submit', function (e) {
@@ -187,6 +201,25 @@
       if (m) { err('err-prenom', m); ok = false; }
       m = checkTel(val('profilTel'));
       if (m) { err('err-tel', m); ok = false; }
+
+      /* Student optional fields (only validated if filled) */
+      m = checkOptMax(val('profilNiveau'), 'Le niveau', 40);
+      if (m) { err('err-niveau', m); ok = false; }
+      m = checkOptMax(val('profilClasse'), 'La classe', 20);
+      if (m) { err('err-classe', m); ok = false; }
+      m = checkOptEmail(val('profilEmailUniv'), "L'email universitaire", 50);
+      if (m) { err('err-email-univ', m); ok = false; }
+      m = checkOptMax(val('profilEtablissement'), "L'etablissement", 100);
+      if (m) { err('err-etablissement', m); ok = false; }
+      m = checkOptMax(val('profilIdCard'), "L'identifiant carte", 15);
+      if (m) { err('err-idcard', m); ok = false; }
+      m = checkOptMax(val('profilAnneeUniv'), "L'annee universitaire", 20);
+      if (m) { err('err-annee', m); ok = false; }
+      m = checkOptMax(val('profilSpecialite'), 'La specialite', 40);
+      if (m) { err('err-specialite', m); ok = false; }
+      m = checkOptMax(val('profilAdresse'), "L'adresse", 100);
+      if (m) { err('err-adresse', m); ok = false; }
+
       if (!ok) e.preventDefault();
     });
   }

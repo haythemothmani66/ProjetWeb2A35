@@ -54,15 +54,15 @@ class AuthController {
             } else {
                 /* --- Check student verification expiration (trial period) --- */
                 if ($row['role'] === 'etudiant' && (int)$row['verification_student'] === 0) {
-                    $paramStmt = $this->db->prepare("SELECT valeur FROM parametres WHERE cle = 'expiration_verification_jours' LIMIT 1");
-                    $paramStmt->execute();
-                    $trialDays = (int)($paramStmt->fetchColumn() ?: 7);
+                    $trialDays = (int)($row['trial_days'] ?: 7);
 
                     $createdDate = new DateTime($row['created_at']);
                     $now = new DateTime();
-                    $daysSinceCreation = (int)$now->diff($createdDate)->days;
+                    /* Calculate precise hours elapsed, convert to days */
+                    $hoursElapsed = ($now->getTimestamp() - $createdDate->getTimestamp()) / 3600;
+                    $daysSinceCreation = floor($hoursElapsed / 24);
 
-                    if ($daysSinceCreation > $trialDays) {
+                    if ($daysSinceCreation >= $trialDays) {
                         /* Auto-block: trial expired, student not verified */
                         $this->db->prepare("UPDATE user SET statut = 0 WHERE id = ?")->execute([$row['id']]);
                         $errors[] = "Votre période d'essai de {$trialDays} jours a expiré. Veuillez contacter l'administrateur pour vérifier votre statut étudiant.";
@@ -78,12 +78,6 @@ class AuthController {
 
                     /* Set user online */
                     $this->db->prepare("UPDATE user SET etat = 'online' WHERE id = ?")->execute([$row['id']]);
-
-                    /* Record connexion history */
-                    $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-                    $this->db->prepare("INSERT INTO connexion_history (user_id, connected_at, ip_address) VALUES (?, NOW(), ?)")
-                             ->execute([$row['id'], $ip]);
-                    $_SESSION['connexion_id'] = $this->db->lastInsertId();
 
                     if ($row['role'] === 'admin') {
                         header('Location: /gestion_users/view/backoffice/src/pages/backoffice/dashboard.php');
@@ -181,14 +175,23 @@ class AuthController {
             $user->setPhoto('default.png');
             $user->setTokenVerif($token);
 
+            /* Get current trial days from parametres for students */
+            $trialDaysForUser = null;
+            if ($role === 'etudiant') {
+                $pStmt = $this->db->prepare("SELECT valeur FROM parametres WHERE cle = 'expiration_verification_jours' LIMIT 1");
+                $pStmt->execute();
+                $trialDaysForUser = (int)($pStmt->fetchColumn() ?: 7);
+            }
+
             $stmt = $this->db->prepare("
-                INSERT INTO user (nom, prenom, email, password, telephone, role, statut, photo, token_verif, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                INSERT INTO user (nom, prenom, email, password, telephone, role, statut, photo, token_verif, trial_days, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ");
             $stmt->execute([
                 $user->getNom(), $user->getPrenom(), $user->getEmail(),
                 $user->getPassword(), $user->getTelephone(), $user->getRole(),
                 $user->getStatut(), $user->getPhoto(), $user->getTokenVerif(),
+                $trialDaysForUser,
             ]);
 
             $userId = $this->db->lastInsertId();
@@ -358,13 +361,9 @@ class AuthController {
     // =========================================================
     public function logout(): void {
         $userId = $_SESSION['user_id'] ?? null;
-        $connexionId = $_SESSION['connexion_id'] ?? null;
 
         if ($userId) {
             $this->db->prepare("UPDATE user SET etat = 'offline' WHERE id = ?")->execute([$userId]);
-        }
-        if ($connexionId) {
-            $this->db->prepare("UPDATE connexion_history SET disconnected_at = NOW() WHERE id = ?")->execute([$connexionId]);
         }
 
         session_destroy();

@@ -1,8 +1,9 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/check_blocked.php';
 /* Auto-refresh session data if user_prenom is missing (old session) */
 if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
-    require_once __DIR__ . '/../../config/database.php';
     $stmt = Config::getConnexion()->prepare("SELECT nom, prenom, photo FROM user WHERE id = ? LIMIT 1");
     $stmt->execute([$_SESSION['user_id']]);
     $u = $stmt->fetch();
