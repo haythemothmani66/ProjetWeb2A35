@@ -124,52 +124,6 @@ $formatDateTime = static function ($value): string {
                             <div class="label mb-2">Lettre de motivation</div>
                             <div class="value" style="font-weight:400; line-height:1.8; white-space:pre-wrap;"><?= htmlspecialchars((string) $candidature['lettremotivation']) ?></div>
                         </div>
-
-                        <div class="mt-4 info-card">
-                            <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-2">
-                                <div>
-                                    <div class="label">Analyse IA</div>
-                                    <div class="value mb-0">Correspondance du CV</div>
-                                </div>
-                                <?php if ($matchScore !== null): ?>
-                                    <span class="badge-soft" style="background: rgba(21, 120, 74, .14); color: #15784a;"><?= number_format($matchScore, 0) ?>/100</span>
-                                <?php else: ?>
-                                    <span class="badge-soft" style="background: rgba(91, 91, 91, .14); color: #455468;">En attente</span>
-                                <?php endif; ?>
-                            </div>
-
-                            <?php if (!empty($matchDetails['analysis'])): ?>
-                                <p class="muted mb-3"><?= htmlspecialchars((string) $matchDetails['analysis']) ?></p>
-                            <?php endif; ?>
-
-                            <?php if (!empty($matchDetails['summary']['recommendation'])): ?>
-                                <div class="alert alert-light border mb-3">
-                                    <strong>Recommandation:</strong> <?= htmlspecialchars((string) $matchDetails['summary']['recommendation']) ?>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if (!empty($matchDetails['summary']['strengths']) && is_array($matchDetails['summary']['strengths'])): ?>
-                                <div class="label mb-2">Points forts</div>
-                                <ul class="mb-3 ps-3">
-                                    <?php foreach ($matchDetails['summary']['strengths'] as $strength): ?>
-                                        <li><?= htmlspecialchars((string) $strength) ?></li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            <?php endif; ?>
-
-                            <?php if (!empty($matchDetails['summary']['missing_points']) && is_array($matchDetails['summary']['missing_points'])): ?>
-                                <div class="label mb-2">Points manquants</div>
-                                <ul class="mb-0 ps-3">
-                                    <?php foreach ($matchDetails['summary']['missing_points'] as $missingPoint): ?>
-                                        <li><?= htmlspecialchars((string) $missingPoint) ?></li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            <?php endif; ?>
-
-                            <div class="text-secondary small mt-3">
-                                <?= htmlspecialchars((string) ($candidature['match_provider'] ?? '')) ?><?= !empty($candidature['match_model']) ? ' · ' . htmlspecialchars((string) $candidature['match_model']) : '' ?><?= !empty($candidature['match_generated_at']) ? ' · ' . htmlspecialchars($formatDateTime($candidature['match_generated_at'])) : '' ?>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="col-lg-4">

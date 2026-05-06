@@ -405,7 +405,7 @@ class CandidatureController
                 error_log('AI match analysis failed for candidature #' . $newId . ': ' . $exception->getMessage());
             }
 
-            header('Location: index.php?espace=front&module=candidature&action=details&id=' . $newId);
+            header('Location: index.php?espace=front&module=candidature&action=merci');
             exit;
         }
 
@@ -428,5 +428,10 @@ class CandidatureController
         }
 
         include __DIR__ . '/../../views/front/candidature/details.php';
+    }
+
+    public function merci(): void
+    {
+        include __DIR__ . '/../../views/front/candidature/merci.php';
     }
 }

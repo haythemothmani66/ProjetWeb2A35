@@ -87,6 +87,9 @@ switch ($module) {
                 case 'ajouter':
                     $controller->ajouter();
                     break;
+                case 'merci':
+                    $controller->merci();
+                    break;
                 case 'details':
                     if ($id > 0) {
                         $controller->details($id);
