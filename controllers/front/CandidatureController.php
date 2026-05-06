@@ -6,6 +6,7 @@ class CandidatureController
 {
     private PDO $pdo;
     private array $recaptchaConfig;
+    private CvMatchService $cvMatchService;
 
     private function getCvUploadDir(): string
     {
@@ -123,6 +124,7 @@ class CandidatureController
     {
         $this->pdo = $pdo;
         $this->recaptchaConfig = require __DIR__ . '/../../config/recaptcha.php';
+        $this->cvMatchService = new CvMatchService();
     }
 
     private function isRecaptchaConfigured(): bool
@@ -209,6 +211,28 @@ class CandidatureController
         return (int) $this->pdo->lastInsertId();
     }
 
+    private function updateMatchAnalysis(int $id, array $analysis): bool
+    {
+        $sql = 'UPDATE candidature
+                SET match_score = :match_score,
+                    match_details = :match_details,
+                    match_provider = :match_provider,
+                    match_model = :match_model,
+                    match_generated_at = :match_generated_at
+                WHERE id = :id';
+
+        $statement = $this->pdo->prepare($sql);
+
+        return $statement->execute([
+            'id' => $id,
+            'match_score' => $analysis['match_score'] ?? null,
+            'match_details' => json_encode($analysis['match_details'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'match_provider' => $analysis['provider'] ?? null,
+            'match_model' => $analysis['model'] ?? null,
+            'match_generated_at' => $analysis['generated_at'] ?? date('Y-m-d H:i:s'),
+        ]);
+    }
+
     private function getCandidatureById(int $id): ?array
     {
         $sql = 'SELECT
@@ -226,6 +250,11 @@ class CandidatureController
                     c.cv_mime,
                     c.cv_size,
                     c.cv_source,
+                    c.match_score,
+                    c.match_details,
+                    c.match_provider,
+                    c.match_model,
+                    c.match_generated_at,
                     c.email,
                     c.statut,
                     c.datecandidature,
@@ -363,6 +392,18 @@ class CandidatureController
                 'offreid' => (int) $formData['offreid'],
                 'statut' => 'enattente',
             ]);
+
+            try {
+                $analysis = $this->cvMatchService->analyze([
+                    'cv_file_path' => $cvUploadData['cv_file_path'],
+                    'cv_mime' => $cvUploadData['cv_mime'],
+                    'cv_original_name' => $cvUploadData['cv_original_name'],
+                ], $selectedOffer);
+
+                $this->updateMatchAnalysis($newId, $analysis);
+            } catch (Throwable $exception) {
+                error_log('AI match analysis failed for candidature #' . $newId . ': ' . $exception->getMessage());
+            }
 
             header('Location: index.php?espace=front&module=candidature&action=details&id=' . $newId);
             exit;

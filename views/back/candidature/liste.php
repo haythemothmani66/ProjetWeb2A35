@@ -32,6 +32,7 @@ $filterState = $filterState ?? [
         .radio-inline-wrap { display: flex; gap: 1.25rem; flex-wrap: wrap; }
         .table thead th { font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; color: #64748b; }
         .search-row-hide { display: none; }
+        .action-group { display: inline-flex; gap: .5rem; flex-wrap: wrap; }
         @media (max-width: 991.98px) { .sidebar { width: 100%; } }
     </style>
 </head>
@@ -43,6 +44,21 @@ $filterState = $filterState ?? [
         </aside>
 
         <div class="main">
+            <?php
+            $formatDateTime = static function ($value): string {
+                $value = trim((string) $value);
+
+                if ($value === '') {
+                    return '';
+                }
+
+                try {
+                    return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+                } catch (Throwable $exception) {
+                    return $value;
+                }
+            };
+            ?>
             <header class="topbar px-4 py-3 d-flex justify-content-between align-items-center">
                 <div>
                     <p class="mb-1 text-secondary small">Module Candidature</p>
@@ -100,6 +116,7 @@ $filterState = $filterState ?? [
                                         <option value="prenom" <?= $selectedSortBy === 'prenom' ? 'selected' : '' ?>>prenom</option>
                                         <option value="email" <?= $selectedSortBy === 'email' ? 'selected' : '' ?>>email</option>
                                         <option value="statut" <?= $selectedSortBy === 'statut' ? 'selected' : '' ?>>statut</option>
+                                        <option value="match_score" <?= $selectedSortBy === 'match_score' ? 'selected' : '' ?>>score IA</option>
                                         <option value="datecandidature" <?= $selectedSortBy === 'datecandidature' ? 'selected' : '' ?>>date de depot</option>
                                         <option value="datereponse" <?= $selectedSortBy === 'datereponse' ? 'selected' : '' ?>>date de reponse</option>
                                     </select>
@@ -141,6 +158,7 @@ $filterState = $filterState ?? [
                                         <th>Candidat</th>
                                         <th>Email</th>
                                         <th>Statut</th>
+                                        <th>Score IA</th>
                                         <th>Date de depot</th>
                                         <th>Actions</th>
                                     </tr>
@@ -148,7 +166,7 @@ $filterState = $filterState ?? [
                                 <tbody id="candidatures-table-body">
                                     <?php if (empty($candidatures)): ?>
                                         <tr id="server-empty-row">
-                                            <td colspan="6" class="text-center text-secondary py-4">Aucune candidature pour le moment.</td>
+                                            <td colspan="7" class="text-center text-secondary py-4">Aucune candidature pour le moment.</td>
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach ($candidatures as $candidature): ?>
@@ -163,16 +181,27 @@ $filterState = $filterState ?? [
                                                         <?= htmlspecialchars((string) $candidature['statut']) ?>
                                                     </span>
                                                 </td>
-                                                <td><?= htmlspecialchars((string) $candidature['datecandidature']) ?></td>
-                                                <td class="d-flex gap-2 flex-wrap">
+                                                <td>
+                                                    <?php $matchScore = isset($candidature['match_score']) && $candidature['match_score'] !== null && $candidature['match_score'] !== '' ? (float) $candidature['match_score'] : null; ?>
+                                                    <?php if ($matchScore !== null): ?>
+                                                        <span class="badge <?= $matchScore >= 80 ? 'text-bg-success' : ($matchScore >= 60 ? 'text-bg-warning' : 'text-bg-secondary') ?>">
+                                                            <?= number_format($matchScore, 0) ?>/100
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <span class="text-secondary">En attente</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td><?= htmlspecialchars($formatDateTime((string) $candidature['datecandidature'])) ?></td>
+                                                <td>
+                                                    <div class="action-group">
                                                     <a class="btn btn-sm btn-outline-primary" href="index.php?espace=back&module=candidature&action=details&id=<?= (int) $candidature['id'] ?>">Details</a>
-                                                    <a class="btn btn-sm btn-outline-secondary" href="index.php?espace=back&module=candidature&action=modifier&id=<?= (int) $candidature['id'] ?>">Modifier</a>
                                                     <a class="btn btn-sm btn-outline-danger" href="index.php?espace=back&module=candidature&action=supprimer&id=<?= (int) $candidature['id'] ?>" onclick="return confirm('Supprimer cette candidature ?');">Supprimer</a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
                                         <tr id="client-no-result-row" class="search-row-hide">
-                                            <td colspan="6" class="text-center text-secondary py-4">Aucun resultat pour cette recherche.</td>
+                                            <td colspan="7" class="text-center text-secondary py-4">Aucun resultat pour cette recherche.</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
@@ -213,7 +242,7 @@ $filterState = $filterState ?? [
                 rows.forEach(function (row) {
                     const searchableText = normalize(
                         Array.from(row.querySelectorAll('td'))
-                            .slice(0, 5)
+                            .slice(0, 6)
                             .map(function (cell) { return cell.textContent || ''; })
                             .join(' ')
                     );

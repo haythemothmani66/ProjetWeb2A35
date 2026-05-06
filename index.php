@@ -9,6 +9,7 @@ require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/models/OffreEmploi.php';
 require_once __DIR__ . '/models/Candidature.php';
 require_once __DIR__ . '/helpers/Mailer.php';
+require_once __DIR__ . '/helpers/CvMatchService.php';
 
 $espace = $_GET['espace'] ?? 'front';
 $module = $_GET['module'] ?? 'offreemploi';
@@ -117,6 +118,13 @@ switch ($module) {
                 case 'repondre':
                     if ($id > 0) {
                         $controller->repondre($id);
+                        break;
+                    }
+                    $controller->liste();
+                    break;
+                case 'reanalyze':
+                    if ($id > 0) {
+                        $controller->reanalyze($id);
                         break;
                     }
                     $controller->liste();

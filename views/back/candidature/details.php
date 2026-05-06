@@ -2,6 +2,15 @@
 $candidature = $candidature ?? [];
 $reply = $_GET['reply'] ?? null;
 $error = $_GET['error'] ?? null;
+$aiState = $_GET['ai'] ?? null;
+$matchScore = isset($candidature['match_score']) && $candidature['match_score'] !== null && $candidature['match_score'] !== '' ? (float) $candidature['match_score'] : null;
+$matchDetails = [];
+if (!empty($candidature['match_details'])) {
+    $decodedMatchDetails = json_decode((string) $candidature['match_details'], true);
+    if (is_array($decodedMatchDetails)) {
+        $matchDetails = $decodedMatchDetails;
+    }
+}
 $formatDateTime = static function ($value): string {
     $value = trim((string) $value);
 
@@ -35,6 +44,7 @@ $formatDateTime = static function ($value): string {
         .main { flex: 1; min-width: 0; }
         .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; }
         .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+        .score-pill { display:inline-flex; align-items:center; padding: .35rem .75rem; border-radius: 999px; font-weight: 700; }
         @media (max-width: 991.98px) { .sidebar { width: 100%; } }
     </style>
 </head>
@@ -78,6 +88,16 @@ $formatDateTime = static function ($value): string {
                         <strong>Erreur !</strong> Impossible de mettre à jour le statut.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
+                <?php elseif ($aiState === 'reanalyzed'): ?>
+                    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                        <strong>✓ Analyse IA relancée !</strong> Le score a été recalculé.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php elseif ($aiState === 'reanalyze_failed'): ?>
+                    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                        <strong>Erreur IA !</strong> La relance a échoué, vérifiez le détail de l'erreur IA ci-dessous.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
                 <?php endif; ?>
                 <div class="row g-4">
                     <div class="col-lg-8">
@@ -104,6 +124,83 @@ $formatDateTime = static function ($value): string {
                                 <div class="mt-4">
                                     <h4 class="h6">Lettre de motivation</h4>
                                     <p class="text-secondary mb-0" style="white-space: pre-wrap;"><?= htmlspecialchars((string) $candidature['lettremotivation']) ?></p>
+                                </div>
+
+                                <div class="card metric-card mt-4">
+                                    <div class="card-body px-4 py-4">
+                                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                                            <div>
+                                                <h4 class="h6 mb-1">Analyse IA du CV</h4>
+                                                <p class="text-secondary mb-0">Score généré à partir du CV extrait et du texte de l'offre.</p>
+                                            </div>
+                                            <a class="btn btn-outline-primary btn-sm" href="index.php?espace=back&module=candidature&action=reanalyze&id=<?= (int) $candidature['id'] ?>">Relancer l'analyse IA</a>
+                                            <?php if ($matchScore !== null): ?>
+                                                <span class="score-pill <?= $matchScore >= 80 ? 'text-bg-success' : ($matchScore >= 60 ? 'text-bg-warning' : 'text-bg-secondary') ?>"><?= number_format($matchScore, 0) ?>/100</span>
+                                            <?php else: ?>
+                                                <span class="score-pill text-bg-secondary">En attente</span>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <?php if (!empty($matchDetails['analysis'])): ?>
+                                            <p class="text-secondary mb-3" style="white-space: pre-wrap;"><?= htmlspecialchars((string) $matchDetails['analysis']) ?></p>
+                                        <?php endif; ?>
+
+                                        <?php if (!empty($matchDetails['error'])): ?>
+                                            <div class="alert alert-warning mb-3">
+                                                <strong>Erreur IA:</strong> <?= htmlspecialchars((string) $matchDetails['error']) ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php if (!empty($matchDetails['breakdown']) && is_array($matchDetails['breakdown'])): ?>
+                                            <div class="row g-3 mb-3">
+                                                <?php foreach ($matchDetails['breakdown'] as $label => $value): ?>
+                                                    <div class="col-md-6">
+                                                        <div class="border rounded-4 p-3 bg-light">
+                                                            <div class="text-uppercase small text-secondary fw-bold"><?= htmlspecialchars(str_replace('_', ' ', (string) $label)) ?></div>
+                                                            <div class="h5 mb-0"><?= htmlspecialchars(number_format((float) $value, 0)) ?>/100</div>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <div class="row g-4">
+                                            <div class="col-md-6">
+                                                <h5 class="h6 text-success">Points forts</h5>
+                                                <?php if (!empty($matchDetails['summary']['strengths']) && is_array($matchDetails['summary']['strengths'])): ?>
+                                                    <ul class="mb-0 ps-3">
+                                                        <?php foreach ($matchDetails['summary']['strengths'] as $strength): ?>
+                                                            <li><?= htmlspecialchars((string) $strength) ?></li>
+                                                        <?php endforeach; ?>
+                                                    </ul>
+                                                <?php else: ?>
+                                                    <p class="text-secondary mb-0">Aucun point fort détaillé.</p>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h5 class="h6 text-warning">Points manquants</h5>
+                                                <?php if (!empty($matchDetails['summary']['missing_points']) && is_array($matchDetails['summary']['missing_points'])): ?>
+                                                    <ul class="mb-0 ps-3">
+                                                        <?php foreach ($matchDetails['summary']['missing_points'] as $missingPoint): ?>
+                                                            <li><?= htmlspecialchars((string) $missingPoint) ?></li>
+                                                        <?php endforeach; ?>
+                                                    </ul>
+                                                <?php else: ?>
+                                                    <p class="text-secondary mb-0">Aucun point manquant détaillé.</p>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+
+                                        <?php if (!empty($matchDetails['summary']['recommendation'])): ?>
+                                            <div class="alert alert-info mb-0 mt-3">
+                                                <strong>Recommandation:</strong> <?= htmlspecialchars((string) $matchDetails['summary']['recommendation']) ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <div class="text-secondary small mt-3">
+                                            <?= htmlspecialchars((string) ($candidature['match_provider'] ?? '')) ?><?= !empty($candidature['match_model']) ? ' · ' . htmlspecialchars((string) $candidature['match_model']) : '' ?><?= !empty($candidature['match_generated_at']) ? ' · ' . htmlspecialchars($formatDateTime($candidature['match_generated_at'])) : '' ?>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -6,6 +6,28 @@ class CandidatureController
 {
     private PDO $pdo;
 
+    private function updateMatchAnalysis(int $id, array $analysis): bool
+    {
+        $sql = 'UPDATE candidature
+                SET match_score = :match_score,
+                    match_details = :match_details,
+                    match_provider = :match_provider,
+                    match_model = :match_model,
+                    match_generated_at = :match_generated_at
+                WHERE id = :id';
+
+        $statement = $this->pdo->prepare($sql);
+
+        return $statement->execute([
+            'id' => $id,
+            'match_score' => $analysis['match_score'] ?? null,
+            'match_details' => json_encode($analysis['match_details'] ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'match_provider' => $analysis['provider'] ?? null,
+            'match_model' => $analysis['model'] ?? null,
+            'match_generated_at' => $analysis['generated_at'] ?? date('Y-m-d H:i:s'),
+        ]);
+    }
+
     private function isPersonName(string $value): bool
     {
         return preg_match('/^(?=.*\p{L})[\p{L}\s\-\']{2,60}$/u', $value) === 1;
@@ -34,6 +56,7 @@ class CandidatureController
             'prenom' => 'c.prenom',
             'email' => 'c.email',
             'statut' => 'c.statut',
+            'match_score' => 'c.match_score',
             'datecandidature' => 'c.datecandidature',
             'datereponse' => 'c.datereponse',
         ];
@@ -74,6 +97,11 @@ class CandidatureController
                     END AS cvurl,
                     c.cv_source,
                     c.cv_original_name,
+                    c.match_score,
+                    c.match_details,
+                    c.match_provider,
+                    c.match_model,
+                    c.match_generated_at,
                     c.email,
                     c.statut,
                     c.datecandidature,
@@ -122,6 +150,11 @@ class CandidatureController
                     END AS cvurl,
                     c.cv_source,
                     c.cv_original_name,
+                    c.match_score,
+                    c.match_details,
+                    c.match_provider,
+                    c.match_model,
+                    c.match_generated_at,
                     c.email,
                     c.statut,
                     c.datecandidature,
@@ -152,8 +185,15 @@ class CandidatureController
                         WHEN c.cv_source = \'upload\' THEN c.cv_file_path
                         ELSE COALESCE(c.cv_external_url, c.cv_file_path)
                     END AS cvurl,
+                    c.cv_file_path,
+                    c.cv_mime,
                     c.cv_source,
                     c.cv_original_name,
+                    c.match_score,
+                    c.match_details,
+                    c.match_provider,
+                    c.match_model,
+                    c.match_generated_at,
                     c.email,
                     c.statut,
                     c.datecandidature,
@@ -480,6 +520,41 @@ class CandidatureController
         } else {
             header('Location: index.php?espace=back&module=candidature&action=details&id=' . $id . '&error=update');
         }
+        exit;
+    }
+
+    public function reanalyze(int $id): void
+    {
+        $candidature = $this->getCandidatureById($id);
+
+        if (!$candidature) {
+            http_response_code(404);
+            echo '<h1>Candidature non trouvee</h1>';
+            return;
+        }
+
+        try {
+            $service = new CvMatchService();
+            $analysis = $service->analyze([
+                'cv_file_path' => (string) ($candidature['cv_file_path'] ?? ''),
+                'cv_mime' => (string) ($candidature['cv_mime'] ?? ''),
+                'cv_original_name' => (string) ($candidature['cv_original_name'] ?? ''),
+            ], [
+                'titre' => (string) ($candidature['offre_titre'] ?? ''),
+                'description' => (string) ($candidature['offre_description'] ?? ''),
+                'competencesrequises' => '',
+                'lieu' => (string) ($candidature['offre_lieu'] ?? ''),
+                'typecontrat' => (string) ($candidature['offre_typecontrat'] ?? ''),
+                'datelimite' => (string) ($candidature['offre_datelimite'] ?? ''),
+            ]);
+
+            $this->updateMatchAnalysis($id, $analysis);
+            header('Location: index.php?espace=back&module=candidature&action=details&id=' . $id . '&ai=reanalyzed');
+        } catch (Throwable $exception) {
+            error_log('AI reanalyze failed for candidature #' . $id . ': ' . $exception->getMessage());
+            header('Location: index.php?espace=back&module=candidature&action=details&id=' . $id . '&ai=reanalyze_failed');
+        }
+
         exit;
     }
 }
