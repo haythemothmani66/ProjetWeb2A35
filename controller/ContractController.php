@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/config.php';
-require_once dirname(__DIR__) . '/Model/Contract.php';
-require_once dirname(__DIR__) . '/Model/Partenaire.php';
+require_once dirname(__DIR__) . '/model/Contract.php';
+require_once dirname(__DIR__) . '/model/Partenaire.php';
 
 require_once dirname(__DIR__) . '/api/MailHelper.php';
 
@@ -14,7 +15,7 @@ class ContractController
 
     public function __construct()
     {
-        $pdo = getConnexion();
+        $pdo = Config::getConnexion();
         $this->model = new Contract($pdo);
         $this->partenaireModel = new Partenaire($pdo);
     }

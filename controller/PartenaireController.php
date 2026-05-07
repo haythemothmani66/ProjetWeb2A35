@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/config.php';
+require_once dirname(__DIR__) . '/config/database.php';
 require_once dirname(__DIR__) . '/model/Partenaire.php';
 require_once dirname(__DIR__) . '/api/MailHelper.php';
 require_once dirname(__DIR__) . '/api/RecommendationService.php';
@@ -12,7 +12,7 @@ class PartenaireController
 
     public function __construct()
     {
-        $this->pdo = getConnexion();
+        $this->pdo = Config::getConnexion();
         $this->ensurePartenaireTable();
     }
 
