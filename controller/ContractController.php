@@ -22,7 +22,14 @@ class ContractController
 
     public function handleRequest(string $action): void
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
         $normalizedAction = strtolower(trim($action));
+
+        // Backend : seul admin peut gerer les contrats
+        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            header('Location: /gestion_users/view/template/sign-in.php');
+            exit;
+        }
 
         switch ($normalizedAction) {
             case 'add':

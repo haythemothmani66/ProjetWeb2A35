@@ -993,7 +993,7 @@ async function checkPartnerStatusAndRedirect(orgName, partnerRecord = null) {
         
         // Redirect after 2 seconds
         setTimeout(() => {
-            window.location.href = 'http://localhost/edumatch/edumatch/view/frontoffice/contract.html';
+            window.location.href = 'http://localhost/gestion_users/view/frontoffice/contract.html';
         }, 2000);
         return true;
     } else if (partner.status === 'pending') {
@@ -1080,7 +1080,7 @@ async function displayStatusResult(orgName) {
                         email: partner.email,
                         status: partner.status
                     }));
-                    window.location.href = 'http://localhost/edumatch/edumatch/view/frontoffice/contract.html';
+                    window.location.href = 'http://localhost/gestion_users/view/frontoffice/contract.html';
                 });
             }
         } else if (partner.status === 'pending') {

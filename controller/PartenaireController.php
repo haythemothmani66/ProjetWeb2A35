@@ -44,9 +44,10 @@ class PartenaireController
 
     public function handleRequest(string $action): void
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
         $normalizedAction = strtolower(trim($action));
 
-        // Frontend Actions
+        // Frontend Actions (viewall et preview : accessibles a tous)
         switch ($normalizedAction) {
             case 'preview':
             case 'partnerspreview':
@@ -58,17 +59,6 @@ class PartenaireController
                 $this->showAllPartners();
                 return;
 
-            case 'apply':
-            case 'applyform':
-            case 'partnerapplication':
-                $this->showPartnershipForm();
-                return;
-
-            case 'submitapplication':
-            case 'submitpartnership':
-                $this->submitPartnershipApplication();
-                return;
-
             case 'recommendations':
             case 'smartrecommendations':
             case 'partnersyoumaylike':
@@ -76,7 +66,25 @@ class PartenaireController
                 return;
         }
 
-        // Backend Actions
+        // Frontend Actions protegees : seul un user connecte avec role partenariat peut postuler
+        switch ($normalizedAction) {
+            case 'apply':
+            case 'applyform':
+            case 'partnerapplication':
+                $this->requireRole(['partenariat']);
+                $this->showPartnershipForm();
+                return;
+
+            case 'submitapplication':
+            case 'submitpartnership':
+                $this->requireRole(['partenariat']);
+                $this->submitPartnershipApplication();
+                return;
+        }
+
+        // Backend Actions : seul admin peut acceder
+        $this->requireRole(['admin']);
+
         switch ($normalizedAction) {
             case 'add':
             case 'create':
@@ -872,6 +880,21 @@ class PartenaireController
     {
         $source = $_POST['id'] ?? $_GET['id'] ?? 0;
         return (int)$source;
+    }
+
+    private function requireRole(array $allowedRoles): void
+    {
+        if (empty($_SESSION['user_id'])) {
+            header('Location: /gestion_users/view/template/sign-in.php');
+            exit;
+        }
+        $userRole = $_SESSION['user_role'] ?? '';
+        if (!in_array($userRole, $allowedRoles, true)) {
+            http_response_code(403);
+            echo '<h1>403 — Acces interdit</h1><p>Vous n\'avez pas le role necessaire pour acceder a cette page.</p>';
+            echo '<a href="/gestion_users/view/template/index.php">Retour a l\'accueil</a>';
+            exit;
+        }
     }
 
     private function render(string $viewPath, array $data = []): void

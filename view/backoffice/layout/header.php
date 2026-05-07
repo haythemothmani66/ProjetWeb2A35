@@ -1,44 +1,64 @@
 <?php
 declare(strict_types=1);
 
+if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
+require_once $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/config/database.php';
+
+// Protection : seul admin peut acceder au backoffice
+if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'admin') {
+    header('Location: /gestion_users/view/template/sign-in.php');
+    exit;
+}
+
+// Refresh session si besoin
+if (empty($_SESSION['user_prenom'])) {
+    $s = Config::getConnexion()->prepare("SELECT nom,prenom,photo FROM user WHERE id=? LIMIT 1");
+    $s->execute([$_SESSION['user_id']]);
+    $u = $s->fetch();
+    if ($u) {
+        $_SESSION['user_nom']    = $u['nom'];
+        $_SESSION['user_prenom'] = $u['prenom'];
+        $_SESSION['user_photo']  = $u['photo'];
+    }
+}
+
 $pageTitle = $pageTitle ?? 'EduMatch BackOffice';
 $messages = $messages ?? [];
-$currentController = strtolower((string)($_GET['controller'] ?? ''));
+$BO = '/gestion_users/view/backoffice/src';
 ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= h($pageTitle); ?> - EduMatch</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="<?= h(assetUrl('view/backoffice/src/assets/css/theme.css')); ?>">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title><?= htmlspecialchars($pageTitle) ?> | EduMatch Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="<?= $BO ?>/assets/css/theme.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <script src="<?= $BO ?>/assets/js/vendors/color-modes.js"></script>
+  <script>
+    if(localStorage.getItem('sidebarExpanded')==='false'){document.documentElement.classList.add('collapsed');document.documentElement.classList.remove('expanded');}
+    else{document.documentElement.classList.remove('collapsed');document.documentElement.classList.add('expanded');}
+  </script>
 </head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container">
-        <a class="navbar-brand" href="<?= h(appUrl()); ?>">EduMatch MVC</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="mainNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link<?= $currentController === 'partenaire' ? ' active' : ''; ?>" href="<?= h(appUrl(['controller' => 'partenaire', 'action' => 'list'])); ?>">Partenaires</a></li>
-                <li class="nav-item"><a class="nav-link<?= $currentController === 'contract' ? ' active' : ''; ?>" href="<?= h(appUrl(['controller' => 'contract', 'action' => 'list'])); ?>">Contracts</a></li>
-                <li class="nav-item"><a class="nav-link" href="<?= h(assetUrl('view/frontoffice/index.html')); ?>">FrontOffice</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<body>
+  <div>
+    <?php include $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/view/backoffice/src/partials_php/sidebar.php'; ?>
+    <div id="content" class="position-relative h-100">
+      <?php include $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/view/backoffice/src/partials_php/topbar.php'; ?>
+      <div class="custom-container">
 
-<main class="container pb-5">
-    <?php foreach ($messages as $message): ?>
-        <?php
-        $type = (string)($message['type'] ?? 'info');
-        $allowed = ['success', 'danger', 'warning', 'info'];
-        if (!in_array($type, $allowed, true)) {
-            $type = 'info';
-        }
-        ?>
-        <div class="alert alert-<?= h($type); ?>" role="alert"><?= h((string)($message['message'] ?? '')); ?></div>
-    <?php endforeach; ?>
+        <?php foreach ($messages as $message): ?>
+          <?php
+          $type = (string)($message['type'] ?? 'info');
+          $allowed = ['success', 'danger', 'warning', 'info'];
+          if (!in_array($type, $allowed, true)) { $type = 'info'; }
+          ?>
+          <div class="alert alert-<?= $type ?> alert-dismissible fade show" role="alert">
+            <?= htmlspecialchars((string)($message['message'] ?? '')) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <?php endforeach; ?>

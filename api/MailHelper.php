@@ -51,7 +51,7 @@ class MailHelper
             $mailer->clearAddresses();
             $mailer->addAddress($toEmail);
             
-            $contractLink = "http://localhost/edumatch/edumatch/view/frontoffice/contract.html";
+            $contractLink = "http://localhost/gestion_users/view/frontoffice/contract.html";
             
             $mailer->Subject = "🎉 Partnership Approved - EduMatch";
             $mailer->Body = "
