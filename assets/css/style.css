@@ -2798,3 +2798,18 @@ font-weight: 700;
 * 18.END SECTION TOP DESIGN
 * ----------------------------------------------------------------------------------------
 */
+
+/* Toggle password eye icon */
+.toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #6c757d;
+    z-index: 5;
+    line-height: 1;
+}
+.toggle-password:hover {
+    color: #525fe1;
+}
