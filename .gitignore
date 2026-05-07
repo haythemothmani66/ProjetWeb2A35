@@ -1,7 +1,8 @@
-# Uploads (user photos)
+# Uploads (user photos — ignore all except default.png)
 uploads/photos/*.jpg
 uploads/photos/*.jpeg
 uploads/photos/*.png
+!uploads/photos/default.png
 !uploads/photos/.gitkeep
 
 # Temp files
