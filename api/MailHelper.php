@@ -1,12 +1,14 @@
 <?php
 declare(strict_types=1);
 
+// PHPMailer sans Composer — utilise les fichiers locaux du projet
+require_once dirname(__DIR__) . '/lib/PHPMailer/Exception.php';
+require_once dirname(__DIR__) . '/lib/PHPMailer/PHPMailer.php';
+require_once dirname(__DIR__) . '/lib/PHPMailer/SMTP.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
-
-// Require Composer autoloader
-require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 class MailHelper
 {
