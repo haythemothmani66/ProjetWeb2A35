@@ -207,6 +207,232 @@ $successType = $_GET['success'] ?? '';
     <style>
 
         /* ============================================================ */
+/* BINGO DES COMPÉTENCES                                        */
+/* ============================================================ */
+
+.bingo-section {
+    background: white;
+    border-radius: 25px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    border: 1px solid var(--border);
+}
+
+.bingo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border);
+}
+
+.bingo-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bingo-title h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.bingo-title i {
+    font-size: 1.8rem;
+    color: #f59e0b;
+}
+
+.bingo-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.bingo-stats span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.bingo-progress-bar {
+    width: 150px;
+    height: 8px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.bingo-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.btn-reset-bingo {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-reset-bingo:hover {
+    background: #dc2626;
+    transform: scale(1.02);
+}
+
+/* Grille Bingo */
+.bingo-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin: 1.5rem 0;
+}
+
+.bingo-cell {
+    aspect-ratio: 1 / 1;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.bingo-cell:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.bingo-cell.completed {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    border-color: #10b981;
+}
+
+.bingo-cell.completed::after {
+    content: "✓";
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    color: #10b981;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.bingo-cell-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.bingo-cell-name {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bingo-cell.completed .bingo-cell-name {
+    color: #065f46;
+}
+
+/* Message de félicitations */
+.bingo-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+}
+
+.bingo-message-content {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    color: white;
+    padding: 1.5rem 2rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.4);
+}
+
+.bingo-message-content i {
+    font-size: 2.5rem;
+}
+
+.bingo-message-content button {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.bingo-message-content button:hover {
+    background: rgba(255,255,255,0.4);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Responsive Bingo */
+@media (max-width: 768px) {
+    .bingo-grid {
+        gap: 8px;
+    }
+    
+    .bingo-cell-icon {
+        font-size: 1.2rem;
+    }
+    
+    .bingo-cell-name {
+        font-size: 0.55rem;
+    }
+    
+    .bingo-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .bingo-grid {
+        gap: 5px;
+    }
+    
+    .bingo-cell {
+        padding: 0.25rem;
+    }
+}
+
+        /* ============================================================ */
 /* STYLES POUR LA LECTURE AUDIO (TEXT-TO-SPEECH) */
 /* ============================================================ */
 
@@ -1617,7 +1843,39 @@ $successType = $_GET['success'] ?? '';
     </div>
 </div>
 
-
+<!-- ============================================================ -->
+<!-- BINGO DES COMPÉTENCES                                        -->
+<!-- ============================================================ -->
+<div class="bingo-section">
+    <div class="bingo-header">
+        <div class="bingo-title">
+            <i class="fas fa-gamepad"></i> 
+            <h2>🏆 Mon Bingo des compétences</h2>
+        </div>
+        <div class="bingo-stats">
+            <span id="bingoProgress">0%</span>
+            <div class="bingo-progress-bar">
+                <div class="bingo-progress-fill" style="width: 0%"></div>
+            </div>
+            <span id="bingoCount">0 / 25 compétences</span>
+        </div>
+        <button id="resetBingoBtn" class="btn-reset-bingo" title="Réinitialiser ma progression">
+            <i class="fas fa-trash-alt"></i> Réinitialiser
+        </button>
+    </div>
+    
+    <div class="bingo-grid" id="bingoGrid">
+        <!-- La grille sera générée par JavaScript -->
+    </div>
+    
+    <div class="bingo-message" id="bingoMessage" style="display: none;">
+        <div class="bingo-message-content">
+            <i class="fas fa-trophy"></i>
+            <span id="bingoMessageText">🎉 Félicitations ! Vous avez complété une ligne !</span>
+            <button onclick="closeBingoMessage()">✕</button>
+        </div>
+    </div>
+</div>
     
 
     <!-- MAIN CONTENT -->
@@ -3067,6 +3325,310 @@ observer.observe(document.getElementById('feedContainer'), {
 
 // Initialiser au chargement
 document.addEventListener('DOMContentLoaded', initTextToSpeech);
+</script>
+<script>
+    // ============================================================
+// BINGO DES COMPÉTENCES
+// ============================================================
+
+/// Liste des matières (5x5)
+const COMPETENCES = [
+    // Ligne 1 - Sciences exactes
+    { name: "Mathématiques", icon: "📐", keywords: ["math", "algèbre", "géométrie", "calcul", "équation", "fonction"] },
+    { name: "Physique", icon: "⚡", keywords: ["physique", "mécanique", "électricité", "optique", "thermodynamique"] },
+    { name: "Chimie", icon: "🧪", keywords: ["chimie", "réaction", "molécule", "atome", "tableau périodique"] },
+    { name: "SVT", icon: "🔬", keywords: ["svt", "biologie", "géologie", "cellule", "écosystème", "génétique"] },
+    { name: "Informatique", icon: "💻", keywords: ["info", "informatique", "programmation", "algorithme", "code", "python"] },
+    // Ligne 2 - Sciences humaines
+    { name: "Français", icon: "📖", keywords: ["français", "grammaire", "conjugaison", "orthographe", "littérature", "rédaction"] },
+    { name: "Anglais", icon: "🇬🇧", keywords: ["anglais", "english", "vocabulaire", "grammaire anglaise", "traduction"] },
+    { name: "Espagnol", icon: "🇪🇸", keywords: ["espagnol", "español", "vocabulario", "gramática"] },
+    { name: "Histoire", icon: "🏛️", keywords: ["histoire", "guerre", "révolution", "antiquité", "moyen âge", "chronologie"] },
+    { name: "Géographie", icon: "🌍", keywords: ["géographie", "carte", "population", "climat", "relief", "frontière"] },
+    // Ligne 3 - Arts et culture
+    { name: "Philosophie", icon: "💭", keywords: ["philosophie", "platon", "socrate", "cogito", "métaphysique", "éthique"] },
+    { name: "Arts plastiques", icon: "🎨", keywords: ["art", "peinture", "dessin", "couleur", "perspective", "création"] },
+    { name: "Musique", icon: "🎵", keywords: ["musique", "solfège", "partition", "instrument", "rythme", "mélodie"] },
+    { name: "Éducation physique", icon: "⚽", keywords: ["sport", "eps", "athlétisme", "football", "basket", "natation"] },
+    { name: "Technologie", icon: "🔧", keywords: ["techno", "technologie", "mécanique", "électronique", "design", "prototype"] },
+    // Ligne 4 - Sciences sociales
+    { name: "Économie", icon: "📊", keywords: ["économie", "marché", "offre", "demande", "prix", "croissance", "pib"] },
+    { name: "SES", icon: "📈", keywords: ["ses", "sociologie", "économie", "politique", "social"] },
+    { name: "Droit", icon: "⚖️", keywords: ["droit", "loi", "constitution", "justice", "contrat", "juridique"] },
+    { name: "Management", icon: "👔", keywords: ["management", "gestion", "entreprise", "leadership", "stratégie"] },
+    { name: "Communication", icon: "💬", keywords: ["communication", "média", "publicité", "réseaux", "information"] },
+    // Ligne 5 - Spécialités et options
+    { name: "NSI", icon: "🖥️", keywords: ["nsi", "numérique", "informatique", "python", "web", "base de données"] },
+    { name: "LLCE", icon: "📚", keywords: ["llce", "littérature", "langue", "civilisation", "culture"] },
+    { name: "HGGSP", icon: "🌐", keywords: ["hggsp", "géopolitique", "relations internationales", "puissance", "monde"] },
+    { name: "Maths expertes", icon: "📐", keywords: ["maths expertes", "arithmétique", "complexe", "matrice", "géométrie"] },
+    { name: "Option", icon: "⭐", keywords: ["option", "spécialité", "supplément", "approfondissement"] }
+];
+// État du bingo (stocké en localStorage)
+let bingoState = {};
+let unlockedLines = [];
+
+// Initialiser le bingo
+function initBingo() {
+    // Charger depuis localStorage
+    const saved = localStorage.getItem('edumatch_bingo');
+    if (saved) {
+        bingoState = JSON.parse(saved);
+    } else {
+        // Créer un nouvel état (tout false)
+        COMPETENCES.forEach((comp, index) => {
+            bingoState[index] = false;
+        });
+        saveBingo();
+    }
+    
+    // Afficher la grille
+    renderBingoGrid();
+    
+    // Mettre à jour les stats
+    updateBingoStats();
+}
+
+// Sauvegarder l'état du bingo
+function saveBingo() {
+    localStorage.setItem('edumatch_bingo', JSON.stringify(bingoState));
+}
+
+// Afficher la grille
+function renderBingoGrid() {
+    const grid = document.getElementById('bingoGrid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    COMPETENCES.forEach((comp, index) => {
+        const cell = document.createElement('div');
+        cell.className = `bingo-cell ${bingoState[index] ? 'completed' : ''}`;
+        cell.innerHTML = `
+            <div class="bingo-cell-icon">${comp.icon}</div>
+            <div class="bingo-cell-name">${comp.name}</div>
+        `;
+        cell.addEventListener('click', () => toggleCompetence(index));
+        grid.appendChild(cell);
+    });
+}
+
+// Basculer une compétence (manuellement)
+function toggleCompetence(index) {
+    bingoState[index] = !bingoState[index];
+    saveBingo();
+    renderBingoGrid();
+    checkBingoLines();
+    updateBingoStats();
+    
+    if (bingoState[index]) {
+        showToast(`🎉 Compétence débloquée : ${COMPETENCES[index].name} !`, 'success');
+    }
+}
+
+// Vérifier les lignes complétées (Bingo)
+function checkBingoLines() {
+    const newCompletedLines = [];
+    
+    // Vérifier les 5 lignes horizontales
+    for (let i = 0; i < 5; i++) {
+        let lineComplete = true;
+        for (let j = 0; j < 5; j++) {
+            if (!bingoState[i * 5 + j]) {
+                lineComplete = false;
+                break;
+            }
+        }
+        if (lineComplete && !unlockedLines.includes(`h${i}`)) {
+            newCompletedLines.push(`h${i}`);
+            showBingoMessage(`🎉 Bingo ! Vous avez complété la ligne ${i + 1} !`);
+        }
+    }
+    
+    // Vérifier les 5 lignes verticales
+    for (let i = 0; i < 5; i++) {
+        let lineComplete = true;
+        for (let j = 0; j < 5; j++) {
+            if (!bingoState[j * 5 + i]) {
+                lineComplete = false;
+                break;
+            }
+        }
+        if (lineComplete && !unlockedLines.includes(`v${i}`)) {
+            newCompletedLines.push(`v${i}`);
+            showBingoMessage(`🎉 Bingo ! Vous avez complété la colonne ${i + 1} !`);
+        }
+    }
+    
+    // Vérifier la diagonale principale
+    let diag1Complete = true;
+    for (let i = 0; i < 5; i++) {
+        if (!bingoState[i * 5 + i]) {
+            diag1Complete = false;
+            break;
+        }
+    }
+    if (diag1Complete && !unlockedLines.includes('d1')) {
+        newCompletedLines.push('d1');
+        showBingoMessage(`🎉 Bingo ! Vous avez complété la diagonale !`);
+    }
+    
+    // Vérifier la diagonale secondaire
+    let diag2Complete = true;
+    for (let i = 0; i < 5; i++) {
+        if (!bingoState[i * 5 + (4 - i)]) {
+            diag2Complete = false;
+            break;
+        }
+    }
+    if (diag2Complete && !unlockedLines.includes('d2')) {
+        newCompletedLines.push('d2');
+        showBingoMessage(`🎉 Bingo ! Vous avez complété la diagonale !`);
+    }
+    
+    // Ajouter les nouvelles lignes complétées
+    newCompletedLines.forEach(line => unlockedLines.push(line));
+    
+    // Sauvegarder les lignes dans localStorage
+    localStorage.setItem('edumatch_bingo_lines', JSON.stringify(unlockedLines));
+}
+
+// Charger les lignes déjà complétées
+function loadUnlockedLines() {
+    const saved = localStorage.getItem('edumatch_bingo_lines');
+    if (saved) {
+        unlockedLines = JSON.parse(saved);
+    }
+}
+
+// Mettre à jour les statistiques
+function updateBingoStats() {
+    const completedCount = Object.values(bingoState).filter(v => v === true).length;
+    const percentage = Math.round((completedCount / 25) * 100);
+    
+    const progressBar = document.querySelector('.bingo-progress-fill');
+    const progressSpan = document.getElementById('bingoProgress');
+    const countSpan = document.getElementById('bingoCount');
+    
+    if (progressBar) progressBar.style.width = `${percentage}%`;
+    if (progressSpan) progressSpan.textContent = `${percentage}%`;
+    if (countSpan) countSpan.textContent = `${completedCount} / 25 compétences`;
+    
+    // Si toutes les compétences sont débloquées
+    if (completedCount === 25) {
+        showBingoMessage(`🏆 Félicitations ! Vous avez complété TOUT le bingo ! Vous êtes un maître ! 🏆`);
+    }
+}
+
+// Afficher un message de Bingo
+function showBingoMessage(message) {
+    const messageDiv = document.getElementById('bingoMessage');
+    const messageText = document.getElementById('bingoMessageText');
+    
+    if (messageDiv && messageText) {
+        messageText.textContent = message;
+        messageDiv.style.display = 'block';
+        
+        // Jouer un son (optionnel - nécessite interaction utilisateur)
+        // setTimeout(() => {
+        //     messageDiv.style.display = 'none';
+        // }, 3000);
+    }
+}
+
+// Fermer le message
+function closeBingoMessage() {
+    const messageDiv = document.getElementById('bingoMessage');
+    if (messageDiv) messageDiv.style.display = 'none';
+}
+
+// Réinitialiser le bingo
+function resetBingo() {
+    if (confirm('Êtes-vous sûr de vouloir réinitialiser toute votre progression ?')) {
+        COMPETENCES.forEach((_, index) => {
+            bingoState[index] = false;
+        });
+        unlockedLines = [];
+        saveBingo();
+        localStorage.setItem('edumatch_bingo_lines', JSON.stringify(unlockedLines));
+        renderBingoGrid();
+        updateBingoStats();
+        showToast('Progression réinitialisée', 'info');
+    }
+}
+
+// Débloquer les compétences basées sur les mots-clés des devoirs
+function unlockCompetencesFromKeywords(motsCles) {
+    if (!motsCles) return;
+    
+    const motsLower = motsCles.toLowerCase();
+    let newUnlocked = false;
+    
+    COMPETENCES.forEach((comp, index) => {
+        if (!bingoState[index]) {
+            const matched = comp.keywords.some(keyword => 
+                motsLower.includes(keyword.toLowerCase())
+            );
+            if (matched) {
+                bingoState[index] = true;
+                newUnlocked = true;
+                showToast(`🎯 Nouvelle compétence débloquée : ${comp.name} !`, 'success');
+            }
+        }
+    });
+    
+    if (newUnlocked) {
+        saveBingo();
+        renderBingoGrid();
+        checkBingoLines();
+        updateBingoStats();
+    }
+}
+
+// Parcourir tous les devoirs existants pour débloquer les compétences
+function unlockAllFromExistingDevoirs() {
+    const devoirs = document.querySelectorAll('.feed-card');
+    devoirs.forEach(card => {
+        const motsClesElement = card.querySelector('.tags-row');
+        if (motsClesElement) {
+            const tags = motsClesElement.querySelectorAll('.tag');
+            tags.forEach(tag => {
+                unlockCompetencesFromKeywords(tag.textContent);
+            });
+        }
+    });
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', () => {
+    loadUnlockedLines();
+    initBingo();
+    unlockAllFromExistingDevoirs();
+});
+
+// Attacher l'événement au bouton reset
+document.getElementById('resetBingoBtn')?.addEventListener('click', resetBingo);
+
+// Toast helper
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = 'bingo-toast';
+    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i> ${message}`;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        background: ${type === 'success' ? '#10b981' : '#3b82f6'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 12px;
+        z-index: 10000;
+        font-size: 14px;
+        animation: slideInRight 0.3s ease;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
 </script>
 
 

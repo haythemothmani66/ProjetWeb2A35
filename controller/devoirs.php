@@ -97,7 +97,7 @@ public function chatbot($message) {
     }
     
     $prompt = "Tu es EduBot, un assistant pédagogique intelligent pour la plateforme EduMatch.
-    Tu aides les élèves à comprendre leurs cours, leurs devoirs, et les concepts éducatifs.
+    Tu aides les élèves à comprendre leurs cours, leurs devoirs, et les concepts éducatifs ne me répond que au questions pédagigiques.
     
     Règles :
     - Réponds de manière claire, précise et pédagogique
@@ -568,7 +568,7 @@ public function deleteCorrection()
     }
 
     // ============================================================
-// ANALYSE DE SENTIMENT CORRIGÉE
+// ANALYSE DE SENTIMENT 
 // ============================================================
 public function analyzeSentiment($commentaire) {
     if (empty($commentaire)) {
