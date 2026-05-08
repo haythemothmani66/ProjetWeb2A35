@@ -1,8 +1,14 @@
 ﻿<?php
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
+require_once __DIR__ . '/../../../../../config/database.php';
+
+// --- Protection admin : seul un admin peut acceder au backoffice ---
+if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+    header('Location: /gestion_users/view/template/sign-in.php');
+    exit;
+}
 
 // Configuration de la base de données
-require_once __DIR__ . '/../../../../../config/database.php';
 $conn = getDBConnection();
 
 

@@ -45,61 +45,7 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
     <!-- PRELOADER -->
     <div class="preloaders"><span class="loader"></span></div>
 
-    <!-- NAVBAR -->
-    <div id="navigation" class="navbar-light bg-faded site-navigation">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-20 align-self-center">
-            <div class="site-logo">
-              <a href="index.php"><img src="../../assets/img/logo.png" alt="EduMatch" style="height:50px;" /></a>
-            </div>
-          </div>
-          <div class="col-60 d-flex">
-            <nav id="main-menu">
-              <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li class="menu-item-has-children">
-                  <a href="#">Edufeed</a>
-                  <ul>
-                    <li><a href="#">Submit Assignment</a></li>
-                    <li><a href="#">Learning Feed</a></li>
-                  </ul>
-                </li>
-                <li><a href="#">Partenariat</a></li>
-                <li><a href="#">Evenement</a></li>
-                <li><a href="#">Quiz</a></li>
-                <li><a href="#">Offre d'emploi</a></li>
-              </ul>
-            </nav>
-          </div>
-          <div class="col-20 d-none d-xl-block text-end align-self-center">
-            <div class="header-group">
-                <a href="sign-in.php" class="header-btn">Connexion</a>
-                <a href="sign-up.php" class="btn_one">Inscription</a>
-            </div>
-          </div>
-          <ul class="mobile_menu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li>
-              <a href="#">Edufeed</a>
-              <ul class="sub-menu">
-                <li><a href="#">Submit Assignment</a></li>
-                <li><a href="#">Learning Feed</a></li>
-              </ul>
-            </li>
-            <li><a href="#">Partenariat</a></li>
-            <li><a href="#">Evenement</a></li>
-            <li><a href="#">Quiz</a></li>
-            <li><a href="#">Offre d'emploi</a></li>
-            <li><a href="sign-in.php">Connexion</a></li>
-            <li><a href="sign-up.php">Inscription</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    <!-- END NAVBAR -->
+    <?php include __DIR__ . '/_navbar.php'; ?>
 
     <!-- SIGN IN FORM -->
     <section class="auth-section">

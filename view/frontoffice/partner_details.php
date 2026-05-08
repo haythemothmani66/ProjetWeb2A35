@@ -1,11 +1,18 @@
 <?php
+if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../api/RecommendationService.php';
+
+// --- Protection : tout utilisateur connecte peut acceder ---
+if (empty($_SESSION['user_id'])) {
+    header('Location: /gestion_users/view/template/sign-in.php');
+    exit;
+}
 
 $partnerId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($partnerId <= 0) {
-    header('Location: partners_may_like.html');
+    header('Location: partners_may_like.php');
     exit;
 }
 
@@ -16,7 +23,7 @@ $stmt->execute([$partnerId]);
 $partner = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$partner) {
-    echo "<h1>Partenaire non trouvé</h1><a href='partners_may_like.html'>Retour aux recommandations</a>";
+    echo "<h1>Partenaire non trouvé</h1><a href='partners_may_like.php'>Retour aux recommandations</a>";
     exit;
 }
 
@@ -198,7 +205,7 @@ $similarPartners = RecommendationService::getRecommendations($conn, $partnerId, 
 </head>
 <body>
 
-    <a href="partners_may_like.html" class="back-btn">
+    <a href="partners_may_like.php" class="back-btn">
         <i class="fas fa-arrow-left me-2"></i> Retour aux recommandations
     </a>
 

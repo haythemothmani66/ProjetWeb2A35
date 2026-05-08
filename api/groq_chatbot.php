@@ -22,7 +22,7 @@ if (empty($userMessage)) {
 // API Configuration from .env
 $apiKey = $_ENV['GROQ_API_KEY'] ?? getenv('GROQ_API_KEY');
 $apiUrl = $_ENV['GROQ_API_URL'] ?? 'https://api.groq.com/openai/v1/chat/completions';
-$model = $_ENV['GROQ_MODEL'] ?? 'mixtral-8x7b-32768';
+$model = $_ENV['GROQ_MODEL'] ?? 'llama-3.3-70b-versatile';
 
 if (!$apiKey) {
     echo json_encode(['error' => 'Groq API Key not configured']);
@@ -30,14 +30,22 @@ if (!$apiKey) {
 }
 
 // Prepare the payload (EduMatch Context)
-$systemPrompt = "Tu es l'assistant intelligent officiel d'EduMatch, une plateforme innovante qui connecte étudiants, professeurs et partenaires professionnels. " .
-                "Ton but est d'aider les utilisateurs sur les sujets suivants :\n" .
-                "- Partenariats : Expliquer comment devenir partenaire, les avantages (badges Nouveau/Populaire), et rediriger vers la page partenariat.\n" .
-                "- Devoirs & Projets : Aider à comprendre le système de dépôt de devoirs et de suivi des contrats.\n" .
-                "- Événements : Donner des informations sur les événements à venir.\n" .
-                "- Contact : Expliquer comment contacter les professeurs ou l'équipe de support.\n" .
-                "Réponds toujours en français, de manière polie, concise et professionnelle. Utilise le modèle Mixtral pour fournir des réponses précises. " .
-                "Si tu ne connais pas la réponse, redirige vers la page de contact (contact.html).";
+$systemPrompt = "Tu es l'assistant officiel d'EduMatch, une plateforme éducative qui connecte étudiants, professeurs et partenaires professionnels.\n\n" .
+                "RÈGLE ABSOLUE : Tu ne réponds QU'AUX questions liées à EduMatch et ses fonctionnalités. " .
+                "Si l'utilisateur pose une question qui n'a AUCUN rapport avec EduMatch (recettes, sport, météo, politique, culture générale, etc.), " .
+                "tu dois REFUSER catégoriquement de répondre avec ce message exact :\n" .
+                "\"Je suis l'assistant EduMatch et je ne peux répondre qu'aux questions concernant notre plateforme. " .
+                "Pour toute autre question, veuillez utiliser un moteur de recherche.\"\n\n" .
+                "Tu ne dois JAMAIS fournir d'informations hors-sujet, même partiellement, même si l'utilisateur insiste.\n\n" .
+                "Sujets autorisés :\n" .
+                "- Partenariats : comment devenir partenaire, soumettre une candidature, les badges (Nouveau/Populaire), vérifier le statut\n" .
+                "- Devoirs & Projets : dépôt de devoirs, correction, suivi\n" .
+                "- Événements EduMatch : événements à venir sur la plateforme\n" .
+                "- Quiz : système de quiz éducatifs\n" .
+                "- Offres d'emploi : consultation et candidature aux offres\n" .
+                "- Compte utilisateur : inscription, connexion, profil, rôles (étudiant, encadrant, partenariat, admin)\n" .
+                "- Contact : comment joindre l'équipe support EduMatch\n\n" .
+                "Réponds toujours en français, de manière polie, concise et professionnelle.";
 
 $messages = [
     ['role' => 'system', 'content' => $systemPrompt],

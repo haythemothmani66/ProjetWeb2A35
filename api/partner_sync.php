@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
 
+// Utiliser Config::getConnexion() — DB unifiee edumatch (PDO)
+require_once __DIR__ . '/../config/database.php';
+
 function send_json(int $statusCode, array $payload): void
 {
     http_response_code($statusCode);
@@ -18,50 +21,6 @@ function nullable_string($value): ?string
 
     $trimmed = trim((string)$value);
     return $trimmed === '' ? null : $trimmed;
-}
-
-function connect_database(): mysqli
-{
-    $host = 'localhost';
-    $username = 'root';
-    $password = '';
-    $dbCandidates = ['databaseedumatch', 'database_edumatch'];
-
-    foreach ($dbCandidates as $databaseName) {
-        $conn = @new mysqli($host, $username, $password, $databaseName);
-        if (!$conn->connect_errno) {
-            $conn->set_charset('utf8mb4');
-            return $conn;
-        }
-    }
-
-    throw new RuntimeException('Unable to connect to MySQL database.');
-}
-
-function ensure_column(mysqli $conn, string $table, string $column, string $definition): void
-{
-    $columnEscaped = $conn->real_escape_string($column);
-    $result = $conn->query("SHOW COLUMNS FROM `{$table}` LIKE '{$columnEscaped}'");
-    if ($result && $result->num_rows > 0) {
-        return;
-    }
-
-    if (!$conn->query("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}")) {
-        throw new RuntimeException('Failed to add column ' . $column . ': ' . $conn->error);
-    }
-}
-
-function ensure_unique_index(mysqli $conn, string $table, string $indexName, string $column): void
-{
-    $indexEscaped = $conn->real_escape_string($indexName);
-    $result = $conn->query("SHOW INDEX FROM `{$table}` WHERE Key_name = '{$indexEscaped}'");
-    if ($result && $result->num_rows > 0) {
-        return;
-    }
-
-    if (!$conn->query("ALTER TABLE `{$table}` ADD UNIQUE KEY `{$indexName}` (`{$column}`)")) {
-        throw new RuntimeException('Failed to add index ' . $indexName . ': ' . $conn->error);
-    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -98,9 +57,10 @@ if ($clientId <= 0) {
 }
 
 try {
-    $conn = connect_database();
+    $pdo = Config::getConnexion();
 
-    $createTableSql = "CREATE TABLE IF NOT EXISTS `partenaires` (
+    // S'assurer que la table partenaires existe
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `partenaires` (
         `id` INT AUTO_INCREMENT PRIMARY KEY,
         `client_id` INT NULL,
         `organization_name` VARCHAR(255) NOT NULL,
@@ -115,33 +75,15 @@ try {
         `status` VARCHAR(50) NOT NULL DEFAULT 'pending',
         `auth_key_hash` CHAR(64) DEFAULT NULL,
         `embedding_vector` TEXT DEFAULT NULL,
+        `view_count` INT DEFAULT 0,
         `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-
-    if (!$conn->query($createTableSql)) {
-        throw new RuntimeException('Failed to initialize partenaires table: ' . $conn->error);
-    }
-
-    ensure_column($conn, 'partenaires', 'client_id', 'INT NULL');
-    ensure_column($conn, 'partenaires', 'auth_key_hash', 'CHAR(64) DEFAULT NULL');
-    ensure_column($conn, 'partenaires', 'embedding_vector', 'TEXT DEFAULT NULL');
-    ensure_column($conn, 'partenaires', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
-    ensure_unique_index($conn, 'partenaires', 'uniq_partenaires_client_id', 'client_id');
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY `uniq_partenaires_client_id` (`client_id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     if ($action === 'delete') {
-        $deleteStmt = $conn->prepare('DELETE FROM `partenaires` WHERE `client_id` = ?');
-        if (!$deleteStmt) {
-            throw new RuntimeException('Failed to prepare delete statement: ' . $conn->error);
-        }
-
-        $deleteStmt->bind_param('i', $clientId);
-        if (!$deleteStmt->execute()) {
-            throw new RuntimeException('Failed to delete partner record: ' . $deleteStmt->error);
-        }
-
-        $deleteStmt->close();
-        $conn->close();
+        $stmt = $pdo->prepare('DELETE FROM `partenaires` WHERE `client_id` = :client_id');
+        $stmt->execute([':client_id' => $clientId]);
 
         send_json(200, [
             'success' => true,
@@ -150,16 +92,16 @@ try {
     }
 
     $organizationName = nullable_string($record['organization_name'] ?? null);
-    $partnerType = nullable_string($record['partner_type'] ?? null);
-    $email = nullable_string($record['email'] ?? null);
-    $telephone = nullable_string($record['telephone'] ?? null);
-    $address = nullable_string($record['address'] ?? null);
-    $country = nullable_string($record['country'] ?? null);
-    $domain = nullable_string($record['domain'] ?? null);
-    $logo = nullable_string($record['logo_file_name'] ?? null);
-    $description = nullable_string($record['description'] ?? null);
-    $status = nullable_string($record['status'] ?? 'pending') ?? 'pending';
-    $authKeyHash = strtolower((string)($record['auth_key_hash'] ?? ''));
+    $partnerType      = nullable_string($record['partner_type'] ?? null);
+    $email            = nullable_string($record['email'] ?? null);
+    $telephone        = nullable_string($record['telephone'] ?? null);
+    $address          = nullable_string($record['address'] ?? null);
+    $country          = nullable_string($record['country'] ?? null);
+    $domain           = nullable_string($record['domain'] ?? null);
+    $logo             = nullable_string($record['logo_file_name'] ?? null);
+    $description      = nullable_string($record['description'] ?? null);
+    $status           = nullable_string($record['status'] ?? 'pending') ?? 'pending';
+    $authKeyHash      = strtolower((string)($record['auth_key_hash'] ?? ''));
 
     if ($organizationName === null || $partnerType === null || $email === null || $telephone === null) {
         send_json(422, [
@@ -185,9 +127,13 @@ try {
     ]);
 
     $upsertSql = 'INSERT INTO `partenaires` (
-        `client_id`, `organization_name`, `partner_type`, `email`, `telephone`, `address`, `country`, `domain`, `logo`, `description`, `status`, `auth_key_hash`, `embedding_vector`, `created_at`, `updated_at`
+        `client_id`, `organization_name`, `partner_type`, `email`, `telephone`,
+        `address`, `country`, `domain`, `logo`, `description`,
+        `status`, `auth_key_hash`, `embedding_vector`, `created_at`, `updated_at`
     ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
+        :client_id, :organization_name, :partner_type, :email, :telephone,
+        :address, :country, :domain, :logo, :description,
+        :status, :auth_key_hash, :embedding_vector, NOW(), NOW()
     ) ON DUPLICATE KEY UPDATE
         `organization_name` = VALUES(`organization_name`),
         `partner_type` = VALUES(`partner_type`),
@@ -203,39 +149,27 @@ try {
         `embedding_vector` = VALUES(`embedding_vector`),
         `updated_at` = NOW()';
 
-    $upsertStmt = $conn->prepare($upsertSql);
-    if (!$upsertStmt) {
-        throw new RuntimeException('Failed to prepare upsert statement: ' . $conn->error);
-    }
+    $stmt = $pdo->prepare($upsertSql);
+    $stmt->execute([
+        ':client_id'         => $clientId,
+        ':organization_name' => $organizationName,
+        ':partner_type'      => $partnerType,
+        ':email'             => $email,
+        ':telephone'         => $telephone,
+        ':address'           => $address,
+        ':country'           => $country,
+        ':domain'            => $domain,
+        ':logo'              => $logo,
+        ':description'       => $description,
+        ':status'            => $status,
+        ':auth_key_hash'     => $authKeyHash,
+        ':embedding_vector'  => $embeddingVector,
+    ]);
 
-    $upsertStmt->bind_param(
-        'issssssssssss',
-        $clientId,
-        $organizationName,
-        $partnerType,
-        $email,
-        $telephone,
-        $address,
-        $country,
-        $domain,
-        $logo,
-        $description,
-        $status,
-        $authKeyHash,
-        $embeddingVector
-    );
-
-    if (!$upsertStmt->execute()) {
-        throw new RuntimeException('Failed to sync partner record: ' . $upsertStmt->error);
-    }
-    
-    $affectedRows = $upsertStmt->affected_rows;
-
-    $upsertStmt->close();
-    $conn->close();
+    $affectedRows = $stmt->rowCount();
 
     if ($affectedRows === 1 && $status === 'pending') {
-        require_once dirname(__DIR__) . '/api/MailHelper.php';
+        require_once __DIR__ . '/MailHelper.php';
         MailHelper::sendPendingEmail($email, $organizationName);
     }
 

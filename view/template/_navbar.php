@@ -10,16 +10,18 @@
 // Base URL absolue pour les assets et liens
 $baseUrl = '/gestion_users';
 
-// Auto-refresh session data si user_prenom manquant (ancienne session)
-if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
+// Auto-refresh session data depuis la DB (role, nom, prenom, photo)
+// Garantit que les changements en DB (role modifie par admin, etc.) sont toujours refletes
+if (!empty($_SESSION['user_id'])) {
     require_once $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/config/database.php';
-    $stmt = Config::getConnexion()->prepare("SELECT nom, prenom, photo FROM user WHERE id = ? LIMIT 1");
+    $stmt = Config::getConnexion()->prepare("SELECT nom, prenom, photo, role FROM user WHERE id = ? LIMIT 1");
     $stmt->execute([$_SESSION['user_id']]);
     $u = $stmt->fetch();
     if ($u) {
         $_SESSION['user_nom']    = $u['nom'];
         $_SESSION['user_prenom'] = $u['prenom'];
         $_SESSION['user_photo']  = $u['photo'];
+        $_SESSION['user_role']   = $u['role'];
     }
 }
 ?>
@@ -45,7 +47,6 @@ if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
                 <li><a href="#">Learning Feed</a></li>
               </ul>
             </li>
-            <li><a href="<?= $baseUrl ?>/view/frontoffice/partenariat.php">PARTENARIAT</a></li>
             <li><a href="#">EVENEMENT</a></li>
             <li><a href="#">QUIZ</a></li>
             <li><a href="#">OFFRE D'EMPLOI</a></li>
@@ -89,7 +90,6 @@ if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
             <li><a href="#">Learning Feed</a></li>
           </ul>
         </li>
-        <li><a href="<?= $baseUrl ?>/view/frontoffice/partenariat.php">Partenariat</a></li>
         <li><a href="#">Evenement</a></li>
         <li><a href="#">Quiz</a></li>
         <li><a href="#">Offre d'emploi</a></li>

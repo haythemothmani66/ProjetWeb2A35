@@ -283,7 +283,7 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         try {
-            const response = await fetch('/edumatch/edumatch/api/groq_chatbot.php', {
+            const response = await fetch('/gestion_users/api/groq_chatbot.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: message })

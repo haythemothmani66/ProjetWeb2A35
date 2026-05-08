@@ -1,8 +1,16 @@
 <?php
 ob_start();
-session_start(); // Pour les messages de succès/erreur
+if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
 
 require_once __DIR__ . '/../config/database.php';
+
+// --- Protection : seul un utilisateur connecte peut soumettre/corriger des devoirs ---
+if (empty($_SESSION['user_id'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => 'Non authentifie. Veuillez vous connecter.']);
+    exit;
+}
 
 class Devoirs
 {

@@ -1,5 +1,13 @@
 <?php
+if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
 require_once __DIR__ . '/../../config/database.php';
+
+// --- Protection : seul un utilisateur connecte peut acceder ---
+if (empty($_SESSION['user_id'])) {
+    header('Location: /gestion_users/view/template/sign-in.php');
+    exit;
+}
+
 $conn = getDBConnection();
 
 // Récupère TOUS les devoirs avec toutes leurs colonnes
@@ -358,58 +366,7 @@ $successType = $_GET['success'] ?? '';
     </div>
     <?php endif; ?>
 
-    <!-- NAVBAR -->
-    <div id="navigation" class="navbar-light bg-faded site-navigation">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-20 align-self-center">
-                    <div class="site-logo">
-                        <a href="index.html"><img src="../../assets/img/logo.png" alt=""></a>
-                    </div>
-                </div>
-                <div class="col-60 d-flex">
-                    <nav id="main-menu">
-                        <ul>
-                            <li><a href="index.html">Home</a></li>
-                            <li><a href="about.html">About</a></li>
-                            <li class="menu-item-has-children">
-                                <a href="#">Edufeed</a>
-                                <ul>
-                                    <li><a href="submit.html">Submit Assignment</a></li>
-                                    <li><a href="feed.html">Learning Feed</a></li>
-                                </ul>
-                            </li>
-                            <li><a href="partenariat.html">Partenariat</a></li>
-                            <li><a href="evenement.html">Événement</a></li>
-                            <li><a href="quiz.html">Quiz</a></li>
-                            <li><a href="offre-emploi.html">Offre d'emploi</a></li>
-                            <li><a href="contact.html">Contact</a></li>
-                        </ul>
-                    </nav>
-                </div>
-                <div class="col-20 d-none d-xl-block text-end align-self-center">
-                    <a href="#" class="header-btn">Sign In</a>
-                    <a href="contact.html" class="btn_one">Sign Up</a>
-                </div>
-                <ul class="mobile_menu">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="about.html">About</a></li>
-                    <li><a href="#">Edufeed</a>
-                        <ul class="sub-menu">
-                            <li><a href="submit.php">Submit Assignment</a></li>
-                            <li><a href="feed.php">Learning Feed</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="partenariat.html">Partenariat</a></li>
-                    <li><a href="evenement.html">Événement</a></li>
-                    <li><a href="quiz.html">Quiz</a></li>
-                    <li><a href="offre-emploi.html">Offre d'emploi</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <!-- END NAVBAR -->
+    <?php include $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/view/template/_navbar.php'; ?>
 
     <!-- HERO HEADER -->
     <div class="feed-hero">

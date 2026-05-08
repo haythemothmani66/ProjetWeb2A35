@@ -5,6 +5,9 @@ uploads/photos/*.png
 !uploads/photos/default.png
 !uploads/photos/.gitkeep
 
+# Environment variables (API keys)
+.env
+
 # Temp files
 *.txt
 *.log

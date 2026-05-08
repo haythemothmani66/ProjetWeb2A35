@@ -1,6 +1,19 @@
 <?php
 session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/config/database.php';
+
+// --- Protection : seul le role 'partenariat' peut acceder a cette page ---
+if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'partenariat') {
+    // Si pas connecte du tout -> page de connexion
+    if (empty($_SESSION['user_id'])) {
+        header('Location: /gestion_users/view/template/sign-in.php');
+    } else {
+        // Connecte mais pas le bon role -> accueil
+        header('Location: /gestion_users/view/template/index.php');
+    }
+    exit;
+}
+
 $baseUrl = '/gestion_users';
 ?>
 <!DOCTYPE html>
@@ -58,7 +71,7 @@ $baseUrl = '/gestion_users';
 					<div class="section-top-title wow fadeInRight" data-wow-duration="1s" data-wow-delay="0.3s" data-wow-offset="0">
 						<h1>sponsorship</h1>
 						<ul>
-							<li><a href="index.html">Home</a></li>
+							<li><a href="<?= $baseUrl ?>/view/template/index.php">Home</a></li>
 							<li> / sponsorship</li>
 						</ul>
 					</div><!-- //.HERO-TEXT -->
@@ -727,7 +740,7 @@ $baseUrl = '/gestion_users';
 				}
 
 				const STORAGE_KEY = 'edumatch_frontoffice_partners';
-				const PARTNER_SYNC_API_URL = '/edumatch/edumatch/api/partner_sync.php';
+				const PARTNER_SYNC_API_URL = '/gestion_users/api/partner_sync.php';
 				const alertBox = document.getElementById('partnerFormAlert');
 				const searchAlert = document.getElementById('partnerSearchAlert');
 				const searchInput = document.getElementById('search_org_name');
@@ -1028,7 +1041,7 @@ async function displayStatusResult(orgName) {
     
     try {
         // Appel API vers le backend
-        const response = await fetch('/edumatch/edumatch/api/check_partner_status.php', {
+        const response = await fetch('/gestion_users/api/check_partner_status.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

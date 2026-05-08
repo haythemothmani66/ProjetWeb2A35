@@ -339,72 +339,7 @@ if ($userData['role'] === 'etudiant' && !$isStudentVerified) {
   <body>
     <div class="preloaders"><span class="loader"></span></div>
 
-    <!-- NAVBAR -->
-    <div id="navigation" class="navbar-light bg-faded site-navigation">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-20 align-self-center">
-            <div class="site-logo">
-              <a href="index.php"><img src="../../assets/img/logo.png" alt="EduMatch" style="height:50px;" /></a>
-            </div>
-          </div>
-          <div class="col-60 d-flex">
-            <nav id="main-menu">
-              <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li class="menu-item-has-children">
-                  <a href="#">Edufeed</a>
-                  <ul>
-                    <li><a href="#">Submit Assignment</a></li>
-                    <li><a href="#">Learning Feed</a></li>
-                  </ul>
-                </li>
-                <li><a href="#">Partenariat</a></li>
-                <li><a href="#">Evenement</a></li>
-                <li><a href="#">Quiz</a></li>
-                <li><a href="#">Offre d'emploi</a></li>
-              </ul>
-            </nav>
-          </div>
-          <div class="col-20 d-none d-xl-block text-end align-self-center">
-            <div class="header-group" style="justify-content: flex-end;">
-              <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
-              <a href="/gestion_users/view/backoffice/src/pages/backoffice/users.php" class="btn-backoffice"><i class="fas fa-tachometer-alt"></i> Backoffice</a>
-              <?php endif; ?>
-              <div class="user-dropdown" id="userDropdown">
-                <img src="/gestion_users/uploads/photos/<?= htmlspecialchars($_SESSION['user_photo'] ?? 'default.png') ?>" alt="Photo" class="user-avatar" onerror="this.src='/gestion_users/uploads/photos/default.png';">
-                <span class="user-name"><?= htmlspecialchars(($_SESSION['user_prenom'] ?? '') . ' ' . ($_SESSION['user_nom'] ?? '')) ?></span>
-                <i class="fas fa-chevron-down dropdown-caret"></i>
-                <div class="user-dropdown-menu" id="userDropdownMenu">
-                  <a href="profil.php"><i class="fas fa-user"></i> Mon Profil</a>
-                  <hr>
-                  <a href="/gestion_users/auth/logout"><i class="fas fa-sign-out-alt"></i> Deconnexion</a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <ul class="mobile_menu">
-            <li><a href="index.php">Home</a></li>
-            <li><a href="#">About</a></li>
-            <li>
-              <a href="#">Edufeed</a>
-              <ul class="sub-menu">
-                <li><a href="#">Submit Assignment</a></li>
-                <li><a href="#">Learning Feed</a></li>
-              </ul>
-            </li>
-            <li><a href="#">Partenariat</a></li>
-            <li><a href="#">Evenement</a></li>
-            <li><a href="#">Quiz</a></li>
-            <li><a href="#">Offre d'emploi</a></li>
-            <li><a href="profil.php">Mon Profil</a></li>
-            <li><a href="/gestion_users/auth/logout">Deconnexion</a></li>
-          </ul>
-        </div>
-      </div>
-    </div>
-    <!-- END NAVBAR -->
+    <?php include __DIR__ . '/_navbar.php'; ?>
 
     <section class="py-5" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 80vh; padding-top: 80px !important;">
       <div class="container">

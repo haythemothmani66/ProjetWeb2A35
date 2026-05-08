@@ -1,5 +1,17 @@
 <?php
 declare(strict_types=1);
+
+// Guard : ce fichier doit etre inclus par le controller, pas accede directement
+if (!isset($recommendations)) {
+    if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
+    if (empty($_SESSION['user_id'])) {
+        header('Location: /gestion_users/view/template/sign-in.php');
+        exit;
+    }
+    // Si accede directement sans controller, rediriger vers la page recommandations
+    header('Location: /gestion_users/view/frontoffice/partners_may_like.php');
+    exit;
+}
 /** @var array $recommendations */
 /** @var array|null $targetPartner */
 ?>

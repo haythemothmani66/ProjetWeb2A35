@@ -11,45 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// Utiliser Config::getConnexion() — DB unifiee edumatch
+require_once __DIR__ . '/../config/database.php';
+
 function send_json(int $statusCode, array $payload): void
 {
     http_response_code($statusCode);
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
-}
-
-function getConnexion(): PDO
-{
-    $host = '127.0.0.1';
-    $port = 3306;
-    $dbCandidates = ['databaseedumatch', 'database_edumatch'];
-    $user = 'root';
-    $password = '';
-
-    $lastException = null;
-
-    foreach ($dbCandidates as $databaseName) {
-        try {
-            $dsn = sprintf(
-                'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
-                $host,
-                $port,
-                $databaseName
-            );
-
-            $pdo = new PDO($dsn, $user, $password, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
-
-            return $pdo;
-        } catch (PDOException $exception) {
-            $lastException = $exception;
-        }
-    }
-
-    throw new RuntimeException('Unable to connect to the database.', 0, $lastException);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -78,7 +47,7 @@ if ($organizationName === '') {
 }
 
 try {
-    $pdo = getConnexion();
+    $pdo = Config::getConnexion();
     
     // Vérifier si la table existe
     $tableCheck = $pdo->query("SHOW TABLES LIKE 'partenaires'");
@@ -124,4 +93,3 @@ try {
         'message' => 'Database error: ' . $exception->getMessage()
     ]);
 }
-?>

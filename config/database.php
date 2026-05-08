@@ -19,3 +19,13 @@ class Config {
         return self::$pdo;
     }
 }
+
+/**
+ * Wrapper de compatibilite pour le module devoirs
+ * Tous les modules doivent utiliser Config::getConnexion()
+ */
+if (!function_exists('getDBConnection')) {
+    function getDBConnection(): PDO {
+        return Config::getConnexion();
+    }
+}

@@ -12,48 +12,52 @@ use PHPMailer\PHPMailer\Exception;
 
 class MailHelper
 {
-    private static ?PHPMailer $mailer = null;
-    
-    private static function getMailer(): PHPMailer
-    {
-        if (self::$mailer === null) {
-            self::$mailer = new PHPMailer(true);
-            
-            // Server settings - UPDATE THESE WITH YOUR ACTUAL CREDENTIALS
-            self::$mailer->isSMTP();
-            // self::$mailer->SMTPDebug = 2; // Uncomment for detailed debug
-            self::$mailer->Host       = 'smtp.gmail.com';  
-            self::$mailer->SMTPAuth   = true;
-            self::$mailer->Username   = 'chahdtissaoui29@gmail.com';  // Your email
-            self::$mailer->Password   = 'lnainfkoigwpvggw';     // Your app password
-            self::$mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            self::$mailer->Port       = 587;
-            
-            // Sender
-            self::$mailer->setFrom('noreply@edumatch.com', 'EduMatch Team');
-            self::$mailer->addReplyTo('contact@edumatch.com', 'EduMatch Support');
-            
-            // Content
-            self::$mailer->isHTML(true);
-            self::$mailer->CharSet = 'UTF-8';
-        }
-        
-        return self::$mailer;
-    }
-    
+    // Credentials SMTP (Gmail App Password)
+    private const SMTP_HOST     = 'smtp.gmail.com';
+    private const SMTP_PORT     = 587;
+    private const SMTP_USER     = 'chahdtissaoui29@gmail.com';
+    private const SMTP_PASS     = 'lnainfkoigwpvggw';
+    private const SENDER_NAME   = 'EduMatch Team';
+
     /**
-     * Send partnership approval email with contract link
+     * Cree une nouvelle instance PHPMailer configuree a chaque appel.
+     * Pas de singleton — evite les problemes d'etat corrompu entre les envois.
+     */
+    private static function createMailer(): PHPMailer
+    {
+        $mailer = new PHPMailer(true);
+
+        $mailer->isSMTP();
+        $mailer->Host       = self::SMTP_HOST;
+        $mailer->SMTPAuth   = true;
+        $mailer->Username   = self::SMTP_USER;
+        $mailer->Password   = self::SMTP_PASS;
+        $mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mailer->Port       = self::SMTP_PORT;
+
+        // From DOIT correspondre au compte Gmail authentifie, sinon Gmail rejette/vide le mail
+        $mailer->setFrom(self::SMTP_USER, self::SENDER_NAME);
+        $mailer->addReplyTo(self::SMTP_USER, self::SENDER_NAME);
+
+        $mailer->isHTML(true);
+        $mailer->CharSet = 'UTF-8';
+
+        return $mailer;
+    }
+
+    /**
+     * Send partnership approval email
      */
     public static function sendApprovalEmail(string $toEmail, string $organizationName): bool
     {
         try {
-            $mailer = self::getMailer();
-            $mailer->clearAddresses();
+            $mailer = self::createMailer();
             $mailer->addAddress($toEmail);
-            
-            $contractLink = "http://localhost/gestion_users/view/frontoffice/contract.html";
-            
-            $mailer->Subject = "🎉 Partnership Approved - EduMatch";
+
+            // Lien vers la page partenariat (le partenaire devra se connecter pour voir son espace)
+            $partnerLink = "http://localhost/gestion_users/view/frontoffice/partenariat.php";
+
+            $mailer->Subject = "Partenariat Approuve - EduMatch";
             $mailer->Body = "
                 <!DOCTYPE html>
                 <html>
@@ -63,55 +67,54 @@ class MailHelper
                         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
                         .header { background: linear-gradient(135deg, #ff7f50 0%, #ff6347 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
                         .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-                        .button { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #ff7f50 0%, #ff6347 100%); color: white; text-decoration: none; border-radius: 8px; margin-top: 20px; }
+                        .button { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #ff7f50 0%, #ff6347 100%); color: white; text-decoration: none; border-radius: 8px; margin-top: 20px; font-weight: bold; }
                         .footer { text-align: center; padding: 20px; font-size: 12px; color: #999; }
                     </style>
                 </head>
                 <body>
                     <div class='container'>
                         <div class='header'>
-                            <h1>Congratulations {$organizationName}!</h1>
+                            <h1>Felicitations {$organizationName} !</h1>
                         </div>
                         <div class='content'>
-                            <h2>Your Partnership Has Been Approved! 🎉</h2>
-                            <p>Dear {$organizationName},</p>
-                            <p>We are pleased to inform you that your partnership application with <strong>EduMatch</strong> has been <strong>approved</strong>.</p>
-                            <p>We are excited to welcome you to our growing network of partners dedicated to shaping the future of education together.</p>
-                            <p>To proceed with the partnership, please click the button below to complete the partnership contract:</p>
+                            <h2>Votre demande de partenariat a ete approuvee !</h2>
+                            <p>Cher(e) {$organizationName},</p>
+                            <p>Nous avons le plaisir de vous informer que votre candidature de partenariat avec <strong>EduMatch</strong> a ete <strong>approuvee</strong>.</p>
+                            <p>Nous sommes ravis de vous accueillir dans notre reseau de partenaires dédies a l'avenir de l'education.</p>
+                            <p>Pour acceder a votre espace partenaire, cliquez sur le bouton ci-dessous :</p>
                             <p style='text-align: center;'>
-                                <a href='{$contractLink}' class='button'>Complete Partnership Contract →</a>
+                                <a href='{$partnerLink}' class='button'>Acceder a mon espace partenaire</a>
                             </p>
-                            <p>If you have any questions, please don't hesitate to contact our partnership team.</p>
-                            <p>Best regards,<br><strong>The EduMatch Team</strong></p>
+                            <p>Si vous avez des questions, n'hesitez pas a contacter notre equipe.</p>
+                            <p>Cordialement,<br><strong>L'equipe EduMatch</strong></p>
                         </div>
                         <div class='footer'>
-                            <p>&copy; 2026 EduMatch. All rights reserved.</p>
+                            <p>&copy; 2026 EduMatch. Tous droits reserves.</p>
                         </div>
                     </div>
                 </body>
                 </html>
             ";
-            
-            $mailer->AltBody = strip_tags(str_replace(['<br>', '</p>'], "\n", $mailer->Body));
-            
+
+            $mailer->AltBody = "Felicitations {$organizationName} ! Votre demande de partenariat avec EduMatch a ete approuvee. Accedez a votre espace : {$partnerLink}";
+
             return $mailer->send();
         } catch (Exception $e) {
-            error_log("Email sending failed: " . $e->getMessage());
+            error_log("MailHelper::sendApprovalEmail failed: " . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
-     * Send partnership rejection email with standard message
+     * Send partnership rejection email
      */
     public static function sendRejectionEmail(string $toEmail, string $organizationName): bool
     {
         try {
-            $mailer = self::getMailer();
-            $mailer->clearAddresses();
+            $mailer = self::createMailer();
             $mailer->addAddress($toEmail);
-            
-            $mailer->Subject = "Update on Your Partnership Application - EduMatch";
+
+            $mailer->Subject = "Mise a jour de votre candidature - EduMatch";
             $mailer->Body = "
                 <!DOCTYPE html>
                 <html>
@@ -127,48 +130,44 @@ class MailHelper
                 <body>
                     <div class='container'>
                         <div class='header'>
-                            <h1>Update on Your Application</h1>
+                            <h1>Mise a jour de votre candidature</h1>
                         </div>
                         <div class='content'>
-                            <h2>Application Status: Not Approved</h2>
-                            <p>Dear {$organizationName},</p>
-                            <p>Thank you for your interest in partnering with <strong>EduMatch</strong>.</p>
-                            <p>After careful review of your application, we regret to inform you that we are unable to approve your partnership request at this time as it does not fully align with our current partnership policies and criteria.</p>
-                            
-                            <p>We sincerely apologize for any inconvenience this may have caused. We appreciate your interest in EduMatch and encourage you to review our partnership guidelines and reapply in the future.</p>
-                            
-                            <p>If you have any questions or would like to discuss this decision further, please don't hesitate to contact our partnership team.</p>
-                            
-                            <p>Best regards,<br><strong>The EduMatch Team</strong></p>
+                            <h2>Statut : Non approuvee</h2>
+                            <p>Cher(e) {$organizationName},</p>
+                            <p>Merci pour votre interet pour un partenariat avec <strong>EduMatch</strong>.</p>
+                            <p>Apres examen attentif de votre candidature, nous ne sommes malheureusement pas en mesure d'approuver votre demande de partenariat pour le moment.</p>
+                            <p>Nous vous invitons a consulter nos criteres de partenariat et a soumettre une nouvelle candidature a l'avenir.</p>
+                            <p>Si vous avez des questions, n'hesitez pas a contacter notre equipe.</p>
+                            <p>Cordialement,<br><strong>L'equipe EduMatch</strong></p>
                         </div>
                         <div class='footer'>
-                            <p>&copy; 2026 EduMatch. All rights reserved.</p>
+                            <p>&copy; 2026 EduMatch. Tous droits reserves.</p>
                         </div>
                     </div>
                 </body>
                 </html>
             ";
-            
-            $mailer->AltBody = strip_tags(str_replace(['<br>', '</p>'], "\n", $mailer->Body));
-            
+
+            $mailer->AltBody = "Cher(e) {$organizationName}, apres examen de votre candidature, nous ne sommes pas en mesure d'approuver votre demande de partenariat avec EduMatch pour le moment.";
+
             return $mailer->send();
         } catch (Exception $e) {
-            error_log("Email sending failed: " . $e->getMessage());
+            error_log("MailHelper::sendRejectionEmail failed: " . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
      * Send pending confirmation email (when application is submitted)
      */
     public static function sendPendingEmail(string $toEmail, string $organizationName): bool
     {
         try {
-            $mailer = self::getMailer();
-            $mailer->clearAddresses();
+            $mailer = self::createMailer();
             $mailer->addAddress($toEmail);
-            
-            $mailer->Subject = "Partnership Application Received - EduMatch";
+
+            $mailer->Subject = "Candidature recue - EduMatch";
             $mailer->Body = "
                 <!DOCTYPE html>
                 <html>
@@ -184,34 +183,33 @@ class MailHelper
                 <body>
                     <div class='container'>
                         <div class='header'>
-                            <h1>Application Received!</h1>
+                            <h1>Candidature recue !</h1>
                         </div>
                         <div class='content'>
-                            <h2>Thank You for Your Interest, {$organizationName}!</h2>
-                            <p>We have successfully received your partnership application for <strong>EduMatch</strong>.</p>
-                            <p>Our team will carefully review your application and get back to you within 48 hours.</p>
-                            <p><strong>What happens next?</strong></p>
+                            <h2>Merci pour votre interet, {$organizationName} !</h2>
+                            <p>Nous avons bien recu votre candidature de partenariat pour <strong>EduMatch</strong>.</p>
+                            <p>Notre equipe examinera votre dossier et vous recontactera dans les 48 heures.</p>
+                            <p><strong>Prochaines etapes :</strong></p>
                             <ul>
-                                <li>✅ Our partnership team reviews your application</li>
-                                <li>📧 You will receive an email with the decision</li>
-                                <li>🎉 If approved, you'll get a link to complete the partnership contract</li>
+                                <li>Notre equipe partenariat examine votre candidature</li>
+                                <li>Vous recevrez un email avec la decision</li>
+                                <li>Si approuvee, vous pourrez acceder a votre espace partenaire</li>
                             </ul>
-                            <p>You can check your application status at any time by visiting our Partnership Page and using the 'Check Status' feature.</p>
-                            <p>Best regards,<br><strong>The EduMatch Team</strong></p>
+                            <p>Cordialement,<br><strong>L'equipe EduMatch</strong></p>
                         </div>
                         <div class='footer'>
-                            <p>&copy; 2026 EduMatch. All rights reserved.</p>
+                            <p>&copy; 2026 EduMatch. Tous droits reserves.</p>
                         </div>
                     </div>
                 </body>
                 </html>
             ";
-            
-            $mailer->AltBody = strip_tags(str_replace(['<br>', '</p>'], "\n", $mailer->Body));
-            
+
+            $mailer->AltBody = "Merci {$organizationName} ! Nous avons bien recu votre candidature de partenariat EduMatch. Notre equipe vous recontactera dans les 48 heures.";
+
             return $mailer->send();
         } catch (Exception $e) {
-            error_log("Email sending failed: " . $e->getMessage());
+            error_log("MailHelper::sendPendingEmail failed: " . $e->getMessage());
             return false;
         }
     }
@@ -222,11 +220,10 @@ class MailHelper
     public static function sendContractFinalizedEmail(string $toEmail, string $organizationName, string $contractRef): bool
     {
         try {
-            $mailer = self::getMailer();
-            $mailer->clearAddresses();
+            $mailer = self::createMailer();
             $mailer->addAddress($toEmail);
-            
-            $mailer->Subject = "🤝 Official Partnership Confirmed - EduMatch";
+
+            $mailer->Subject = "Partenariat officiel confirme - EduMatch";
             $mailer->Body = "
                 <!DOCTYPE html>
                 <html>
@@ -243,41 +240,39 @@ class MailHelper
                 <body>
                     <div class='container'>
                         <div class='header'>
-                            <h1 style='margin:0;'>Welcome Aboard!</h1>
+                            <h1 style='margin:0;'>Bienvenue a bord !</h1>
                         </div>
                         <div class='content'>
-                            <h2 style='color: #1e293b;'>Partnership Officially Active 🚀</h2>
-                            <p>Dear <strong>{$organizationName}</strong>,</p>
-                            <p>We are thrilled to inform you that your partnership contract (Ref: <strong>{$contractRef}</strong>) has been reviewed and <strong>officially activated</strong> by our team.</p>
-                            
+                            <h2 style='color: #1e293b;'>Partenariat officiellement actif</h2>
+                            <p>Cher(e) <strong>{$organizationName}</strong>,</p>
+                            <p>Nous sommes ravis de vous informer que votre contrat de partenariat (Ref: <strong>{$contractRef}</strong>) a ete examine et <strong>officiellement active</strong> par notre equipe.</p>
+
                             <div class='welcome-box'>
-                                <p style='margin:0;'><strong>You are now an official partner of EduMatch!</strong> Your organization is now visible to our students and professors community.</p>
+                                <p style='margin:0;'><strong>Vous etes desormais un partenaire officiel d'EduMatch !</strong> Votre organisation est maintenant visible pour notre communaute d'etudiants et de professeurs.</p>
                             </div>
 
-                            <p>As a partner, you can now:</p>
+                            <p>En tant que partenaire, vous pouvez desormais :</p>
                             <ul style='color: #475569;'>
-                                <li>Access our exclusive talent pool</li>
-                                <li>Participate in official EduMatch events</li>
-                                <li>Showcase your expertise to thousands of students</li>
+                                <li>Acceder a notre vivier de talents</li>
+                                <li>Participer aux evenements officiels EduMatch</li>
+                                <li>Mettre en avant votre expertise aupres de milliers d'etudiants</li>
                             </ul>
 
-                            <p>We look forward to a fruitful collaboration and the amazing things we will achieve together.</p>
-                            
-                            <p style='margin-top: 30px;'>Best regards,<br><strong style='color: #6366f1;'>The EduMatch Partnership Team</strong></p>
+                            <p>Cordialement,<br><strong style='color: #6366f1;'>L'equipe Partenariat EduMatch</strong></p>
                         </div>
                         <div class='footer'>
-                            <p>&copy; 2026 EduMatch Platform. Empowering Education Connections.</p>
+                            <p>&copy; 2026 EduMatch. Tous droits reserves.</p>
                         </div>
                     </div>
                 </body>
                 </html>
             ";
-            
-            $mailer->AltBody = strip_tags(str_replace(['<br>', '</p>', '</div>'], "\n", $mailer->Body));
-            
+
+            $mailer->AltBody = "Felicitations {$organizationName} ! Votre contrat de partenariat (Ref: {$contractRef}) est officiellement actif sur EduMatch.";
+
             return $mailer->send();
         } catch (Exception $e) {
-            error_log("Email sending failed: " . $e->getMessage());
+            error_log("MailHelper::sendContractFinalizedEmail failed: " . $e->getMessage());
             return false;
         }
     }
@@ -288,11 +283,16 @@ class MailHelper
     public static function sendContractRejectedEmail(string $toEmail, string $organizationName, string $contractRef, string $reason = ''): bool
     {
         try {
-            $mailer = self::getMailer();
-            $mailer->clearAddresses();
+            $mailer = self::createMailer();
             $mailer->addAddress($toEmail);
-            
-            $mailer->Subject = "⚠️ Update Regarding Your Partnership Contract - EduMatch";
+
+            $reasonBlock = $reason
+                ? "<div style='background: #fff5f5; border-left: 4px solid #e53e3e; padding: 15px; margin: 20px 0; font-style: italic;'>
+                       <p style='margin:0;'><strong>Note de notre equipe :</strong> {$reason}</p>
+                   </div>"
+                : "";
+
+            $mailer->Subject = "Mise a jour de votre contrat de partenariat - EduMatch";
             $mailer->Body = "
                 <!DOCTYPE html>
                 <html>
@@ -302,46 +302,36 @@ class MailHelper
                         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
                         .header { background: #e53e3e; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
                         .content { background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e2e8f0; border-top: none; }
-                        .reason-box { background: #fff5f5; border-left: 4px solid #e53e3e; padding: 15px; margin: 20px 0; font-style: italic; }
                         .footer { text-align: center; padding: 20px; font-size: 12px; color: #999; }
                     </style>
                 </head>
                 <body>
                     <div class='container'>
                         <div class='header'>
-                            <h1 style='margin:0;'>Contract Status Update</h1>
+                            <h1 style='margin:0;'>Mise a jour du contrat</h1>
                         </div>
                         <div class='content'>
-                            <h2>Contract Not Validated</h2>
-                            <p>Dear <strong>{$organizationName}</strong>,</p>
-                            <p>We are writing to inform you of a status update regarding your partnership contract (Ref: <strong>{$contractRef}</strong>).</p>
-                            
-                            <p>After a formal review, our team is currently <strong>unable to validate</strong> this contract in its current state.</p>
-
-                            " . ($reason ? "
-                            <div class='reason-box'>
-                                <p style='margin:0;'><strong>Note from our team:</strong> {$reason}</p>
-                            </div>
-                            " : "") . "
-
-                            <p>If you believe this is a mistake or if you would like to discuss the steps necessary to re-activate your partnership, please contact our support team at <a href='mailto:contact@edumatch.com'>contact@edumatch.com</a>.</p>
-                            
-                            <p>Thank you for your understanding.</p>
-                            <p>Best regards,<br><strong>The EduMatch Team</strong></p>
+                            <h2>Contrat non valide</h2>
+                            <p>Cher(e) <strong>{$organizationName}</strong>,</p>
+                            <p>Nous vous ecrivons concernant votre contrat de partenariat (Ref: <strong>{$contractRef}</strong>).</p>
+                            <p>Apres examen, notre equipe n'est pas en mesure de <strong>valider</strong> ce contrat dans son etat actuel.</p>
+                            {$reasonBlock}
+                            <p>Si vous pensez qu'il s'agit d'une erreur ou souhaitez discuter des etapes necessaires, veuillez contacter notre equipe support.</p>
+                            <p>Cordialement,<br><strong>L'equipe EduMatch</strong></p>
                         </div>
                         <div class='footer'>
-                            <p>&copy; 2026 EduMatch. All rights reserved.</p>
+                            <p>&copy; 2026 EduMatch. Tous droits reserves.</p>
                         </div>
                     </div>
                 </body>
                 </html>
             ";
-            
-            $mailer->AltBody = strip_tags(str_replace(['<br>', '</p>', '</div>'], "\n", $mailer->Body));
-            
+
+            $mailer->AltBody = "Cher(e) {$organizationName}, votre contrat de partenariat (Ref: {$contractRef}) n'a pas ete valide par notre equipe. Contactez-nous pour plus d'informations.";
+
             return $mailer->send();
         } catch (Exception $e) {
-            error_log("Email sending failed: " . $e->getMessage());
+            error_log("MailHelper::sendContractRejectedEmail failed: " . $e->getMessage());
             return false;
         }
     }

@@ -120,6 +120,75 @@ if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
     </section>
     <!-- END CALL TO ACTION -->
 
+    <!-- START OUR PARTNERS SECTION -->
+    <section class="partners-section py-5" style="background: #f8f9fa;">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-lg-7 col-md-12 mb-4 mb-lg-0">
+            <h2 style="font-size: 2.5rem; font-weight: 700; color: #0b104a; margin-bottom: 1rem;">Nos Partenaires</h2>
+            <p style="font-size: 1.1rem; color: #555; line-height: 1.8; margin-bottom: 1rem;">
+              Chez <strong>EduMatch</strong>, nous croyons en la puissance de la collaboration pour creer des opportunites d'apprentissage significatives.
+              Nous travaillons avec des entreprises, des universites, des startups et des ONG pour connecter les etudiants avec des ressources, des experiences et des connaissances precieuses.
+            </p>
+            <p style="font-size: 1.1rem; color: #555; line-height: 1.8; margin-bottom: 1.5rem;">
+              En devenant partenaire, vous rejoignez un reseau croissant dedie a faconner l'avenir de l'education.
+              Soumettez votre demande de partenariat et notre equipe examinera votre candidature dans les plus brefs delais.
+            </p>
+
+            <?php
+              $userRole = $_SESSION['user_role'] ?? '';
+              $isLoggedIn = !empty($_SESSION['user_id']);
+            ?>
+
+            <?php if ($isLoggedIn && $userRole === 'partenariat'): ?>
+              <!-- Connecte + role partenariat : acces direct -->
+              <a href="/gestion_users/view/frontoffice/partenariat.php" class="btn btn-lg" style="background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; border: none; padding: 1rem 2.5rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; display: inline-block;">
+                <i class="fas fa-handshake me-2"></i>Apply as Partner
+              </a>
+            <?php elseif ($isLoggedIn): ?>
+              <!-- Connecte mais pas le bon role -->
+              <div class="d-inline-block" style="cursor: not-allowed;">
+                <button disabled class="btn btn-lg" style="background: #ccc; color: #666; border: none; padding: 1rem 2.5rem; border-radius: 50px; font-weight: 600; pointer-events: none;">
+                  <i class="fas fa-lock me-2"></i>Apply as Partner
+                </button>
+              </div>
+              <p style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.75rem;">
+                <i class="fas fa-info-circle me-1"></i>Cette section est reservee aux comptes avec le role <strong>partenariat</strong>. Votre role actuel est <strong><?= htmlspecialchars($userRole) ?></strong>.
+              </p>
+            <?php else: ?>
+              <!-- Pas connecte : rediriger vers connexion -->
+              <a href="/gestion_users/view/template/sign-in.php" class="btn btn-lg" style="background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; border: none; padding: 1rem 2.5rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; display: inline-block;">
+                <i class="fas fa-handshake me-2"></i>Apply as Partner
+              </a>
+              <p style="color: #888; font-size: 0.9rem; margin-top: 0.75rem;">
+                <i class="fas fa-info-circle me-1"></i>Vous devez vous connecter avec un compte <strong>partenariat</strong> pour soumettre une demande.
+              </p>
+            <?php endif; ?>
+          </div>
+          <div class="col-lg-5 col-md-12 text-center">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 3rem; color: white;">
+              <i class="fas fa-building" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.9;"></i>
+              <h3 style="font-weight: 700; margin-bottom: 1rem;">Pourquoi devenir partenaire ?</h3>
+              <ul style="list-style: none; padding: 0; text-align: left; font-size: 1rem; line-height: 2;">
+                <li><i class="fas fa-check-circle me-2" style="color: #00D4FF;"></i>Visibilite aupres de milliers d'etudiants</li>
+                <li><i class="fas fa-check-circle me-2" style="color: #00D4FF;"></i>Badge "Nouveau" et "Populaire" automatiques</li>
+                <li><i class="fas fa-check-circle me-2" style="color: #00D4FF;"></i>Recommandations IA personnalisees</li>
+                <li><i class="fas fa-check-circle me-2" style="color: #00D4FF;"></i>Contrats et suivi en temps reel</li>
+                <li><i class="fas fa-check-circle me-2" style="color: #00D4FF;"></i>Chatbot intelligent pour assistance</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <!-- Discover partners : visible pour tout le monde -->
+        <div class="text-center mt-5">
+          <a href="/gestion_users/view/frontoffice/partners_may_like.php" class="btn btn-lg" style="background: linear-gradient(135deg, #0f172a, #1e293b); color: white; border: none; padding: 1rem 2.5rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; display: inline-block;">
+            <i class="fas fa-brain me-2"></i>Discover Our Partners (AI Recommendations)
+          </a>
+        </div>
+      </div>
+    </section>
+    <!-- END OUR PARTNERS SECTION -->
+
     <!-- START MODERN FOOTER -->
     <footer class="modern-footer bg-dark text-white py-5">
       <div class="container">
