@@ -70,6 +70,32 @@
         <span class="text">Gerer corrections</span>
       </a>
     </li>
+
+    <li class="nav-item">
+      <div class="nav-heading">Evenements</div>
+      <hr class="mx-5 nav-line mb-1" />
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/public/index.php?url=AdminEvenement/index">
+        <span class="nav-icon"><i class="ti ti-calendar-event"></i></span>
+        <span class="text">Liste evenements</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/public/index.php?url=AdminCategorie/index">
+        <span class="nav-icon"><i class="ti ti-tags"></i></span>
+        <span class="text">Categories</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/public/index.php?url=AdminParticipation/index">
+        <span class="nav-icon"><i class="ti ti-users"></i></span>
+        <span class="text">Participations</span>
+      </a>
+    </li>
   </ul>
 </div>
 
@@ -90,6 +116,9 @@
       <li class="nav-item"><a class="nav-link" href="/gestion_users/index.php?controller=partenaire&action=verification"><i class="ti ti-shield-check me-2"></i><span>Verification</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/view/backoffice/src/pages/backoffice/feed_back.html"><i class="ti ti-list-details me-2"></i><span>Liste devoirs</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/view/backoffice/src/pages/backoffice/submit_back.php"><i class="ti ti-edit me-2"></i><span>Gerer corrections</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="/gestion_users/public/index.php?url=AdminEvenement/index"><i class="ti ti-calendar-event me-2"></i><span>Evenements</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="/gestion_users/public/index.php?url=AdminCategorie/index"><i class="ti ti-tags me-2"></i><span>Categories</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="/gestion_users/public/index.php?url=AdminParticipation/index"><i class="ti ti-users me-2"></i><span>Participations</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/view/template/index.php"><i class="ti ti-home me-2"></i><span>FrontOffice</span></a></li>
       <li class="nav-item"><a class="nav-link text-danger" href="/gestion_users/auth/logout"><i class="ti ti-logout me-2"></i><span>Deconnexion</span></a></li>
     </ul>

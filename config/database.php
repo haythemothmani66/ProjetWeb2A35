@@ -29,3 +29,19 @@ if (!function_exists('getDBConnection')) {
         return Config::getConnexion();
     }
 }
+
+/**
+ * Wrapper de compatibilite pour le module evenements
+ * Le module utilise `new Database(); $db->getConnection();`
+ * On delegue vers Config::getConnexion() — base unifiee edumatch
+ */
+if (!class_exists('Database')) {
+    class Database {
+        public $conn;
+
+        public function getConnection() {
+            $this->conn = Config::getConnexion();
+            return $this->conn;
+        }
+    }
+}

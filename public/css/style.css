@@ -1,0 +1,317 @@
+/* --- Thème aligné sur le template Eduleb / EduMatch (polices + couleurs) --- */
+:root {
+    --tm-purple: #667eea;
+    --tm-violet: #764ba2;
+    --tm-cyan: #00d4ff;
+    --tm-dark: #1a1a1a;
+    --tm-muted: #555;
+    --tm-bg: #f5f7fa;
+}
+
+body,
+.template-front-body {
+    background-color: var(--tm-bg);
+    font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+    color: var(--tm-dark);
+}
+
+.template-front-body h1,
+.template-front-body h2,
+.template-front-body h3,
+.template-front-body .display-4 {
+    font-family: 'Jost', 'DM Sans', sans-serif;
+}
+
+.template-admin-body {
+    font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+    background: var(--tm-bg);
+    min-height: 100vh;
+}
+
+/* Barre front (équivalent template site-navigation) */
+.site-navigation {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.12);
+}
+
+.site-logo-img {
+    max-height: 48px;
+    width: auto;
+}
+
+.text-gradient-brand {
+    background: linear-gradient(90deg, var(--tm-purple), var(--tm-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+#main-menu a {
+    color: var(--tm-dark);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 8px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+#main-menu a:hover {
+    color: var(--tm-purple);
+    background: rgba(102, 126, 234, 0.08);
+}
+
+.btn-one-header {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    color: #fff !important;
+    background: linear-gradient(45deg, var(--tm-cyan), var(--tm-purple));
+    border: none;
+    box-shadow: 0 4px 14px rgba(102, 126, 234, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-one-header:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
+    color: #fff !important;
+}
+
+.navbar-toggler-custom {
+    border: 1px solid rgba(102, 126, 234, 0.25);
+    border-radius: 10px;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+}
+
+.mobile-menu a {
+    display: block;
+    padding: 0.6rem 0;
+    color: var(--tm-dark);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mobile-menu a:hover {
+    color: var(--tm-purple);
+}
+
+.template-main {
+    min-height: 40vh;
+}
+
+/* Pied de page type template modern-footer */
+.modern-footer {
+    background: linear-gradient(135deg, #2d1b4e 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+.modern-footer .text-primary-soft {
+    color: var(--tm-cyan) !important;
+}
+
+/* Admin */
+.template-admin-navbar {
+    background: linear-gradient(135deg, var(--tm-purple) 0%, var(--tm-violet) 100%) !important;
+}
+
+.template-admin-navbar .nav-link {
+    color: rgba(255, 255, 255, 0.92) !important;
+    font-weight: 500;
+}
+
+.template-admin-navbar .nav-link:hover {
+    color: #fff !important;
+}
+
+.btn-admin-site {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff !important;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.btn-admin-site:hover {
+    background: #fff;
+    color: var(--tm-purple) !important;
+}
+
+.navbar-brand {
+    font-size: 1.15rem;
+}
+
+/* Anciennes classes (compat.) */
+.edumatch-navbar .nav-link,
+.edumatch-admin-navbar .nav-link {
+    color: #ffffff !important;
+    font-weight: 500;
+}
+
+.logo-wrap {
+    display: inline-flex;
+    align-items: center;
+}
+
+.logo-fallback {
+    font-weight: 700;
+    font-size: 1.35rem;
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 14px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, var(--tm-purple), var(--tm-violet));
+    border: none;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #5a6fd6, #6a4190);
+    filter: brightness(1.05);
+}
+
+.btn-outline-primary {
+    border-color: var(--tm-purple);
+    color: var(--tm-purple);
+    font-weight: 600;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(45deg, var(--tm-purple), var(--tm-violet));
+    border-color: transparent;
+    color: #fff;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.invalid-feedback {
+    font-size: 0.875rem;
+}
+
+.site-footer h5 {
+    color: var(--tm-purple);
+}
+
+.footer-logo-lg {
+    max-width: 230px;
+    width: 100%;
+    height: auto;
+}
+
+.footer-fallback {
+    color: #fff;
+    font-size: 2.2rem;
+}
+
+.preset-color {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 2px solid #d9d9d9;
+    cursor: pointer;
+}
+
+input[type="radio"].color-choice:checked + .preset-color {
+    border-color: var(--tm-purple);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.35);
+}
+
+.color-choice-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 14px;
+}
+
+/* Roadmap accueil : liste des lieux et iframe Google Maps côte à côte */
+.roadmap-venues-scroll {
+    max-height: min(480px, 60vh);
+    overflow-y: auto;
+}
+
+.roadmap-map-wrap {
+    min-height: 280px;
+    height: 100%;
+}
+
+.roadmap-google-iframe {
+    display: block;
+    width: 100%;
+    min-height: 280px;
+    height: min(420px, 55vh);
+    border: 0;
+}
+
+@media (min-width: 992px) {
+    .roadmap-google-iframe {
+        min-height: 420px;
+        height: min(520px, 70vh);
+    }
+
+    .roadmap-split > [class*="col-lg-"]:last-child {
+        align-self: flex-start;
+    }
+
+    .roadmap-split > [class*="col-lg-"]:last-child .roadmap-map-wrap {
+        position: sticky;
+        top: 1rem;
+    }
+}
+
+/* FullCalendar vue liste */
+.home-cal-list-rows {
+    line-height: 1.35;
+}
+
+.home-cal-list-rows .fw-semibold {
+    margin-top: 0.2rem;
+}
+
+.home-cal-month-cell {
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.home-cal-month-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.home-cal-month-dur {
+    font-size: 0.72em;
+    opacity: 0.92;
+    margin-top: 0.08rem;
+    font-weight: 500;
+}
+
+@media (min-width: 992px) {
+    .roadmap-aside-card {
+        position: sticky;
+        top: 1rem;
+        z-index: 1;
+    }
+}

@@ -47,7 +47,7 @@ if (!empty($_SESSION['user_id'])) {
                 <li><a href="<?= $baseUrl ?>/view/frontoffice/feed.php">Feed</a></li>
               </ul>
             </li>
-            <li><a href="#">EVENEMENT</a></li>
+            <li><a href="<?= $baseUrl ?>/public/index.php?url=Home/index">EVENEMENT</a></li>
             <li><a href="#">QUIZ</a></li>
             <li><a href="#">OFFRE D'EMPLOI</a></li>
           </ul>
@@ -90,7 +90,7 @@ if (!empty($_SESSION['user_id'])) {
             <li><a href="<?= $baseUrl ?>/view/frontoffice/feed.php">Feed</a></li>
           </ul>
         </li>
-        <li><a href="#">Evenement</a></li>
+        <li><a href="<?= $baseUrl ?>/public/index.php?url=Home/index">Evenement</a></li>
         <li><a href="#">Quiz</a></li>
         <li><a href="#">Offre d'emploi</a></li>
         <?php if (!empty($_SESSION['user_id'])): ?>

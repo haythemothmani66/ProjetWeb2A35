@@ -9,8 +9,8 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Allow direct access to PHP files in controller/, api/, view/, config/, model/, uploads/, assets/, lib/
-RewriteRule ^(controller|api|view|config|model|uploads|assets|lib|data)/ - [L]
+# Allow direct access to PHP files in controller/, api/, view/, config/, model/, uploads/, assets/, lib/, public/, app/
+RewriteRule ^(controller|api|view|config|model|uploads|assets|lib|data|public|app)/ - [L]
 
 # Route everything else through index.php (router)
 RewriteRule ^ index.php [L,QSA]
