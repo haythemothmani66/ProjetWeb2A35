@@ -2,8 +2,9 @@
 session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/config/database.php';
 
-// --- Protection : seul le role 'partenariat' peut acceder a cette page ---
-if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'partenariat') {
+// --- Protection : roles 'partenariat' et 'admin' autorises ---
+$allowedRoles = ['partenariat', 'admin'];
+if (empty($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', $allowedRoles, true)) {
     // Si pas connecte du tout -> page de connexion
     if (empty($_SESSION['user_id'])) {
         header('Location: /gestion_users/view/template/sign-in.php');

@@ -125,10 +125,10 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
 
 <body>
     <div>
-        <div data-include-html="../../partials/sidebar-collapse.html"></div>
+        <?php include __DIR__ . '/../../../src/partials_php/sidebar.php'; ?>
 
         <div id="content" class="position-relative h-100">
-            <div data-include-html="../../partials/topbar-second.html"></div>
+            <?php include __DIR__ . '/../../../src/partials_php/topbar.php'; ?>
 
             <div class="custom-container">
                 <div class="row mb-6 g-6 align-items-center">

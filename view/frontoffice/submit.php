@@ -4,12 +4,30 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 require_once __DIR__ . '/../../config/database.php';
 
-// Protection : seuls les etudiants peuvent acceder a la page de soumission
+// Detection requete AJAX (pour ne pas rediriger en HTML mais retourner JSON)
+$isAjax = (
+    (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest') ||
+    ($_SERVER['REQUEST_METHOD'] === 'POST' && stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== false)
+);
+
+// Protection : seuls etudiants/encadrants/admins peuvent acceder
 if (empty($_SESSION['user_id'])) {
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'Non authentifie']);
+        exit;
+    }
     header('Location: /gestion_users/view/template/sign-in.php');
     exit;
 }
 if (($_SESSION['user_role'] ?? '') !== 'etudiant' && ($_SESSION['user_role'] ?? '') !== 'encadrant' && ($_SESSION['user_role'] ?? '') !== 'admin') {
+    if ($isAjax) {
+        header('Content-Type: application/json');
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Role non autorise']);
+        exit;
+    }
     header('Location: /gestion_users/view/template/index.php');
     exit;
 }
@@ -98,7 +116,21 @@ function oldOrEdit(string $field, array $oldData, ?array $editData): string
     return '';
 }
 
-define('GROQ_API_KEY', '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');
+// Charger GROQ_API_KEY depuis .env (pas hardcode)
+if (!defined('GROQ_API_KEY')) {
+    $envFile = __DIR__ . '/../../.env';
+    $apiKey = '';
+    if (is_file($envFile)) {
+        foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            if (strpos(trim($line), '#') === 0) continue;
+            if (strpos($line, 'GROQ_API_KEY=') === 0) {
+                $apiKey = trim(substr($line, strlen('GROQ_API_KEY=')), " \t\"'");
+                break;
+            }
+        }
+    }
+    define('GROQ_API_KEY', $apiKey);
+}
 
 // ============================================================
 // FONCTION ASSISTANT CORRECTION IA (GROQ - Version complète)

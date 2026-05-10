@@ -314,10 +314,10 @@
 
     if (markerIndex !== -1) {
       const appBase = normalized.slice(0, markerIndex);
-      return `${appBase}/controller/devoirs_back.php`;
+      return `${appBase}/controller/devoirs.php`;
     }
 
-    return "/controller/devoirs_back.php";
+    return "/controller/devoirs.php";
   }
 
   function escapeHtml(value) {

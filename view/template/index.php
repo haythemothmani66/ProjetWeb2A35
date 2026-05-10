@@ -140,8 +140,8 @@ if (!empty($_SESSION['user_id']) && empty($_SESSION['user_prenom'])) {
               $isLoggedIn = !empty($_SESSION['user_id']);
             ?>
 
-            <?php if ($isLoggedIn && $userRole === 'partenariat'): ?>
-              <!-- Connecte + role partenariat : acces direct -->
+            <?php if ($isLoggedIn && ($userRole === 'partenariat' || $userRole === 'admin')): ?>
+              <!-- Connecte + role partenariat ou admin : acces direct -->
               <a href="/gestion_users/view/frontoffice/partenariat.php" class="btn btn-lg" style="background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; border: none; padding: 1rem 2.5rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; display: inline-block;">
                 <i class="fas fa-handshake me-2"></i>Apply as Partner
               </a>

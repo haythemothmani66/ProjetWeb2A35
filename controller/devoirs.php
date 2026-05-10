@@ -195,8 +195,8 @@ public function chatbot($message) {
     // ============================================================
     public function submit()
     {
-        // Seuls les etudiants peuvent soumettre un devoir
-        $this->requireRole(['etudiant']);
+        // Etudiants soumettent leurs devoirs, admins peuvent ajouter depuis le backoffice
+        $this->requireRole(['etudiant', 'admin']);
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->respond(false, 'Méthode non autorisée', 405);
@@ -760,6 +760,33 @@ public function analyzeSentiment($commentaire) {
             'stats' => $stats
         ]);
     }
+
+    // ============================================================
+    //   LISTER TOUS LES DEVOIRS (pour backoffice)
+    // ============================================================
+    public function listDevoirs()
+    {
+        header('Content-Type: application/json');
+        $stmt = $this->conn->query("SELECT * FROM devoirs ORDER BY id_devoir DESC");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'data' => $rows]);
+    }
+
+    // ============================================================
+    //   LISTER TOUTES LES CORRECTIONS (pour backoffice)
+    // ============================================================
+    public function listCorrections()
+    {
+        header('Content-Type: application/json');
+        $stmt = $this->conn->query("
+            SELECT c.*, d.titre AS devoir_titre
+            FROM correction c
+            LEFT JOIN devoirs d ON d.id_devoir = c.id_devoir
+            ORDER BY c.id_correction DESC
+        ");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'data' => $rows]);
+    }
 }
 
 // ============================================================
@@ -786,11 +813,17 @@ if ($action === 'submit') {
     $devoir->updateCorrection();
 } elseif ($action === 'sentimentStats') {
     $devoir->getSentimentStats();
-}elseif ($action === 'chat') {
+} elseif ($action === 'listdevoirs') {
+    $devoir->listDevoirs();
+} elseif ($action === 'listcorrections') {
+    $devoir->listCorrections();
+} elseif ($action === 'chat') {
     $message = $_GET['message'] ?? $_POST['message'] ?? '';
     $reply = $devoir->chatbot($message);
     echo json_encode(['reply' => $reply]);
-}else {
-    echo "Action non reconnue";
+} else {
+    header('Content-Type: application/json');
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Action non reconnue : ' . htmlspecialchars($action)]);
 }
 ?>

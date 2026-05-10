@@ -58,7 +58,7 @@
     </li>
 
     <li class="nav-item">
-      <a class="nav-link" href="/gestion_users/view/backoffice/src/pages/backoffice/feed_back.php">
+      <a class="nav-link" href="/gestion_users/view/backoffice/src/pages/backoffice/feed_back.html">
         <span class="nav-icon"><i class="ti ti-list-details"></i></span>
         <span class="text">Liste devoirs</span>
       </a>
@@ -88,7 +88,7 @@
       <li class="nav-item"><a class="nav-link" href="/gestion_users/index.php?controller=partenaire&action=list"><i class="ti ti-building me-2"></i><span>Partenaires</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/index.php?controller=contract&action=list"><i class="ti ti-file-text me-2"></i><span>Contrats</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/index.php?controller=partenaire&action=verification"><i class="ti ti-shield-check me-2"></i><span>Verification</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="/gestion_users/view/backoffice/src/pages/backoffice/feed_back.php"><i class="ti ti-list-details me-2"></i><span>Liste devoirs</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="/gestion_users/view/backoffice/src/pages/backoffice/feed_back.html"><i class="ti ti-list-details me-2"></i><span>Liste devoirs</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/view/backoffice/src/pages/backoffice/submit_back.php"><i class="ti ti-edit me-2"></i><span>Gerer corrections</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/view/template/index.php"><i class="ti ti-home me-2"></i><span>FrontOffice</span></a></li>
       <li class="nav-item"><a class="nav-link text-danger" href="/gestion_users/auth/logout"><i class="ti ti-logout me-2"></i><span>Deconnexion</span></a></li>

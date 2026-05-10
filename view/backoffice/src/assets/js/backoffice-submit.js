@@ -294,10 +294,10 @@
 
     if (markerIndex !== -1) {
       const appBase = normalized.slice(0, markerIndex);
-      return `${appBase}/controller/devoirs_back.php`;
+      return `${appBase}/controller/devoirs.php`;
     }
 
-    return '/controller/devoirs_back.php';
+    return '/controller/devoirs.php';
   }
 
   function escapeHtml(value) {
@@ -311,12 +311,16 @@
 
   function showToast(message, variant) {
     const color = variant === 'danger' ? 'danger' : 'success';
+    const icon = color === 'success' ? '✓' : '✕';
     const toastId = `toast-${Date.now()}`;
 
     const toastMarkup = `
-      <div id="${toastId}" class="toast align-items-center text-bg-${color} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+      <div id="${toastId}" class="toast align-items-center text-bg-${color} border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="min-width: 320px; font-size: 1rem; font-weight: 500;">
         <div class="d-flex">
-          <div class="toast-body">${escapeHtml(message)}</div>
+          <div class="toast-body d-flex align-items-center gap-2">
+            <span style="font-size: 1.4rem; font-weight: bold;">${icon}</span>
+            <span>${escapeHtml(message)}</span>
+          </div>
           <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
       </div>
@@ -324,7 +328,7 @@
 
     elements.toastContainer.insertAdjacentHTML('beforeend', toastMarkup);
     const toastElement = document.getElementById(toastId);
-    const toast = bootstrap.Toast.getOrCreateInstance(toastElement, { delay: 3000 });
+    const toast = bootstrap.Toast.getOrCreateInstance(toastElement, { delay: 5000 });
 
     toast.show();
     toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
@@ -494,6 +498,10 @@
       const response = await fetch(`${state.controllerUrl}?action=${action}`, {
         method: 'POST',
         body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
       });
 
       const raw = await response.text();

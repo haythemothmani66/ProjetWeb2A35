@@ -1,10 +1,16 @@
 RewriteEngine On
 RewriteBase /gestion_users/
 
-# Serve existing real files and directories directly
+# Specific rewrites: serve dynamic .php content under .html URL (legacy compat)
+RewriteRule ^view/backoffice/src/pages/backoffice/feed_back\.html$ view/backoffice/src/pages/backoffice/feed_back.php [L,QSA]
+
+# Serve existing real files and directories directly (do NOT rewrite)
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
-# Route everything else through index.php
+# Allow direct access to PHP files in controller/, api/, view/, config/, model/, uploads/, assets/, lib/
+RewriteRule ^(controller|api|view|config|model|uploads|assets|lib|data)/ - [L]
+
+# Route everything else through index.php (router)
 RewriteRule ^ index.php [L,QSA]

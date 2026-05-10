@@ -32,10 +32,12 @@ $sqlDevoirs = "
 
 $params = array();
 
-// Filtre recherche
+// Filtre recherche (3 placeholders uniques pour eviter HY093)
 if (!empty($search)) {
-    $sqlDevoirs .= " AND (titre LIKE :search OR description LIKE :search OR mots_cles LIKE :search)";
-    $params[':search'] = "%$search%";
+    $sqlDevoirs .= " AND (titre LIKE :search1 OR description LIKE :search2 OR mots_cles LIKE :search3)";
+    $params[':search1'] = "%$search%";
+    $params[':search2'] = "%$search%";
+    $params[':search3'] = "%$search%";
 }
 
 // Filtre niveau
@@ -1596,30 +1598,46 @@ $successType = $_GET['success'] ?? '';
         <!-- Barre de recherche et filtres -->
         <form method="GET" action="" class="search-filter-form">
             <div class="row g-3">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <div class="search-input-wrapper">
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" name="search" class="form-control search-input" 
-                               placeholder="Rechercher par titre, description ou mots-clés..." 
+                               placeholder="Rechercher par titre, description ou mots-cles..." 
                                value="<?= htmlspecialchars($_GET['search'] ?? '') ?>">
                     </div>
+                </div>
+
+                <div class="col-md-2">
+                    <button type="submit" class="btn-refresh" style="background:#525fe1;color:#fff;width:100%;">
+                        <i class="fas fa-search"></i> Rechercher
+                    </button>
                 </div>
                 
                 <div class="col-md-2">
                     <select name="sort" class="form-control filter-select" onchange="this.form.submit()">
-                        <option value="date_desc" <?= ($_GET['sort'] ?? 'date_desc') == 'date_desc' ? 'selected' : '' ?>>📅 Récent d'abord</option>
+                        <option value="date_desc" <?= ($_GET['sort'] ?? 'date_desc') == 'date_desc' ? 'selected' : '' ?>>📅 Recent d'abord</option>
                         <option value="date_asc" <?= ($_GET['sort'] ?? '') == 'date_asc' ? 'selected' : '' ?>>📅 Ancien d'abord</option>
                         <option value="level_asc" <?= ($_GET['sort'] ?? '') == 'level_asc' ? 'selected' : '' ?>>📈 Niveau croissant</option>
-                        <option value="level_desc" <?= ($_GET['sort'] ?? '') == 'level_desc' ? 'selected' : '' ?>>📉 Niveau décroissant</option>
+                        <option value="level_desc" <?= ($_GET['sort'] ?? '') == 'level_desc' ? 'selected' : '' ?>>📉 Niveau decroissant</option>
                         <option value="urgence" <?= ($_GET['sort'] ?? '') == 'urgence' ? 'selected' : '' ?>>⚠️ Par urgence</option>
                     </select>
                 </div>
+
+                <div class="col-md-2">
+                    <select name="level" class="form-control filter-select" onchange="this.form.submit()">
+                        <option value="">Tous niveaux</option>
+                        <option value="facile" <?= ($_GET['level'] ?? '') == 'facile' ? 'selected' : '' ?>>Facile</option>
+                        <option value="moyen" <?= ($_GET['level'] ?? '') == 'moyen' ? 'selected' : '' ?>>Moyen</option>
+                        <option value="difficile" <?= ($_GET['level'] ?? '') == 'difficile' ? 'selected' : '' ?>>Difficile</option>
+                    </select>
+                </div>
+
                 <!-- Bouton Refresh -->
-        <div class="col-md-3">
-            <button type="button" onclick="refreshPage()" class="btn-refresh">
-                <i class="fas fa-sync-alt"></i> Refresh
-            </button>
-        </div>
+                <div class="col-md-2">
+                    <button type="button" onclick="refreshPage()" class="btn-refresh">
+                        <i class="fas fa-sync-alt"></i> Reset
+                    </button>
+                </div>
             </div>
             
         </form>
