@@ -1,12 +1,24 @@
-<?php
-session_start();
+﻿<?php
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 require_once __DIR__ . '/../../config/database.php';
 
-// --- Protection : seul un utilisateur connecte peut acceder ---
+// Protection : seuls les etudiants peuvent acceder a la page de soumission
 if (empty($_SESSION['user_id'])) {
     header('Location: /gestion_users/view/template/sign-in.php');
     exit;
 }
+if (($_SESSION['user_role'] ?? '') !== 'etudiant' && ($_SESSION['user_role'] ?? '') !== 'encadrant' && ($_SESSION['user_role'] ?? '') !== 'admin') {
+    header('Location: /gestion_users/view/template/index.php');
+    exit;
+}
+
+$baseUrl = '/gestion_users';
+
+
+
+
 
 // Récupérer et effacer les messages
 $successMessage = $_SESSION['success_message'] ?? '';
@@ -18,15 +30,189 @@ unset($_SESSION['success_message']);
 unset($_SESSION['form_errors']);
 unset($_SESSION['form_data']);
 
+
+
 // Pour pré-remplir les champs (optionnel)
 $oldDevoir = $oldData;
 $oldCorrection = $oldData;
 
+require_once __DIR__ . '/../../config/database.php';
 $conn = getDBConnection();
 
-$devoirs = $conn->query("SELECT * FROM devoirs ORDER BY id_devoir DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+
+// Vérifier si on vient du feed pour ajouter une correction à un devoir spécifique
+$addCorrectionFor = $_GET['add_correction_for'] ?? '';
+$devoirTitle = $_GET['title'] ?? '';
+
+if ($addCorrectionFor && is_numeric($addCorrectionFor)) {
+    // Stocker l'ID du devoir dans une variable pour pré-remplir le formulaire
+    $prefillDevoirId = (int)$addCorrectionFor;
+    $prefillDevoirTitle = htmlspecialchars($devoirTitle);
+} else {
+    $prefillDevoirId = null;
+    $prefillDevoirTitle = null;
+}
+
+// Récupérer l'ID à modifier depuis l'URL
+$editType = $_GET['edit'] ?? '';
+$editId = (int)($_GET['id'] ?? 0);
+$editDevoir = null;
+$editCorrection = null;
+
+if ($editType && $editId) {
+    if ($editType === 'devoir') {
+        $stmt = $conn->prepare("SELECT * FROM devoirs WHERE id_devoir = ?");
+        $stmt->execute([$editId]);
+        $editDevoir = $stmt->fetch(PDO::FETCH_ASSOC);
+    } elseif ($editType === 'correction') {
+        $stmt = $conn->prepare("SELECT * FROM correction WHERE id_correction = ?");
+        $stmt->execute([$editId]);
+        $editCorrection = $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+}
+
+$devoirs = $conn->query("SELECT id_devoir, titre FROM devoirs ORDER BY id_devoir DESC")->fetchAll(PDO::FETCH_ASSOC);
 $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+
+$isEditDevoir = ($editType === 'devoir' && is_array($editDevoir));
+$isEditCorrection = ($editType === 'correction' && is_array($editCorrection));
+
+$devoirFormAction = $isEditDevoir
+    ? '/gestion_users/controller/devoirs.php?action=updatedevoir'
+    : '/gestion_users/controller/devoirs.php?action=submit';
+
+$correctionFormAction = $isEditCorrection
+    ? '/gestion_users/controller/devoirs.php?action=updatecorrection'
+    : '/gestion_users/controller/devoirs.php?action=correct';
+
+function oldOrEdit(string $field, array $oldData, ?array $editData): string
+{
+    if (array_key_exists($field, $oldData) && $oldData[$field] !== null && $oldData[$field] !== '') {
+        return (string)$oldData[$field];
+    }
+
+    if (is_array($editData) && array_key_exists($field, $editData) && $editData[$field] !== null) {
+        return (string)$editData[$field];
+    }
+
+    return '';
+}
+
+define('GROQ_API_KEY', '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');
+
+// ============================================================
+// FONCTION ASSISTANT CORRECTION IA (GROQ - Version complète)
+// ============================================================
+
+
+function callAICorrection($titre, $description, $niveau) {
+    $prompt = "Tu es un professeur expert en programmation et pédagogie. 
+    Génère une correction complète et détaillée pour le devoir suivant :
+    
+    TITRE: " . $titre . "
+    DESCRIPTION: " . $description . "
+    NIVEAU: " . $niveau . "
+    
+    
+    Tu dois répondre UNIQUEMENT avec un objet JSON valide contenant EXACTEMENT ces 6 champs :
+    {
+        \"commentaire\": \"Commentaire détaillé de la correction (min 100 caractères)\",
+        \"note_estimee\": 14,
+        \"suggestions\": \"Suggestions d'amélioration concrètes (min 50 caractères)\",
+        \"competences\": [\"compétence1\", \"compétence2\", \"compétence3\"],
+        \"type_feedback\": \"explicatif\",
+        \"ton_feedback\": \"encourageant\"
+    }
+    
+    Règles importantes :
+    - commentaire : entre 100 et 300 caractères, formaté avec des retours à la ligne
+    - note_estimee : nombre entier entre 8 et 18
+    - suggestions : entre 50 et 150 caractères
+    - competences : tableau de 2 à 4 compétences (ex: Logique algorithmique, Syntaxe, SQL)
+    - type_feedback : \"explicatif\", \"direct\" ou \"guide\"
+    - ton_feedback : \"encourageant\", \"strict\" ou \"neutre\"
+    
+    Ne mets AUCUN texte avant ou après le JSON.";
+    
+    $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . GROQ_API_KEY
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'model' => 'llama-3.3-70b-versatile',
+        'messages' => [
+            ['role' => 'system', 'content' => 'Tu es un assistant pédagogique. Tu réponds UNIQUEMENT en JSON valide.'],
+            ['role' => 'user', 'content' => $prompt]
+        ],
+        'temperature' => 0.5,
+        'max_tokens' => 1000
+    ]));
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200) {
+        // Fallback avec valeurs par défaut
+        return getDefaultCorrection($titre, $description);
+    }
+    
+    $data = json_decode($response, true);
+    $content = $data['choices'][0]['message']['content'] ?? '';
+    
+    // Nettoyer le JSON
+    $content = preg_replace('/```json\s*|\s*```/', '', trim($content));
+    
+    // Extraire le JSON complet
+    preg_match('/\{[^{}]*"commentaire"[^{}]*"ton_feedback"[^{}]*\}/s', $content, $matches);
+    if (isset($matches[0])) {
+        $result = json_decode($matches[0], true);
+    } else {
+        $result = json_decode($content, true);
+    }
+    
+    if (!$result) {
+        return getDefaultCorrection($titre, $description);
+    }
+    
+    // Retourner avec TOUS les champs (même si manquants, on met des valeurs par défaut)
+    return [
+        'commentaire' => $result['commentaire'] ?? getDefaultCommentaire($titre),
+        'note_estimee' => $result['note_estimee'] ?? 13,
+        'suggestions' => $result['suggestions'] ?? getDefaultSuggestions(),
+        'competences' => is_array($result['competences'] ?? null) ? $result['competences'] : ['Logique algorithmique', 'Résolution de problèmes', 'Analyse critique'],
+        'type_feedback' => $result['type_feedback'] ?? 'explicatif',
+        'ton_feedback' => $result['ton_feedback'] ?? 'encourageant'
+    ];
+}
+
+
+
+// ============================================================
+// TRAITEMENT AJAX POUR L'ASSISTANT IA (À AJOUTER ICI)
+// ============================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+    header('Content-Type: application/json');
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    if ($input && isset($input['action']) && $input['action'] === 'generate_correction') {
+        $result = callAICorrection(
+            $input['titre'] ?? '',
+            $input['description'] ?? '',
+            $input['niveau'] ?? 'moyen'
+        );
+        echo json_encode($result);
+        exit;
+    }
+}
+
 ?>
+
+
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -49,6 +235,75 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
     <link rel="stylesheet" href="../../assets/css/style.css">
 
     <style>
+
+        /* Toast IA */
+.ai-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 10000;
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    animation: slideInRight 0.3s ease forwards;
+}
+.ai-toast.success {
+    background: #10B981;
+    color: white;
+}
+.ai-toast.error {
+    background: #EF4444;
+    color: white;
+}
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+        /* Bouton IA */
+.btn-ai {
+    background: linear-gradient(135deg, #8B5CF6, #6C63FF);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.8rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-ai:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+}
+
+.btn-ai.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.btn-ai.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
         .popup-message {
     position: fixed;
     top: 20px;
@@ -381,6 +636,22 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
             .modern-form-container { padding: 1.5rem; }
             .form-title { font-size: 1.4rem; }
         }
+
+        /* ============ NAVBAR DROPDOWN (necessaire pour _navbar.php) ============ */
+        .header-group { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+        .btn-backoffice { background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; padding: 10px 20px; border-radius: 2px; text-decoration: none; font-weight: 600; font-size: 13px; transition: all 0.3s ease; display: inline-block; text-align: center; border: none; cursor: pointer; }
+        .btn-backoffice:hover { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; text-decoration: none; }
+        .user-dropdown { position: relative; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .user-dropdown .user-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #525fe1; }
+        .user-dropdown .user-name { font-weight: 600; font-size: 14px; color: #0b104a; white-space: nowrap; }
+        .user-dropdown .dropdown-caret { font-size: 10px; color: #6c757d; transition: transform 0.2s; }
+        .user-dropdown:hover .dropdown-caret { transform: rotate(180deg); }
+        .user-dropdown-menu { display: none; position: absolute; top: 100%; right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.12); min-width: 200px; padding: 8px 0; z-index: 1000; margin-top: 8px; }
+        .user-dropdown-menu.show { display: block; }
+        .user-dropdown-menu a { display: flex; align-items: center; gap: 10px; padding: 10px 18px; color: #333; text-decoration: none; font-size: 14px; font-weight: 500; transition: background 0.2s; }
+        .user-dropdown-menu a:hover { background: #f5f7fa; color: #525fe1; }
+        .user-dropdown-menu a i { width: 18px; text-align: center; }
+        .user-dropdown-menu hr { margin: 6px 0; border-color: #eee; }
     </style>
 </head>
 
@@ -390,7 +661,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
     <div class="preloaders"><span class="loader"></span></div>
     <!-- END PRELOADER -->
 
+    <!-- START NAVBAR (unifie via _navbar.php) -->
     <?php include $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/view/template/_navbar.php'; ?>
+    <!-- END NAVBAR -->
 
     <!-- START SECTION TOP -->
     <section class="section-top">
@@ -399,7 +672,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                 <div class="section-top-title wow fadeInRight" data-wow-duration="1s" data-wow-delay="0.3s" data-wow-offset="0">
                     <h1>EduFeed</h1>
                     <ul>
-                        <li><a href="/gestion_users/view/template/index.php">Home</a></li>
+                        <li><a href="<?= $baseUrl ?>/view/template/index.php">Home</a></li>
                         <li> / Soumettre</li>
                     </ul>
                 </div>
@@ -417,13 +690,27 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                     <!--        FORMULAIRE 1 : SOUMETTRE UN DEVOIR   -->
                     <!-- =========================================== -->
                     <div class="modern-form-container">
-                        <h3 class="form-title"><i class="fas fa-file-upload"></i> Soumettre un Devoir</h3>
-                        <p class="form-subtitle">Remplissez tous les champs pour soumettre votre devoir</p>
+                        <h3 class="form-title">
+                            <i class="fas fa-file-upload"></i>
+                            <?= $isEditDevoir ? 'Modifier un Devoir' : 'Soumettre un Devoir' ?>
+                        </h3>
+                        <p class="form-subtitle">
+                            <?= $isEditDevoir
+                                ? 'Mettez à jour les champs du devoir existant'
+                                : 'Remplissez tous les champs pour soumettre votre devoir' ?>
+                        </p>
 
                         <?php if (!empty($successMessage)): ?>
                             <div class="alert-modern success">
                                 <i class="fas fa-check-circle"></i>
                                 <?= htmlspecialchars($successMessage) ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($formErrors)): ?>
+                            <div class="alert-modern error">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <?= htmlspecialchars(implode(' ', $formErrors)) ?>
                             </div>
                         <?php endif; ?>
 
@@ -437,10 +724,14 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
 
                         <!-- ACTION → devoirs.php (submit) -->
                         <form id="form-devoir"
-                              action="/eduleb/controller/devoirs.php?action=submit"
+                              action="<?= htmlspecialchars($devoirFormAction) ?>"
                               method="POST"
                               enctype="multipart/form-data"
                               novalidate>
+
+                            <?php if ($isEditDevoir): ?>
+                                <input type="hidden" name="id_devoir" value="<?= htmlspecialchars((string)$editDevoir['id_devoir']) ?>">
+                            <?php endif; ?>
 
                             <!-- TITRE -->
                             <div class="form-group">
@@ -453,9 +744,10 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="titre"
                                        class="form-control"
                                        placeholder="Ex: Algorithme de tri à bulles"
-                                       minlength="3"
-                                       maxlength="150"
-                                       required>
+                                      
+                                      
+                                        value="<?= htmlspecialchars(oldOrEdit('titre', $oldData, $editDevoir)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-titre"></span>
                                 <small class="hint">Donnez un titre descriptif (3 à 150 caractères)</small>
                             </div>
@@ -470,9 +762,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           id="description"
                                           class="form-control"
                                           placeholder="Décrivez le contexte et les défis du devoir..."
-                                          minlength="10"
-                                          maxlength="1000"
-                                          required></textarea>
+                                         
+                                         
+                                         ><?= htmlspecialchars(oldOrEdit('description', $oldData, $editDevoir)) ?></textarea>
                                 <span class="char-counter" id="counter-description">0 / 1000</span>
                                 <span class="field-feedback" id="fb-description"></span>
                             </div>
@@ -488,13 +780,16 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="file1"
                                        class="form-control"
                                        accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
-                                       required>
+                                       >
                                 <div class="file-preview" id="preview-file1">
                                     <i class="fas fa-check-circle"></i>
                                     <span id="preview-file1-name"></span>
                                 </div>
                                 <span class="field-feedback" id="fb-file1"></span>
                                 <small class="hint">Formats : .py .js .java .cpp .c .png .jpg .jpeg</small>
+                                <?php if ($isEditDevoir && !empty($editDevoir['fichier'])): ?>
+                                    <small class="hint">Fichier actuel : <?= htmlspecialchars($editDevoir['fichier']) ?></small>
+                                <?php endif; ?>
                             </div>
 
                             <!-- DATE SOUMISSION -->
@@ -507,7 +802,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="date_soumission"
                                        id="date_soumission"
                                        class="form-control"
-                                       required>
+                                        value="<?= htmlspecialchars(oldOrEdit('date_soumission', $oldData, $editDevoir)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-date_soumission"></span>
                             </div>
 
@@ -517,11 +813,13 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                     <i class="fas fa-graduation-cap"></i> Niveau de difficulté
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="niveau_difficulte" id="niveau_difficulte" class="form-control" required>
+                                <select name="niveau_difficulte" id="niveau_difficulte" class="form-control" 
+
+                               >
                                     <option value="">-- Sélectionnez un niveau --</option>
-                                    <option value="facile">🟢 Facile</option>
-                                    <option value="moyen">🟡 Moyen</option>
-                                    <option value="difficile">🔴 Difficile</option>
+                                    <option value="facile" <?= oldOrEdit('niveau_difficulte', $oldData, $editDevoir) === 'facile' ? 'selected' : '' ?>>🟢 Facile</option>
+                                    <option value="moyen" <?= oldOrEdit('niveau_difficulte', $oldData, $editDevoir) === 'moyen' ? 'selected' : '' ?>>🟡 Moyen</option>
+                                    <option value="difficile" <?= oldOrEdit('niveau_difficulte', $oldData, $editDevoir) === 'difficile' ? 'selected' : '' ?>>🔴 Difficile</option>
                                 </select>
                                 <span class="field-feedback" id="fb-niveau_difficulte"></span>
                             </div>
@@ -532,11 +830,11 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                     <i class="fas fa-exclamation-triangle"></i> Type d'erreur prédominant
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="type_erreur_predominant" id="type_erreur_predominant" class="form-control" required>
+                                <select name="type_erreur_predominant" id="type_erreur_predominant" class="form-control">
                                     <option value="">-- Sélectionnez un type --</option>
-                                    <option value="logique">⚙️ Logique</option>
-                                    <option value="syntaxe">📝 Syntaxe</option>
-                                    <option value="comprehension">🧠 Compréhension</option>
+                                    <option value="logique" <?= oldOrEdit('type_erreur_predominant', $oldData, $editDevoir) === 'logique' ? 'selected' : '' ?>>⚙️ Logique</option>
+                                    <option value="syntaxe" <?= oldOrEdit('type_erreur_predominant', $oldData, $editDevoir) === 'syntaxe' ? 'selected' : '' ?>>📝 Syntaxe</option>
+                                    <option value="comprehension" <?= oldOrEdit('type_erreur_predominant', $oldData, $editDevoir) === 'comprehension' ? 'selected' : '' ?>>🧠 Compréhension</option>
                                 </select>
                                 <span class="field-feedback" id="fb-type_erreur_predominant"></span>
                             </div>
@@ -552,9 +850,10 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="temps_estime_resolution"
                                        class="form-control"
                                        placeholder="Ex: 45"
-                                       min="1"
-                                       max="480"
-                                       required>
+                                      
+                                      
+                                    value="<?= htmlspecialchars(oldOrEdit('temps_estime_resolution', $oldData, $editDevoir)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-temps_estime_resolution"></span>
                                 <small class="hint">Entre 1 et 480 minutes</small>
                             </div>
@@ -570,9 +869,10 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="progression_eleve"
                                        class="form-control"
                                        placeholder="Ex: 75"
-                                       min="0"
-                                       max="100"
-                                       required>
+                                      
+                                      
+                                    value="<?= htmlspecialchars(oldOrEdit('progression_eleve', $oldData, $editDevoir)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-progression_eleve"></span>
                                 <small class="hint">Pourcentage entre 0 et 100</small>
                             </div>
@@ -588,7 +888,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="mots_cles"
                                        class="form-control"
                                        placeholder="Ex: SQL, jointures, récursion, pointeurs"
-                                       required>
+                                        value="<?= htmlspecialchars(oldOrEdit('mots_cles', $oldData, $editDevoir)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-mots_cles"></span>
                                 <small class="hint">Séparez les mots clés par des virgules</small>
                             </div>
@@ -599,18 +900,21 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                     <i class="fas fa-exclamation-circle"></i> Niveau d'urgence
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="urgence" id="urgence" class="form-control" required>
+                                <select name="urgence" id="urgence" class="form-control">
                                     <option value="">-- Sélectionnez l'urgence --</option>
-                                    <option value="faible">🟢 Faible</option>
-                                    <option value="moyenne">🟡 Moyenne</option>
-                                    <option value="urgente">🔴 Urgente</option>
+                                    <option value="faible" <?= oldOrEdit('urgence', $oldData, $editDevoir) === 'faible' ? 'selected' : '' ?>>🟢 Faible</option>
+                                    <option value="moyenne" <?= oldOrEdit('urgence', $oldData, $editDevoir) === 'moyenne' ? 'selected' : '' ?>>🟡 Moyenne</option>
+                                    <option value="urgente" <?= oldOrEdit('urgence', $oldData, $editDevoir) === 'urgente' ? 'selected' : '' ?>>🔴 Urgente</option>
                                 </select>
                                 <span class="field-feedback" id="fb-urgence"></span>
                             </div>
 
                             <button type="submit" class="btn btn-submit" id="btn-devoir">
                                 <span class="spinner"></span>
-                                <span class="btn-text"><i class="fas fa-paper-plane"></i>&nbsp; Publier le Devoir</span>
+                                <span class="btn-text">
+                                    <i class="fas <?= $isEditDevoir ? 'fa-save' : 'fa-paper-plane' ?>"></i>&nbsp;
+                                    <?= $isEditDevoir ? 'Enregistrer la modification' : 'Publier le Devoir' ?>
+                                </span>
                             </button>
                         </form>
                     </div>
@@ -619,8 +923,15 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                     <!--      FORMULAIRE 2 : SOUMETTRE UNE CORRECTION -->
                     <!-- ============================================ -->
                     <div class="modern-form-container">
-                        <h3 class="form-title"><i class="fas fa-check-circle"></i> Soumettre une Correction</h3>
-                        <p class="form-subtitle">Remplissez tous les champs pour corriger un devoir</p>
+                        <h3 class="form-title">
+                            <i class="fas fa-check-circle"></i>
+                            <?= $isEditCorrection ? 'Modifier une Correction' : 'Soumettre une Correction' ?>
+                        </h3>
+                        <p class="form-subtitle">
+                            <?= $isEditCorrection
+                                ? 'Mettez à jour les champs de la correction existante'
+                                : 'Remplissez tous les champs pour corriger un devoir' ?>
+                        </p>
 
                         <!-- Barre de progression correction -->
                         <div class="form-progress">
@@ -633,26 +944,32 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
 
                         <!-- ACTION → devoirs.php (correct) -->
                         <form id="form-correction"
-                              action="/eduleb/controller/devoirs.php?action=correct"
+                              action="<?= htmlspecialchars($correctionFormAction) ?>"
                               method="POST"
                               enctype="multipart/form-data"
                               novalidate>
 
+                            <?php if ($isEditCorrection): ?>
+                                <input type="hidden" name="id_correction" value="<?= htmlspecialchars((string)$editCorrection['id_correction']) ?>">
+                            <?php endif; ?>
+
                             <!-- ID DEVOIR (sélection) -->
                             <div class="form-group">
                                 <label for="id_devoir">
-                                    <i class="fas fa-link"></i> Devoir à corriger
+                                    <i class="fas fa-link"></i> Quel devoir voulez-vous corriger ? 
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="id_devoir" id="id_devoir" class="form-control" required>
+                                <select name="id_devoir" id="id_devoir" class="form-control">
                                     <option value="">-- Sélectionnez un devoir --</option>
                                     <?php foreach ($devoirs as $d): ?>
-                                        <option value="<?= htmlspecialchars($d['id_devoir']) ?>">
-                                            #<?= htmlspecialchars($d['id_devoir']) ?> — <?= htmlspecialchars($d['titre']) ?>
+                                        <option value="<?= htmlspecialchars($d['id_devoir']) ?>" <?= (oldOrEdit('id_devoir', $oldData, $editCorrection) === (string)$d['id_devoir']) 
+        || ($prefillDevoirId === (int)$d['id_devoir']) ? 'selected' : '' ?>>
+                                             <?= htmlspecialchars($d['titre']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                                 <span class="field-feedback" id="fb-id_devoir"></span>
+                                <small class="hint">Choisissez l'ID du devoir concerné avant de soumettre la correction.</small>
                             </div>
 
                             <!-- COMMENTAIRE -->
@@ -665,9 +982,9 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           id="commentaire"
                                           class="form-control"
                                           placeholder="Donnez votre feedback détaillé..."
-                                          minlength="10"
-                                          maxlength="1000"
-                                          required></textarea>
+                                         
+                                         
+                                         ><?= htmlspecialchars(oldOrEdit('commentaire', $oldData, $editCorrection)) ?></textarea>
                                 <span class="char-counter" id="counter-commentaire">0 / 1000</span>
                                 <span class="field-feedback" id="fb-commentaire"></span>
                             </div>
@@ -682,14 +999,17 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="file2"
                                        id="file2"
                                        class="form-control"
-                                       accept=".py,.js,.java,.cpp,.c"
-                                       required>
+                                       accept=".py,.js,.java,.cpp,.c,.png,.jpg,.jpeg"
+                                       >
                                 <div class="file-preview" id="preview-file2">
                                     <i class="fas fa-check-circle"></i>
                                     <span id="preview-file2-name"></span>
                                 </div>
                                 <span class="field-feedback" id="fb-file2"></span>
                                 <small class="hint">Formats : .py .js .java .cpp .c</small>
+                                <?php if ($isEditCorrection && !empty($editCorrection['fichier_corrige'])): ?>
+                                    <small class="hint">Fichier actuel : <?= htmlspecialchars($editCorrection['fichier_corrige']) ?></small>
+                                <?php endif; ?>
                             </div>
 
                             <!-- DATE CORRECTION -->
@@ -702,7 +1022,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="date_correction"
                                        id="date_correction"
                                        class="form-control"
-                                       required>
+                                    value="<?= htmlspecialchars(oldOrEdit('date_correction', $oldData, $editCorrection)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-date_correction"></span>
                             </div>
 
@@ -712,11 +1033,13 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                     <i class="fas fa-comment"></i> Type de feedback
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="type_feedback" id="type_feedback" class="form-control" required>
+                                <select name="type_feedback" id="type_feedback" class="form-control" 
+
+                               >
                                     <option value="">-- Sélectionnez un type --</option>
-                                    <option value="explicatif">📖 Explicatif</option>
-                                    <option value="direct">⚡ Direct</option>
-                                    <option value="guide">🧭 Guidé</option>
+                                    <option value="explicatif" <?= oldOrEdit('type_feedback', $oldData, $editCorrection) === 'explicatif' ? 'selected' : '' ?>>📖 Explicatif</option>
+                                    <option value="direct" <?= oldOrEdit('type_feedback', $oldData, $editCorrection) === 'direct' ? 'selected' : '' ?>>⚡ Direct</option>
+                                    <option value="guide" <?= oldOrEdit('type_feedback', $oldData, $editCorrection) === 'guide' ? 'selected' : '' ?>>🧭 Guidé</option>
                                 </select>
                                 <span class="field-feedback" id="fb-type_feedback"></span>
                             </div>
@@ -732,10 +1055,11 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="note_estimee"
                                        class="form-control"
                                        placeholder="Ex: 15"
-                                       min="0"
-                                       max="20"
-                                       step="0.5"
-                                       required>
+                                      
+                                      
+                                      
+                                    value="<?= htmlspecialchars(oldOrEdit('note_estimee', $oldData, $editCorrection)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-note_estimee"></span>
                                 <small class="hint">Valeur entre 0 et 20 (pas de 0.5)</small>
                             </div>
@@ -751,7 +1075,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="competences_evaluees"
                                        class="form-control"
                                        placeholder="Ex: Algorithmique, Français, Physique"
-                                       required>
+                                    value="<?= htmlspecialchars(oldOrEdit('competences_evaluees', $oldData, $editCorrection)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-competences_evaluees"></span>
                                 <small class="hint">Séparez les compétences par des virgules</small>
                             </div>
@@ -767,9 +1092,10 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="nombre_iterations"
                                        class="form-control"
                                        placeholder="Ex: 2"
-                                       min="1"
-                                       max="10"
-                                       required>
+                                      
+                                      
+                                    value="<?= htmlspecialchars(oldOrEdit('nombre_iterations', $oldData, $editCorrection)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-nombre_iterations"></span>
                                 <small class="hint">Entre 1 et 10 itérations</small>
                             </div>
@@ -783,7 +1109,7 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                           id="suggestions_personnalisees"
                                           class="form-control"
                                           placeholder="Suggérez des améliorations et ressources..."
-                                          maxlength="800"></textarea>
+                                         ><?= htmlspecialchars(oldOrEdit('suggestions_personnalisees', $oldData, $editCorrection)) ?></textarea>
                                 <span class="char-counter" id="counter-suggestions">0 / 800</span>
                             </div>
 
@@ -796,7 +1122,8 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        name="ressources_recommandees"
                                        id="ressources_recommandees"
                                        class="form-control"
-                                       placeholder="Ex: https://exemple.com, https://tutoriel.com">
+                                       placeholder="Ex: https://exemple.com, https://tutoriel.com"
+                                        value="<?= htmlspecialchars(oldOrEdit('ressources_recommandees', $oldData, $editCorrection)) ?>">
                                 <small class="hint">Liens séparés par des virgules</small>
                             </div>
 
@@ -811,9 +1138,10 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                        id="rapidite_correction"
                                        class="form-control"
                                        placeholder="Ex: 30"
-                                       min="1"
-                                       max="480"
-                                       required>
+                                      
+                                      
+                                    value="<?= htmlspecialchars(oldOrEdit('rapidite_correction', $oldData, $editCorrection)) ?>"
+                                      >
                                 <span class="field-feedback" id="fb-rapidite_correction"></span>
                                 <small class="hint">Entre 1 et 480 minutes</small>
                             </div>
@@ -824,18 +1152,29 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
                                     <i class="fas fa-smile"></i> Ton du feedback
                                     <span class="required-star">*</span>
                                 </label>
-                                <select name="ton_feedback" id="ton_feedback" class="form-control" required>
+                                <select name="ton_feedback" id="ton_feedback" class="form-control">
                                     <option value="">-- Sélectionnez un ton --</option>
-                                    <option value="encourageant">😊 Encourageant</option>
-                                    <option value="strict">😤 Strict</option>
-                                    <option value="neutre">😐 Neutre</option>
+                                    <option value="encourageant" <?= oldOrEdit('ton_feedback', $oldData, $editCorrection) === 'encourageant' ? 'selected' : '' ?>>😊 Encourageant</option>
+                                    <option value="strict" <?= oldOrEdit('ton_feedback', $oldData, $editCorrection) === 'strict' ? 'selected' : '' ?>>😤 Strict</option>
+                                    <option value="neutre" <?= oldOrEdit('ton_feedback', $oldData, $editCorrection) === 'neutre' ? 'selected' : '' ?>>😐 Neutre</option>
                                 </select>
                                 <span class="field-feedback" id="fb-ton_feedback"></span>
                             </div>
 
+                            <!-- Ajouter après le champ commentaire ou avant le bouton submit -->
+<div class="form-group">
+    <button type="button" id="aiAssistBtn" class="btn btn-ai">
+        <i class="fas fa-magic"></i> 🤖 Générer correction avec IA
+    </button>
+    <small class="hint">L'IA va analyser le devoir sélectionné et proposer une correction automatique</small>
+</div>
+
                             <button type="submit" class="btn btn-submit btn-submit-correction" id="btn-correction">
                                 <span class="spinner"></span>
-                                <span class="btn-text"><i class="fas fa-check"></i>&nbsp; Soumettre la Correction</span>
+                                <span class="btn-text">
+                                    <i class="fas <?= $isEditCorrection ? 'fa-save' : 'fa-check' ?>"></i>&nbsp;
+                                    <?= $isEditCorrection ? 'Enregistrer la modification' : 'Soumettre la Correction' ?>
+                                </span>
                             </button>
                         </form>
                     </div>
@@ -845,76 +1184,77 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         </div><!-- /container -->
     </section>
 
-    <!-- ===================== FOOTER ===================== -->
-    <div class="modern-footer">
-        <div class="footer-main">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-6 col-md-12">
-                        <div class="footer-brand">
-                            <div class="footer-logo">
-                                <a href="/gestion_users/view/template/index.php"><img src="../../assets/img/logo.png" alt="EduMatch Logo"></a>
-                            </div>
-                            <div class="brand-info">
-                                <h3>EduMatch</h3>
-                                <span class="brand-tagline">Smart Learning Platform</span>
-                            </div>
-                        </div>
-                        <div class="footer-description">
-                            <p>EduMatch connecte étudiants et enseignants via un système interactif de soumission et correction de devoirs.</p>
-                        </div>
-                        <div class="footer-social">
-                            <h4>Suivez-nous</h4>
-                            <div class="social-links">
-                                <a href="#" class="social-link facebook"><i class="fab fa-facebook-f"></i></a>
-                                <a href="#" class="social-link twitter"><i class="fab fa-twitter"></i></a>
-                                <a href="#" class="social-link instagram"><i class="fab fa-instagram"></i></a>
-                                <a href="#" class="social-link linkedin"><i class="fab fa-linkedin-in"></i></a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-section">
-                            <h4>Liens rapides</h4>
-                            <ul class="footer-links">
-                                <li><a href="about.html"><i class="fas fa-chevron-right"></i> À propos</a></li>
-                                <li><a href="submit.php"><i class="fas fa-chevron-right"></i> Soumettre</a></li>
-                                <li><a href="feed.php"><i class="fas fa-chevron-right"></i> Feed</a></li>
-                                <li><a href="contact.html"><i class="fas fa-chevron-right"></i> Contact</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6">
-                        <div class="footer-section">
-                            <h4>Fonctionnalités</h4>
-                            <ul class="footer-links">
-                                <li><i class="fas fa-check-circle text-success"></i> Apprentissage interactif</li>
-                                <li><i class="fas fa-check-circle text-success"></i> Feedback en temps réel</li>
-                                <li><i class="fas fa-check-circle text-success"></i> Analyses de notes</li>
-                                <li><i class="fas fa-check-circle text-success"></i> Mobile friendly</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+    <!-- START MODERN FOOTER -->
+    <footer class="modern-footer bg-dark text-white py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <div class="footer-brand">
+              <a href="<?= $baseUrl ?>/view/template/index.php" class="text-decoration-none">
+                <img src="../../assets/img/logo.png" alt="EduMatch Logo" class="mb-3" style="height: 50px;">
+                <h3 class="text-white fw-bold">EduMatch</h3>
+              </a>
+              <p class="mt-3 text-light opacity-75">
+                Smart matching platform connecting students with expert professors across all academic subjects for personalized learning experiences.
+              </p>
+              <div class="social-links mt-3">
+                <a href="#" class="text-white me-3 fs-4"><i class="fab fa-facebook-f"></i></a>
+                <a href="#" class="text-white me-3 fs-4"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-white me-3 fs-4"><i class="fab fa-linkedin-in"></i></a>
+                <a href="#" class="text-white me-3 fs-4"><i class="fab fa-instagram"></i></a>
+              </div>
             </div>
-        </div>
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <p style="color:#94a3b8;margin:0;font-size:0.9rem;">
-                            &copy; 2026 EduMatch. Tous droits réservés.
-                        </p>
-                    </div>
-                    <div class="col-md-6 text-end">
-                        <a href="#" style="color:#94a3b8;text-decoration:none;margin-left:1.5rem;font-size:0.9rem;">Confidentialité</a>
-                        <a href="#" style="color:#94a3b8;text-decoration:none;margin-left:1.5rem;font-size:0.9rem;">Conditions</a>
-                    </div>
-                </div>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Platform</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="<?= $baseUrl ?>/view/frontoffice/submit.php" class="text-light text-decoration-none">Submit Requirements</a></li>
+              <li class="mb-2"><a href="<?= $baseUrl ?>/view/frontoffice/feed.php" class="text-light text-decoration-none">Professor Matches</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">How It Works</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Get Matched</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Academic Subjects</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematics</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences</a></li>
+							<li class="mb-2"><a href="#" class="text-light text-decoration-none">coding</a></li>
+							<li class="mb-2"><a href="#" class="text-light text-decoration-none">algorithm</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Languages</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Humanities</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-4 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Contact Info</h5>
+            <div class="contact-info">
+              <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Tunisia,Tunis</p>
+              <p class="mb-2"><i class="fas fa-phone me-2"></i>+216 90 549 254</p>
+              <p class="mb-2"><i class="fas fa-envelope me-2"></i>edumatch@gmail.com</p>
             </div>
+            <div class="newsletter mt-3">
+              <h6 class="fw-bold mb-2">Stay Updated on Academic Tutoring</h6>
+              <div class="input-group">
+                <input type="email" class="form-control" placeholder="Your email" style="border-radius: 25px 0 0 25px;">
+                <button class="btn btn-primary" type="button" style="border-radius: 0 25px 25px 0;">Subscribe</button>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-    <!-- END FOOTER -->
+        <hr class="my-4 opacity-25">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. All rights reserved.</p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <a href="#" class="text-light text-decoration-none me-3">Privacy Policy</a>
+            <a href="#" class="text-light text-decoration-none me-3">Terms of Service</a>
+            <a href="#" class="text-light text-decoration-none">Support</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <!-- END MODERN FOOTER -->
 
     <script src="../../assets/js/jquery-1.12.4.min.js"></script>
     <script src="../../assets/bootstrap/js/bootstrap.min.js"></script>
@@ -955,6 +1295,46 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         ton_feedback:           { empty: 'Veuillez sélectionner un ton.', ok: 'Ton sélectionné ✓' },
     };
 
+    const isEditDevoir = <?= $isEditDevoir ? 'true' : 'false' ?>;
+    const isEditCorrection = <?= $isEditCorrection ? 'true' : 'false' ?>;
+
+    const VALIDATION_RULES = {
+        titre:                   { required: true, minLength: 3, maxLength: 150 },
+        description:             { required: true, minLength: 10, maxLength: 1000 },
+        file1:                   { required: !isEditDevoir },
+        date_soumission:         { required: true },
+        niveau_difficulte:       { required: true },
+        type_erreur_predominant: { required: true },
+        temps_estime_resolution: { required: true, min: 1, max: 480 },
+        progression_eleve:       { required: true, min: 0, max: 100 },
+        mots_cles:               { required: true },
+        urgence:                 { required: true },
+        id_devoir:               { required: true },
+        commentaire:             { required: true, minLength: 10, maxLength: 1000 },
+        file2:                   { required: !isEditCorrection },
+        date_correction:         { required: true },
+        type_feedback:           { required: true },
+        note_estimee:            { required: true, min: 0, max: 20 },
+        competences_evaluees:    { required: true },
+        nombre_iterations:       { required: true, min: 1, max: 10 },
+        suggestions_personnalisees: { required: false, maxLength: 800 },
+        ressources_recommandees: { required: false },
+        rapidite_correction:     { required: true, min: 1, max: 480 },
+        ton_feedback:            { required: true },
+    };
+
+    function getRuleForField(field) {
+        const key = field.id || field.name || '';
+        return VALIDATION_RULES[key] || null;
+    }
+
+    function getRequiredFields(form) {
+        return Array.from(form.querySelectorAll('input, select, textarea')).filter(function(field) {
+            const rule = getRuleForField(field);
+            return !!(rule && rule.required);
+        });
+    }
+
     // ============================================================
     //   AFFICHER FEEDBACK SOUS UN CHAMP
     // ============================================================
@@ -974,57 +1354,78 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
     // ============================================================
     //   VALIDER UN CHAMP
     // ============================================================
-    function validateField(field) {
+    function validateField(field, mode = 'live') {
         const id   = field.id || field.name;
+        const rule = VALIDATION_RULES[id] || null;
+        if (!rule) return true;
+
         const msgs = MESSAGES[id] || {};
-        let valid  = true;
+        const isSubmitValidation = mode === 'submit';
+        const isTouched = field.dataset.touched === '1';
+        const isFile = field.type === 'file';
+
+        const rawValue = typeof field.value === 'string' ? field.value : '';
+        const value = rawValue.trim();
+        const hasValue = isFile
+            ? (field.files && field.files.length > 0)
+            : value.length > 0;
+        const isRequired = !!rule.required;
 
         field.classList.remove('is-valid', 'is-invalid');
 
         // Champ requis vide
-        if (field.hasAttribute('required') && !field.value.trim() && field.type !== 'file') {
-            showFeedback(id, 'error', msgs.empty || 'Ce champ est requis.');
+        if (isRequired && !hasValue) {
+            if (isSubmitValidation || isTouched) {
+                showFeedback(id, 'error', msgs.empty || 'Ce champ est requis.');
+                field.classList.add('is-invalid');
+            } else {
+                clearFeedback(id);
+            }
+
+            return false;
+        }
+
+        // Champs optionnels vides : pas de message permanent
+        if (!isRequired && !hasValue) {
+            clearFeedback(id);
+            return true;
+        }
+
+        // Longueur minimale
+        if (!isFile && rule.minLength && value.length < rule.minLength) {
+            showFeedback(id, 'error', msgs.short || `Minimum ${rule.minLength} caractères.`);
             field.classList.add('is-invalid');
             return false;
         }
 
-        // File required
-        if (field.type === 'file' && field.hasAttribute('required')) {
-            if (!field.files || field.files.length === 0) {
-                showFeedback(id, 'error', msgs.empty || 'Fichier requis.');
-                field.classList.add('is-invalid');
-                return false;
-            }
-        }
-
-        // Longueur minimale
-        if (field.minLength && field.value.trim().length < field.minLength && field.value.trim().length > 0) {
-            showFeedback(id, 'error', msgs.short || `Minimum ${field.minLength} caractères.`);
+        // Longueur maximale
+        if (!isFile && rule.maxLength && value.length > rule.maxLength) {
+            showFeedback(id, 'error', msgs.long || `Maximum ${rule.maxLength} caractères.`);
             field.classList.add('is-invalid');
             return false;
         }
 
         // Plage numérique
-        if (field.type === 'number' && field.value.trim() !== '') {
-            const val = parseFloat(field.value);
-            const min = field.min !== '' ? parseFloat(field.min) : -Infinity;
-            const max = field.max !== '' ? parseFloat(field.max) : Infinity;
+        if (field.type === 'number' && value !== '') {
+            const val = parseFloat(value);
+            const min = (typeof rule.min === 'number') ? rule.min : -Infinity;
+            const max = (typeof rule.max === 'number') ? rule.max : Infinity;
             if (val < min || val > max) {
-                showFeedback(id, 'error', msgs.range || `Valeur entre ${field.min} et ${field.max}.`);
+                showFeedback(id, 'error', msgs.range || `Valeur entre ${min} et ${max}.`);
                 field.classList.add('is-invalid');
                 return false;
             }
         }
 
         // Valide
-        if (field.value.trim() || (field.type === 'file' && field.files && field.files.length > 0)) {
+        if (hasValue) {
             showFeedback(id, 'success', msgs.ok || 'Valide ✓');
             field.classList.add('is-valid');
         } else {
             clearFeedback(id);
         }
 
-        return valid;
+        return true;
     }
 
     // ============================================================
@@ -1036,13 +1437,13 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         const label  = document.getElementById(labelId);
         if (!form || !bar || !label) return;
 
-        const required = form.querySelectorAll('[required]');
+        const required = getRequiredFields(form);
         let filled = 0;
         required.forEach(f => {
             if (f.type === 'file') { if (f.files && f.files.length > 0) filled++; }
             else if (f.value.trim()) filled++;
         });
-        const pct = Math.round((filled / required.length) * 100);
+        const pct = required.length > 0 ? Math.round((filled / required.length) * 100) : 0;
         bar.style.width = pct + '%';
         label.textContent = `Progression : ${filled} / ${required.length} champs remplis`;
     }
@@ -1088,6 +1489,47 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         });
     }
 
+    function showPopup(message, type) {
+        const popup = document.createElement('div');
+        popup.className = 'popup-message ' + type;
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+        popup.innerHTML = '<i class="fas ' + icon + '"></i> ' + message;
+        document.body.appendChild(popup);
+        setTimeout(() => {
+            popup.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => popup.remove(), 300);
+        }, 4000);
+    }
+
+    async function submitEditFormAjax(formElement, redirectTarget) {
+        const response = await fetch(formElement.action, {
+            method: 'POST',
+            body: new FormData(formElement),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        const raw = await response.text();
+        let payload = null;
+
+        try {
+            payload = JSON.parse(raw);
+        } catch (error) {
+            payload = null;
+        }
+
+        if (!response.ok || !payload || payload.success !== true) {
+            throw new Error((payload && payload.message) ? payload.message : 'La modification a échoué.');
+        }
+
+        showPopup(payload.message || 'Modification enregistrée avec succès.', 'success');
+
+        setTimeout(function() {
+            window.location.href = redirectTarget;
+        }, 900);
+    }
+
     // ============================================================
     //   INITIALISATION
     // ============================================================
@@ -1106,14 +1548,19 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         document.querySelectorAll('.form-control').forEach(function(field) {
             ['blur', 'change'].forEach(function(evt) {
                 field.addEventListener(evt, function() {
-                    validateField(this);
+                    if (evt === 'change') {
+                        this.dataset.touched = '1';
+                    }
+                    validateField(this, 'live');
                     updateProgress('form-devoir',     'devoir-progress-bar',     'devoir-progress-label');
                     updateProgress('form-correction', 'correction-progress-bar', 'correction-progress-label');
                 });
             });
-            if (field.tagName === 'INPUT' && field.type !== 'file') {
+
+            if ((field.tagName === 'INPUT' && field.type !== 'file') || field.tagName === 'TEXTAREA') {
                 field.addEventListener('input', function() {
-                    if (this.value.trim().length > 0) validateField(this);
+                    this.dataset.touched = '1';
+                    validateField(this, 'live');
                     updateProgress('form-devoir',     'devoir-progress-bar',     'devoir-progress-label');
                     updateProgress('form-correction', 'correction-progress-bar', 'correction-progress-label');
                 });
@@ -1123,12 +1570,12 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
         // ======================================================
         //   SOUMISSION FORMULAIRE DEVOIR
         // ======================================================
-        document.getElementById('form-devoir').addEventListener('submit', function(e) {
-            const requiredFields = this.querySelectorAll('[required]');
+        document.getElementById('form-devoir').addEventListener('submit', async function(e) {
+            const requiredFields = getRequiredFields(this);
             let allValid = true;
 
             requiredFields.forEach(function(field) {
-                if (!validateField(field)) allValid = false;
+                if (!validateField(field, 'submit')) allValid = false;
             });
 
             if (!allValid) {
@@ -1143,30 +1590,29 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
             const btn = document.getElementById('btn-devoir');
             btn.classList.add('loading');
             btn.disabled = true;
-            // Le formulaire part vers PHP → redirection sur feed.php
-        });
 
-        function showPopup(message, type) {
-    const popup = document.createElement('div');
-    popup.className = 'popup-message ' + type;
-    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
-    popup.innerHTML = '<i class="fas ' + icon + '"></i> ' + message;
-    document.body.appendChild(popup);
-    setTimeout(() => {
-        popup.style.animation = 'slideOutRight 0.3s ease forwards';
-        setTimeout(() => popup.remove(), 300);
-    }, 4000);
-}
+            if (isEditDevoir) {
+                e.preventDefault();
+
+                try {
+                    await submitEditFormAjax(this, '/gestion_users/view/frontoffice/feed.php?success=devoir');
+                } catch (error) {
+                    showPopup(error.message || 'Erreur lors de la mise à jour du devoir.', 'error');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            }
+        });
 
         // ======================================================
         //   SOUMISSION FORMULAIRE CORRECTION
         // ======================================================
-        document.getElementById('form-correction').addEventListener('submit', function(e) {
-            const requiredFields = this.querySelectorAll('[required]');
+        document.getElementById('form-correction').addEventListener('submit', async function(e) {
+            const requiredFields = getRequiredFields(this);
             let allValid = true;
 
             requiredFields.forEach(function(field) {
-                if (!validateField(field)) allValid = false;
+                if (!validateField(field, 'submit')) allValid = false;
             });
 
             if (!allValid) {
@@ -1179,11 +1625,145 @@ $correction = $conn->query("SELECT * FROM correction ORDER BY id_correction DESC
             const btn = document.getElementById('btn-correction');
             btn.classList.add('loading');
             btn.disabled = true;
+
+            if (isEditCorrection) {
+                e.preventDefault();
+
+                try {
+                    await submitEditFormAjax(this, '/gestion_users/view/frontoffice/feed.php?success=correction');
+                } catch (error) {
+                    showPopup(error.message || 'Erreur lors de la mise à jour de la correction.', 'error');
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                }
+            }
         });
-        submitFormAjax('form-devoir', 'submit', 'btn-devoir');
-    submitFormAjax('form-correction', 'correct', 'btn-correction');
 });
     
     </script>
+
+    <script>
+       // ============================================================
+// ASSISTANT CORRECTION IA (Version améliorée)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const aiBtn = document.getElementById('aiAssistBtn');
+    if (!aiBtn) return;
+    
+    aiBtn.addEventListener('click', async function() {
+        const devoirSelect = document.getElementById('id_devoir');
+        const devoirId = devoirSelect.value;
+        
+        if (!devoirId) {
+            showAIToast('Veuillez d\'abord sélectionner un devoir à corriger', 'error');
+            return;
+        }
+        
+        const btn = this;
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse du devoir...';
+        
+        try {
+            // Récupérer les infos du devoir
+            const devoirResponse = await fetch(`/gestion_users/controller/devoirs.php?action=getdevoir&id=${devoirId}`);
+            
+            if (!devoirResponse.ok) {
+                throw new Error(`Erreur HTTP: ${devoirResponse.status}`);
+            }
+            
+            const devoirData = await devoirResponse.json();
+            
+            if (!devoirData.success || !devoirData.devoir) {
+                throw new Error(devoirData.message || 'Devoir non trouvé');
+            }
+            
+            const devoir = devoirData.devoir;
+            
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération de la correction...';
+            
+            const aiResponse = await fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: 'generate_correction',
+                    titre: devoir.titre,
+                    description: devoir.description,
+                    niveau: devoir.niveau_difficulte
+                })
+            });
+            
+            const aiData = await aiResponse.json();
+            
+            // TOUS les champs avec valeurs par défaut
+            const fields = {
+                'commentaire': aiData.commentaire || getDefaultCommentaire(devoir.titre),
+                'note_estimee': aiData.note_estimee || 13,
+                'suggestions_personnalisees': aiData.suggestions || getDefaultSuggestions(),
+                'competences_evaluees': Array.isArray(aiData.competences) ? aiData.competences.join(', ') : 'Logique, Algorithmique, Syntaxe',
+                'type_feedback': aiData.type_feedback || 'explicatif',
+                'ton_feedback': aiData.ton_feedback || 'encourageant',
+                'nombre_iterations': 2,  // Valeur par défaut
+                'rapidite_correction': 30  // Valeur par défaut
+            };
+            
+            // Remplir tous les champs
+            let filledCount = 0;
+            for (const [fieldId, value] of Object.entries(fields)) {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.value = value;
+                    field.dispatchEvent(new Event('blur'));
+                    field.dispatchEvent(new Event('change'));
+                    filledCount++;
+                }
+            }
+            
+            showAIToast(`✅ ${filledCount} champs remplis automatiquement !`, 'success');
+            
+        } catch (error) {
+            console.error('Erreur détaillée:', error);
+            showAIToast('❌ ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    });
+});
+
+function getDefaultCommentaire(titre) {
+    return "📝 Correction pour le devoir \"" + titre + "\"\n\n" +
+           "L'étudiant a démontré une bonne compréhension des concepts. " +
+           "Le code est bien structuré, mais quelques améliorations sont possibles pour optimiser les performances.\n\n" +
+           "Points positifs : Logique claire et bonne organisation.\n" +
+           "Points à améliorer : Ajouter plus de commentaires et gérer les cas limites.";
+}
+
+function getDefaultSuggestions() {
+    return "1. Ajoutez des commentaires pour expliquer les étapes importantes\n" +
+           "2. Testez votre code avec différentes entrées (valeurs extrêmes)\n" +
+           "3. Utilisez des noms de variables plus explicites\n" +
+           "4. Pensez à la réutilisabilité de vos fonctions";
+}
+
+function showAIToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = 'ai-toast ' + (type === 'warning' ? 'success' : type);
+    const icon = type === 'success' ? 'fa-check-circle' : (type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-triangle');
+    const bgColor = type === 'warning' ? '#F59E0B' : (type === 'success' ? '#10B981' : '#EF4444');
+    toast.style.background = bgColor;
+    toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease forwards';
+        setTimeout(() => toast.remove(), 400);
+    }, 4000);
+}
+    </script>
 </body>
 </html>
+

@@ -43,8 +43,8 @@ if (!empty($_SESSION['user_id'])) {
             <li class="menu-item-has-children">
               <a href="#">EDUFEED</a>
               <ul>
-                <li><a href="#">Submit Assignment</a></li>
-                <li><a href="#">Learning Feed</a></li>
+                <li><a href="<?= $baseUrl ?>/view/frontoffice/submit.php">Soumettre un devoir</a></li>
+                <li><a href="<?= $baseUrl ?>/view/frontoffice/feed.php">Feed</a></li>
               </ul>
             </li>
             <li><a href="#">EVENEMENT</a></li>
@@ -86,8 +86,8 @@ if (!empty($_SESSION['user_id'])) {
         <li>
           <a href="#">Edufeed</a>
           <ul class="sub-menu">
-            <li><a href="#">Submit Assignment</a></li>
-            <li><a href="#">Learning Feed</a></li>
+            <li><a href="<?= $baseUrl ?>/view/frontoffice/submit.php">Soumettre un devoir</a></li>
+            <li><a href="<?= $baseUrl ?>/view/frontoffice/feed.php">Feed</a></li>
           </ul>
         </li>
         <li><a href="#">Evenement</a></li>

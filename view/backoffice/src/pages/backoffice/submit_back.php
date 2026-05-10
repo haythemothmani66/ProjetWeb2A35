@@ -138,7 +138,7 @@ $correctionFormAction = $editCorrection ? "{$controllerUrl}?action=updatecorrect
                         <p class="mb-0 text-secondary">Admin can submit new devoirs and corrections directly from the dashboard.</p>
                     </div>
                     <div class="col-lg-4 col-12 text-lg-end">
-                        <a href="./feed_back.html" class="btn btn-dark">
+                        <a href="./feed_back.php" class="btn btn-dark">
                             <i class="ti ti-rss me-1"></i>
                             Open Feed Management
                         </a>
