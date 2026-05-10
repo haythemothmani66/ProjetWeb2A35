@@ -1,0 +1,8 @@
+RewriteEngine On
+RewriteBase /event_module/
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^(.+)$ public/index.php?url=$1 [QSA,L]
