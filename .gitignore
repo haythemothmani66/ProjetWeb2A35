@@ -15,7 +15,6 @@ uploads/cv/*
 
 # Composer
 vendor/
-composer.lock
 composer-setup.php
 
 # System
