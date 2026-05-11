@@ -43,6 +43,8 @@ if ($espace === 'back') {
         case 'details':     $id > 0 ? $controller->details($id) : $controller->liste(); break;
         case 'modifier':    $id > 0 ? $controller->modifier($id) : $controller->liste(); break;
         case 'supprimer':   $id > 0 ? $controller->supprimer($id) : $controller->liste(); break;
+        case 'repondre':    $id > 0 ? $controller->repondre($id) : $controller->liste(); break;
+        case 'parOffre':    $id > 0 ? $controller->parOffre($id) : $controller->liste(); break;
         default:            $controller->liste();
     }
     exit;
@@ -64,13 +66,20 @@ if ($action === 'ajouter' || $action === 'merci') {
 require_once __DIR__ . '/offre_emploi/FrontCandidatureController.php';
 $controller = new CandidatureController($pdo);
 
-if ($action === 'merci' && $id > 0) {
-    $controller->merci($id);
+if ($action === 'merci') {
+    $controller->merci();
 } else {
     $offreId = isset($_GET['offre']) ? (int) $_GET['offre'] : 0;
-    if ($offreId <= 0) {
+    if ($offreId <= 0 && isset($_GET['offre_id'])) {
+        $offreId = (int) $_GET['offre_id'];
+    }
+    if ($offreId <= 0 && $_SERVER['REQUEST_METHOD'] !== 'POST') {
         header('Location: /gestion_users/controller/OffreEmploiController.php?espace=front&action=liste');
         exit;
     }
-    $controller->ajouter($offreId);
+    // Alias pour le controller original qui lit $_GET['offre_id']
+    if ($offreId > 0) {
+        $_GET['offre_id'] = $offreId;
+    }
+    $controller->ajouter();
 }

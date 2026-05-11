@@ -25,6 +25,31 @@ if (!empty($_SESSION['user_id'])) {
     }
 }
 ?>
+<!-- STYLES NAVBAR (injectes ici pour etre toujours disponibles) -->
+<style>
+  .header-group { display: flex; flex-direction: row; align-items: center; gap: 10px; justify-content: flex-end; }
+  .header-btn { background: transparent; color: #0b104a; padding: 10px 20px; border-radius: 2px; text-decoration: none; font-weight: 600; font-size: 13px; border: 1px solid #525fe1; transition: all 0.3s ease; }
+  .header-btn:hover { background: #525fe1; color: white; }
+  .btn-backoffice { background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; padding: 10px 20px; border-radius: 2px; text-decoration: none; font-weight: 600; font-size: 13px; transition: all 0.3s ease; display: inline-block; text-align: center; border: none; cursor: pointer; }
+  .btn-backoffice:hover { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; text-decoration: none; }
+  /* User dropdown navbar */
+  .user-dropdown { position: relative; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .user-dropdown .user-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #525fe1; }
+  .user-dropdown .user-name { font-weight: 600; font-size: 14px; color: #0b104a; white-space: nowrap; }
+  .user-dropdown .dropdown-caret { font-size: 10px; color: #6c757d; transition: transform 0.2s; }
+  .user-dropdown:hover .dropdown-caret { transform: rotate(180deg); }
+  .user-dropdown-menu { display: none; position: absolute; top: 100%; right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.12); min-width: 200px; padding: 8px 0; z-index: 1000; margin-top: 8px; }
+  .user-dropdown-menu.show { display: block; }
+  .user-dropdown-menu a { display: flex; align-items: center; gap: 10px; padding: 10px 18px; color: #333; text-decoration: none; font-size: 14px; font-weight: 500; transition: background 0.2s; }
+  .user-dropdown-menu a:hover { background: #f5f7fa; color: #525fe1; }
+  .user-dropdown-menu a i { width: 18px; text-align: center; }
+  .user-dropdown-menu hr { margin: 6px 0; border-color: #eee; }
+  /* Cacher le menu mobile par defaut en desktop (le JS jquery-simple-mobilemenu.js le transforme en hamburger sur mobile) */
+  .mobile_menu { display: none; }
+  @media (max-width: 991.98px) {
+    .mobile_menu { display: block; }
+  }
+</style>
 <!-- START NAVBAR -->
 <div id="navigation" class="navbar-light bg-faded site-navigation">
   <div class="container-fluid">

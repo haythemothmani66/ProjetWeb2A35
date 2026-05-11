@@ -7,82 +7,78 @@ $filterState = $filterState ?? [
     'sort_dir' => 'desc',
     'sort_fields' => ['offre_titre', 'nom', 'prenom', 'email', 'statut', 'date_candidature', 'date_reponse'],
 ];
+$formatDateTime = static function ($value): string {
+    $value = trim((string) $value);
+
+    if ($value === '') {
+        return '';
+    }
+
+    try {
+        return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+    } catch (Throwable $exception) {
+        return $value;
+    }
+};
+
+$BO = '/gestion_users/view/backoffice/src';
 ?>
 <!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Administration - Candidatures</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <style>
-        body { background: #f6f8fc; font-family: 'Public Sans', sans-serif; }
-        .shell { min-height: 100vh; }
-        .sidebar { width: 280px; background: #0f172a; color: #fff; }
-        .sidebar a { color: rgba(255,255,255,.82); text-decoration: none; }
-        .sidebar a:hover, .sidebar .active { color: #fff; }
-        .main { flex: 1; min-width: 0; }
-        .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; }
-        .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
-        .filter-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
-        .filter-title { font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; color: #64748b; font-weight: 700; }
-        .radio-inline-wrap { display: flex; gap: 1.25rem; flex-wrap: wrap; }
-        .table thead th { font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; color: #64748b; }
-        .search-row-hide { display: none; }
-        .action-group { display: inline-flex; gap: .5rem; flex-wrap: wrap; }
-        @media (max-width: 991.98px) { .sidebar { width: 100%; } }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Back Office - Candidatures | EduMatch Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="<?= $BO ?>/assets/css/theme.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <script src="<?= $BO ?>/assets/js/vendors/color-modes.js"></script>
+  <script>
+    if(localStorage.getItem('sidebarExpanded')==='false'){document.documentElement.classList.add('collapsed');document.documentElement.classList.remove('expanded');}
+    else{document.documentElement.classList.remove('collapsed');document.documentElement.classList.add('expanded');}
+  </script>
+  <style>
+    .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+    .filter-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+    .filter-title { font-size: .82rem; letter-spacing: .04em; text-transform: uppercase; color: #64748b; font-weight: 700; }
+    .radio-inline-wrap { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .table thead th { font-size: .78rem; letter-spacing: .04em; text-transform: uppercase; color: #64748b; }
+    .search-row-hide { display: none; }
+    .action-group { display: inline-flex; gap: .5rem; flex-wrap: wrap; }
+  </style>
 </head>
 <body>
-    <div class="shell d-flex">
-        <aside class="sidebar d-none d-lg-flex flex-column">
-            
-            <?php $activeTab = 'candidatures'; include __DIR__ . '/../partials/nav.php'; ?>
-        </aside>
+  <div>
+    <?php include __DIR__ . '/../../../partials_php/sidebar.php'; ?>
+    <div id="content" class="position-relative h-100">
+      <?php include __DIR__ . '/../../../partials_php/topbar.php'; ?>
+      <div class="custom-container">
 
-        <div class="main">
-            <?php
-            $formatDateTime = static function ($value): string {
-                $value = trim((string) $value);
+        <div class="row mb-6 g-6 align-items-end">
+          <div class="col-lg-8">
+            <p class="text-uppercase text-secondary small mb-2">Module Candidatures</p>
+            <h1 class="mb-0"><?= $contextOffre ? 'Candidatures de l\'offre' : 'Gestion des candidatures' ?></h1>
+            <?php if ($contextOffre): ?>
+              <p class="mb-0 text-secondary small">
+                <?= htmlspecialchars((string) $contextOffre['titre']) ?> · <?= htmlspecialchars((string) $contextOffre['lieu']) ?>
+              </p>
+            <?php endif; ?>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <?php if ($contextOffre): ?>
+              <a class="btn btn-outline-secondary me-2" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=details&id=<?= (int) $contextOffre['id'] ?>">Retour à l'offre</a>
+            <?php endif; ?>
+            <a class="btn btn-outline-secondary me-2" href="/gestion_users/controller/OffreEmploiController.php?espace=front&action=liste">Voir l'espace candidat</a>
+            <a class="btn btn-outline-primary" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste">Administration offres</a>
+          </div>
+        </div>
 
-                if ($value === '') {
-                    return '';
-                }
-
-                try {
-                    return (new DateTimeImmutable($value))->format('d/m/Y H:i');
-                } catch (Throwable $exception) {
-                    return $value;
-                }
-            };
-            ?>
-            <header class="topbar px-4 py-3 d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="mb-1 text-secondary small">Module Candidature</p>
-                    <h1 class="h4 mb-0"><?= $contextOffre ? 'Candidatures de l\'offre' : 'Gestion des candidatures' ?></h1>
-                    <?php if ($contextOffre): ?>
-                        <p class="mb-0 text-secondary small">
-                            <?= htmlspecialchars((string) $contextOffre['titre']) ?> · <?= htmlspecialchars((string) $contextOffre['lieu']) ?>
-                        </p>
-                    <?php endif; ?>
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <?php if ($contextOffre): ?>
-                        <a class="btn btn-outline-secondary" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=details&id=<?= (int) $contextOffre['id'] ?>">Retour à l'offre</a>
-                    <?php endif; ?>
-                    <a class="btn btn-outline-secondary" href="/gestion_users/controller/OffreEmploiController.php?espace=front&action=liste">Voir l'espace candidat</a>
-                    <a class="btn btn-outline-primary" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste">Administration offres</a>
-                </div>
-            </header>
-
-            <main class="container-fluid p-4 p-lg-5">
                 <?php if (!$contextOffre): ?>
-                <form method="get" action="index.php" class="mb-4" id="candidature-filter-form">
+                <form method="get" action="/gestion_users/controller/CandidatureController.php" class="mb-4" id="candidature-filter-form">
                     <input type="hidden" name="espace" value="back">
-                    <input type="hidden" name="module" value="candidature">
                     <input type="hidden" name="action" value="liste">
 
                     <div class="row g-3">
@@ -209,12 +205,16 @@ $filterState = $filterState ?? [
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js"></script>
+  <script src="<?= $BO ?>/assets/js/main.js"></script>
+  <script src="<?= $BO ?>/assets/js/vendors/sidebarnav.js"></script>
+  <script>
         (function () {
             const form = document.getElementById('candidature-filter-form');
             const searchInput = document.getElementById('q');

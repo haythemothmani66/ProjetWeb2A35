@@ -4,59 +4,60 @@ $offres = $offres ?? [];
 $fieldErrors = $fieldErrors ?? [];
 $errors = $errors ?? [];
 $error = $error ?? '';
+
+$BO = '/gestion_users/view/backoffice/src';
 ?>
 <!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Administration - Modifier candidature</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <style>
-        body { background: #f6f8fc; font-family: 'Public Sans', sans-serif; }
-        .shell { min-height: 100vh; }
-        .sidebar { width: 280px; background: #0f172a; color: #fff; }
-        .sidebar a { color: rgba(255,255,255,.82); text-decoration: none; }
-        .sidebar a:hover, .sidebar .active { color: #fff; }
-        .main { flex: 1; min-width: 0; }
-        .topbar { background: #fff; border-bottom: 1px solid #e5e7eb; }
-        .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
-        .form-control, .form-select { border-radius: 14px; padding: 12px 14px; }
-        .form-control:focus, .form-select:focus { box-shadow: 0 0 0 3px rgba(15,110,139,.14); border-color: #0f6e8b; }
-        .field-error {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 3px rgba(220,53,69,.12) !important;
-        }
-        .field-error-text {
-            color: #b42318;
-            font-size: .86rem;
-            margin-top: 6px;
-            font-weight: 600;
-        }
-        @media (max-width: 991.98px) { .sidebar { width: 100%; } }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Back Office - Modifier candidature | EduMatch Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="<?= $BO ?>/assets/css/theme.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <script src="<?= $BO ?>/assets/js/vendors/color-modes.js"></script>
+  <script>
+    if(localStorage.getItem('sidebarExpanded')==='false'){document.documentElement.classList.add('collapsed');document.documentElement.classList.remove('expanded');}
+    else{document.documentElement.classList.remove('collapsed');document.documentElement.classList.add('expanded');}
+  </script>
+  <style>
+    .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+    .form-control, .form-select { border-radius: 14px; padding: 12px 14px; }
+    .form-control:focus, .form-select:focus { box-shadow: 0 0 0 3px rgba(15,110,139,.14); border-color: #0f6e8b; }
+    .field-error {
+      border-color: #dc3545 !important;
+      box-shadow: 0 0 0 3px rgba(220,53,69,.12) !important;
+    }
+    .field-error-text {
+      color: #b42318;
+      font-size: .86rem;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
-    <div class="shell d-flex">
-        <aside class="sidebar d-none d-lg-flex flex-column">
-            
-            <?php $activeTab = 'candidatures'; include __DIR__ . '/../partials/nav.php'; ?>
-        </aside>
+  <div>
+    <?php include __DIR__ . '/../../../partials_php/sidebar.php'; ?>
+    <div id="content" class="position-relative h-100">
+      <?php include __DIR__ . '/../../../partials_php/topbar.php'; ?>
+      <div class="custom-container">
 
-        <div class="main">
-            <header class="topbar px-4 py-3 d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="mb-1 text-secondary small">Module Candidature</p>
-                    <h1 class="h4 mb-0">Modifier la candidature</h1>
-                </div>
-                <a class="btn btn-outline-secondary" href="/gestion_users/controller/CandidatureController.php?espace=back&action=details&id=<?= (int) $candidature['id'] ?>">Retour aux details</a>
-            </header>
+        <div class="row mb-6 g-6 align-items-end">
+          <div class="col-lg-8">
+            <p class="text-uppercase text-secondary small mb-2">Module Candidatures</p>
+            <h1 class="mb-0">Modifier la candidature</h1>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a class="btn btn-outline-secondary" href="/gestion_users/controller/CandidatureController.php?espace=back&action=details&id=<?= (int) $candidature['id'] ?>">Retour aux details</a>
+          </div>
+        </div>
 
-            <main class="container-fluid p-4 p-lg-5">
-                <div class="card metric-card">
+        <div class="card metric-card">
                     <div class="card-body p-4">
                         <?php if (!empty($errors)): ?>
                             <div class="alert alert-danger">
@@ -152,12 +153,16 @@ $error = $error ?? '';
                         </form>
                     </div>
                 </div>
-            </main>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js"></script>
+  <script src="<?= $BO ?>/assets/js/main.js"></script>
+  <script src="<?= $BO ?>/assets/js/vendors/sidebarnav.js"></script>
+  <script>
         (function () {
             const form = document.getElementById('candidature-form');
             if (!form) return;

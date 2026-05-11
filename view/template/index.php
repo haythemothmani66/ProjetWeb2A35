@@ -27,8 +27,8 @@ $homeDevoirsStats = [
 ];
 $homeRecentDevoirs = [];
 // Placeholder SVG inline (data URI) - pas de dependance externe, toujours dispo
-$homePlaceholderImg = 'data:image/svg+xml;utf8,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#11998e"/><stop offset="100%" stop-color="#38ef7d"/></linearGradient></defs><rect width="400" height="250" fill="url(#g)"/><g fill="white" opacity="0.9" font-family="Arial,sans-serif" text-anchor="middle"><text x="200" y="115" font-size="56" font-weight="700">📅</text><text x="200" y="160" font-size="22" font-weight="600">EduMatch Event</text></g></svg>');
-$homePartnerPlaceholder = 'data:image/svg+xml;utf8,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs><rect width="400" height="250" fill="url(#g2)"/><text x="200" y="155" font-size="80" fill="white" text-anchor="middle" font-weight="700">🏢</text></svg>');
+$homePlaceholderImg = 'data:image/svg+xml;utf8,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#525fe1"/><stop offset="100%" stop-color="#00D4FF"/></linearGradient></defs><rect width="400" height="250" fill="url(#g)"/><g fill="white" opacity="0.9" font-family="Arial,sans-serif" text-anchor="middle"><text x="200" y="115" font-size="56" font-weight="700">📅</text><text x="200" y="160" font-size="22" font-weight="600">EduMatch Event</text></g></svg>');
+$homePartnerPlaceholder = 'data:image/svg+xml;utf8,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250"><defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#525fe1"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs><rect width="400" height="250" fill="url(#g2)"/><text x="200" y="155" font-size="80" fill="white" text-anchor="middle" font-weight="700">🏢</text></svg>');
 try {
     $pdoHome = Config::getConnexion();
     $stmtHome = $pdoHome->query("
@@ -66,10 +66,30 @@ try {
         LIMIT 3
     ");
     $homeRecentDevoirs = $stmtDevoirs->fetchAll(PDO::FETCH_ASSOC);
+
+    // 3 offres d'emploi ouvertes les plus recentes (avec nb candidatures)
+    $stmtOffres = $pdoHome->query("
+        SELECT o.id, o.titre, o.lieu, o.type_contrat, o.date_limite, o.statut, o.date_creation,
+               (SELECT COUNT(*) FROM candidature c WHERE c.offre_id = o.id) AS nb_candidatures
+        FROM offre_emploi o
+        WHERE o.statut = 'ouverte'
+        ORDER BY o.date_creation DESC
+        LIMIT 3
+    ");
+    $homeOffres = $stmtOffres->fetchAll(PDO::FETCH_ASSOC);
+
+    // Stats globales offres
+    $homeOffresStats = [
+        'total'    => (int) $pdoHome->query("SELECT COUNT(*) FROM offre_emploi")->fetchColumn(),
+        'ouvertes' => (int) $pdoHome->query("SELECT COUNT(*) FROM offre_emploi WHERE statut='ouverte'")->fetchColumn(),
+        'candidatures' => (int) $pdoHome->query("SELECT COUNT(*) FROM candidature")->fetchColumn(),
+    ];
 } catch (Throwable $e) {
     $homeEvents = [];
     $homePartners = [];
     $homeRecentDevoirs = [];
+    $homeOffres = [];
+    $homeOffresStats = ['total' => 0, 'ouvertes' => 0, 'candidatures' => 0];
 }
 ?>
 <!doctype html>
@@ -134,8 +154,22 @@ try {
         color: #1e1b4b !important;
         transform: translateY(-2px);
       }
+      /* ===== Section Offres d'emploi home (creative cards) ===== */
+      .job-card-creative:hover {
+        transform: translateY(-10px) scale(1.02);
+        background: rgba(255,255,255,0.15) !important;
+        border-color: rgba(255,255,255,0.3) !important;
+        box-shadow: 0 25px 55px rgba(0,0,0,0.4), 0 0 0 1px rgba(82, 95, 225, 0.3);
+      }
+      .job-card-creative a.btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+      }
+      .job-offers-section .col-4 > div:hover {
+        transform: translateY(-4px);
+      }
       .header-group { display: flex; flex-direction: row; align-items: center; gap: 10px; }
-      .btn-backoffice { background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; padding: 10px 20px; border-radius: 2px; text-decoration: none; font-weight: 600; font-size: 13px; transition: all 0.3s ease; display: inline-block; text-align: center; border: none; cursor: pointer; }
+      .btn-backoffice { background: linear-gradient(135deg, #525fe1, #3b47c9); color: white; padding: 10px 20px; border-radius: 2px; text-decoration: none; font-weight: 600; font-size: 13px; transition: all 0.3s ease; display: inline-block; text-align: center; border: none; cursor: pointer; }
       .btn-backoffice:hover { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; text-decoration: none; }
       /* User dropdown navbar */
       .user-dropdown { position: relative; display: flex; align-items: center; gap: 8px; cursor: pointer; }
@@ -160,7 +194,7 @@ try {
     <?php include __DIR__ . '/_navbar.php'; ?>
 
     <!-- START HERO -->
-    <section class="hero-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center;">
+    <section class="hero-section" style="background: linear-gradient(135deg, #525fe1 0%, #3b47c9 50%, #1e1b4b 100%); min-height: 100vh; display: flex; align-items: center;">
       <div class="container">
         <div class="row align-items-center">
           <div class="col-lg-6 col-md-12">
@@ -173,14 +207,14 @@ try {
               </p>
               <div class="hero-ctas">
                 <?php if (empty($_SESSION['user_id'])): ?>
-                <a href="sign-up.php" class="btn btn-primary btn-lg me-3" style="background: linear-gradient(45deg, #00D4FF, #6366f1); border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; color: white; transition: all 0.3s ease;">
+                <a href="sign-up.php" class="btn btn-primary btn-lg me-3" style="background: linear-gradient(45deg, #00D4FF, #525fe1); border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; color: white; transition: all 0.3s ease;">
                   Commencer <i class="fas fa-rocket ms-2"></i>
                 </a>
                 <a href="sign-in.php" class="btn btn-outline-light btn-lg" style="border: 2px solid white; color: white; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
                   Connexion <i class="fas fa-sign-in-alt ms-2"></i>
                 </a>
                 <?php else: ?>
-                <a href="profil.php" class="btn btn-primary btn-lg me-3" style="background: linear-gradient(45deg, #00D4FF, #6366f1); border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; color: white; transition: all 0.3s ease;">
+                <a href="profil.php" class="btn btn-primary btn-lg me-3" style="background: linear-gradient(45deg, #00D4FF, #525fe1); border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; color: white; transition: all 0.3s ease;">
                   Mon Profil <i class="fas fa-user ms-2"></i>
                 </a>
                 <?php endif; ?>
@@ -198,20 +232,20 @@ try {
     <!-- END HERO -->
 
     <!-- START CALL TO ACTION -->
-    <section class="cta-section py-5" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+    <section class="cta-section py-5" style="background: linear-gradient(135deg, #525fe1 0%, #3b47c9 100%); color: white;">
       <div class="container text-center">
         <h2 class="cta-title" style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem;">Pret a trouver votre professeur ideal ?</h2>
         <p class="cta-subtitle" style="font-size: 1.25rem; margin-bottom: 2rem; opacity: 0.9;">Rejoignez des milliers d'etudiants qui ont trouve leur professeur ideal dans toutes les matieres. Commencez votre parcours vers l'excellence academique aujourd'hui.</p>
         <div class="cta-buttons">
           <?php if (empty($_SESSION['user_id'])): ?>
-          <a href="sign-up.php" class="btn btn-light btn-lg me-3" style="background: white; color: #f5576c; border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+          <a href="sign-up.php" class="btn btn-light btn-lg me-3" style="background: white; color: #525fe1; border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
             Rejoindre EduMatch <i class="fas fa-rocket ms-2"></i>
           </a>
           <a href="sign-in.php" class="btn btn-outline-light btn-lg" style="border: 2px solid white; color: white; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
             Deja inscrit ? <i class="fas fa-sign-in-alt ms-2"></i>
           </a>
           <?php else: ?>
-          <a href="/gestion_users/view/frontoffice/encadrants_list.php" class="btn btn-light btn-lg" style="background: white; color: #f5576c; border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+          <a href="/gestion_users/view/frontoffice/encadrants_list.php" class="btn btn-light btn-lg" style="background: white; color: #525fe1; border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
             Reserver une seance <i class="fas fa-calendar-plus ms-2"></i>
           </a>
           <?php endif; ?>
@@ -241,7 +275,7 @@ try {
         <!-- Header -->
         <div class="row mb-5 text-center">
           <div class="col-lg-8 mx-auto">
-            <span class="badge mb-3" style="background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px;">
+            <span class="badge mb-3" style="background: linear-gradient(135deg, #525fe1, #3b47c9); color: white; padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px;">
               <i class="fas fa-graduation-cap me-1"></i> EDUFEED
             </span>
             <h2 class="display-5 fw-bold mb-3" style="color: #312e81;">Soumettez. Corrigez. Progressez.</h2>
@@ -260,12 +294,12 @@ try {
             <div class="devoirs-steps">
 
               <!-- Etape 1 : Soumettre -->
-              <div class="step-card mb-3" style="background: white; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 4px 12px rgba(99,102,241,0.08); border-left: 4px solid #6366f1; transition: all 0.3s ease; position: relative;">
+              <div class="step-card mb-3" style="background: white; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 4px 12px rgba(99,102,241,0.08); border-left: 4px solid #525fe1; transition: all 0.3s ease; position: relative;">
                 <div class="d-flex align-items-start gap-3">
-                  <div style="flex-shrink: 0; width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #8B5CF6); border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 800; box-shadow: 0 4px 12px rgba(99,102,241,0.3);">1</div>
+                  <div style="flex-shrink: 0; width: 50px; height: 50px; background: linear-gradient(135deg, #525fe1, #3b47c9); border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 800; box-shadow: 0 4px 12px rgba(82,95,225,0.3);">1</div>
                   <div>
                     <h5 class="fw-bold mb-1" style="color: #312e81;">
-                      <i class="fas fa-upload me-2" style="color: #6366f1;"></i>Soumettre un devoir
+                      <i class="fas fa-upload me-2" style="color: #525fe1;"></i>Soumettre un devoir
                     </h5>
                     <p class="mb-0 text-muted" style="font-size: 0.92rem;">
                       Etudiants : deposez vos devoirs avec niveau, mots-cles et urgence. L'IA analyse automatiquement le sentiment de votre demande.
@@ -309,14 +343,14 @@ try {
             <!-- CTA buttons -->
             <div class="d-flex flex-wrap gap-3 mt-4">
               <?php if (!empty($_SESSION['user_id'])): ?>
-                <a href="/gestion_users/view/frontoffice/submit.php" class="btn btn-lg" style="background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(99,102,241,0.3);">
+                <a href="/gestion_users/view/frontoffice/submit.php" class="btn btn-lg" style="background: linear-gradient(135deg, #525fe1, #3b47c9); color: white; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(82,95,225,0.3);">
                   <i class="fas fa-plus-circle me-2"></i>Soumettre un devoir
                 </a>
-                <a href="/gestion_users/view/frontoffice/feed.php" class="btn btn-lg" style="background: white; color: #6366f1; border: 2px solid #6366f1; padding: 0.75rem 2rem; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease;">
+                <a href="/gestion_users/view/frontoffice/feed.php" class="btn btn-lg" style="background: white; color: #525fe1; border: 2px solid #525fe1; padding: 0.75rem 2rem; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease;">
                   <i class="fas fa-stream me-2"></i>Voir le Feed
                 </a>
               <?php else: ?>
-                <a href="/gestion_users/view/template/sign-in.php" class="btn btn-lg" style="background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(99,102,241,0.3);">
+                <a href="/gestion_users/view/template/sign-in.php" class="btn btn-lg" style="background: linear-gradient(135deg, #525fe1, #3b47c9); color: white; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(82,95,225,0.3);">
                   <i class="fas fa-sign-in-alt me-2"></i>Se connecter pour soumettre
                 </a>
               <?php endif; ?>
@@ -330,7 +364,7 @@ try {
             <div class="row g-3 mb-4">
               <div class="col-6">
                 <div class="stat-tile" style="background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 12px rgba(99,102,241,0.1); text-align: center; transition: all 0.3s ease;">
-                  <div style="font-size: 2.5rem; color: #6366f1;"><i class="fas fa-book"></i></div>
+                  <div style="font-size: 2.5rem; color: #525fe1;"><i class="fas fa-book"></i></div>
                   <div style="font-size: 2.25rem; font-weight: 800; color: #312e81; line-height: 1; margin: 0.5rem 0;"><?= $homeDevoirsStats['total_devoirs'] ?></div>
                   <div style="font-size: 0.8rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Devoirs soumis</div>
                 </div>
@@ -365,7 +399,7 @@ try {
                   <h5 class="fw-bold mb-0" style="color: #312e81;">
                     <i class="fas fa-bolt me-2" style="color: #f59e0b;"></i>Recemment soumis
                   </h5>
-                  <a href="/gestion_users/view/frontoffice/feed.php" class="small fw-semibold text-decoration-none" style="color: #6366f1;">
+                  <a href="/gestion_users/view/frontoffice/feed.php" class="small fw-semibold text-decoration-none" style="color: #525fe1;">
                     Voir tout <i class="fas fa-arrow-right ms-1"></i>
                   </a>
                 </div>
@@ -418,7 +452,7 @@ try {
         <!-- Header creatif -->
         <div class="row mb-5 text-center">
           <div class="col-lg-8 mx-auto">
-            <span class="badge mb-3" style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px;">
+            <span class="badge mb-3" style="background: linear-gradient(135deg, #00D4FF, #525fe1); color: white; padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px;">
               <i class="fas fa-calendar-star me-1"></i> EVENEMENTS A LA UNE
             </span>
             <h2 class="display-5 fw-bold mb-3" style="color: #0b104a;">Decouvrez nos Evenements</h2>
@@ -496,14 +530,14 @@ try {
                     <!-- Lieu si present -->
                     <?php if (!empty($ev['lieu'])): ?>
                       <div class="d-flex align-items-center text-muted small mb-3" style="gap: 0.5rem;">
-                        <i class="fas fa-map-marker-alt" style="color: #11998e;"></i>
+                        <i class="fas fa-map-marker-alt" style="color: #525fe1;"></i>
                         <span style="font-weight: 500;"><?= htmlspecialchars(substr($ev['lieu'], 0, 35)) ?><?= strlen($ev['lieu']) > 35 ? '...' : '' ?></span>
                       </div>
                     <?php endif; ?>
 
                     <!-- Heure -->
                     <div class="d-flex align-items-center text-muted small mb-3" style="gap: 0.5rem;">
-                      <i class="fas fa-clock" style="color: #11998e;"></i>
+                      <i class="fas fa-clock" style="color: #525fe1;"></i>
                       <span style="font-weight: 500;"><?= substr($ev['heure_debut'], 0, 5) ?> - <?= substr($ev['heure_fin'], 0, 5) ?></span>
                     </div>
 
@@ -512,13 +546,13 @@ try {
                       <div class="d-flex justify-content-between align-items-center mb-1">
                         <small class="text-muted fw-semibold"><?= (int) $ev['nb_participants'] ?> inscrits / <?= (int) $ev['capacite_max'] ?> places</small>
                         <?php if ((int) $ev['nb_places_disponibles'] > 0): ?>
-                          <small class="fw-bold" style="color: #11998e;"><?= (int) $ev['nb_places_disponibles'] ?> restantes</small>
+                          <small class="fw-bold" style="color: #525fe1;"><?= (int) $ev['nb_places_disponibles'] ?> restantes</small>
                         <?php else: ?>
                           <small class="fw-bold text-danger">Complet</small>
                         <?php endif; ?>
                       </div>
                       <div style="height: 6px; background: #e2e8f0; border-radius: 50px; overflow: hidden;">
-                        <div style="height: 100%; width: <?= $placesPercent ?>%; background: linear-gradient(90deg, #11998e, #38ef7d); border-radius: 50px; transition: width 0.6s ease;"></div>
+                        <div style="height: 100%; width: <?= $placesPercent ?>%; background: linear-gradient(90deg, #00D4FF, #525fe1); border-radius: 50px; transition: width 0.6s ease;"></div>
                       </div>
                     </div>
 
@@ -534,7 +568,7 @@ try {
 
           <!-- Bouton "Voir tous les evenements" (toujours visible) -->
           <div class="text-center mt-5">
-            <a href="/gestion_users/public/index.php?url=Home/index" class="btn btn-lg" style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; border: none; padding: 1rem 3rem; border-radius: 50px; font-weight: 700; text-decoration: none; box-shadow: 0 8px 25px rgba(17,153,142,0.25); transition: all 0.3s ease;">
+            <a href="/gestion_users/public/index.php?url=Home/index" class="btn btn-lg" style="background: linear-gradient(135deg, #00D4FF, #525fe1); color: white; border: none; padding: 1rem 3rem; border-radius: 50px; font-weight: 700; text-decoration: none; box-shadow: 0 8px 25px rgba(82,95,225,0.3); transition: all 0.3s ease;">
               <i class="fas fa-calendar-alt me-2"></i>Voir tous les evenements <?php if (count($homeEvents) > 6): ?>(<?= count($homeEvents) ?>)<?php endif; ?>
             </a>
 
@@ -552,7 +586,7 @@ try {
             <h4 class="mt-3 text-muted">Aucun evenement actif pour le moment</h4>
             <p class="text-muted">Revenez bientot pour decouvrir nos prochains evenements.</p>
             <?php if (!empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') === 'admin'): ?>
-              <a href="/gestion_users/public/index.php?url=AdminEvenement/create" class="btn btn-lg" style="background: linear-gradient(135deg, #11998e, #38ef7d); color: white; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none;">
+              <a href="/gestion_users/public/index.php?url=AdminEvenement/create" class="btn btn-lg" style="background: linear-gradient(135deg, #00D4FF, #525fe1); color: white; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none;">
                 <i class="fas fa-plus me-2"></i>Creer un evenement
               </a>
             <?php endif; ?>
@@ -707,6 +741,181 @@ try {
       </div>
     </section>
     <!-- END OUR PARTNERS SECTION -->
+
+    <!-- START OFFRES D'EMPLOI SECTION (Creative) -->
+    <section class="job-offers-section py-5" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); position: relative; overflow: hidden;">
+      <!-- Decorations de fond -->
+      <div style="position: absolute; top: -100px; left: -100px; width: 460px; height: 460px; background: radial-gradient(circle, rgba(0, 212, 255, 0.20) 0%, transparent 60%); border-radius: 50%; pointer-events: none;"></div>
+      <div style="position: absolute; bottom: -120px; right: -120px; width: 520px; height: 520px; background: radial-gradient(circle, rgba(82, 95, 225, 0.25) 0%, transparent 60%); border-radius: 50%; pointer-events: none;"></div>
+      <!-- Pattern grille subtle -->
+      <div style="position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none;"></div>
+
+      <div class="container position-relative">
+
+        <!-- Header -->
+        <div class="row mb-5 text-center">
+          <div class="col-lg-8 mx-auto">
+            <span class="badge mb-3" style="background: linear-gradient(135deg, #00D4FF, #525fe1); color: white; padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(82, 95, 225, 0.4);">
+              <i class="fas fa-briefcase me-1"></i> CARRIERES
+            </span>
+            <h2 class="display-5 fw-bold mb-3 text-white">Offres d'Emploi</h2>
+            <p class="lead mb-0" style="color: rgba(255,255,255,0.85);">
+              Decouvrez les opportunites de carriere chez nos partenaires et propulsez votre avenir professionnel.
+            </p>
+          </div>
+        </div>
+
+        <?php if (!empty($homeOffres)): ?>
+          <!-- Cards offres recentes -->
+          <div class="row g-4 mb-5">
+            <?php foreach ($homeOffres as $idx => $offre):
+                $contractColors = [
+                    'CDI'      => ['#00D4FF', '#525fe1'],
+                    'CDD'      => ['#525fe1', '#3b47c9'],
+                    'Stage'    => ['#a855f7', '#8b5cf6'],
+                    'Freelance'=> ['#7c8aff', '#525fe1'],
+                ];
+                $contractKey = $offre['type_contrat'] ?? 'CDI';
+                $colors = $contractColors[$contractKey] ?? ['#525fe1', '#3b47c9'];
+
+                $daysLeft = '';
+                $isUrgent = false;
+                if (!empty($offre['date_limite'])) {
+                    $ts = strtotime($offre['date_limite']);
+                    if ($ts !== false) {
+                        $diff = ceil(($ts - time()) / 86400);
+                        if ($diff <= 0) { $daysLeft = 'Cloture'; }
+                        elseif ($diff <= 3) { $daysLeft = $diff . 'j restants'; $isUrgent = true; }
+                        else { $daysLeft = $diff . 'j restants'; }
+                    }
+                }
+            ?>
+              <div class="col-lg-4 col-md-6">
+                <div class="job-card-creative h-100" style="background: rgba(255,255,255,0.06); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.12); border-radius: 1.25rem; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;">
+                  <!-- Accent bar haut -->
+                  <div style="height: 5px; background: linear-gradient(90deg, <?= $colors[0] ?>, <?= $colors[1] ?>);"></div>
+
+                  <div style="padding: 1.75rem; color: white;">
+                    <!-- Header card : icone + badge contrat -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div style="width: 56px; height: 56px; background: linear-gradient(135deg, <?= $colors[0] ?>, <?= $colors[1] ?>); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px <?= $colors[0] ?>40;">
+                        <i class="fas fa-briefcase text-white" style="font-size: 1.4rem;"></i>
+                      </div>
+                      <span class="badge" style="background: rgba(255,255,255,0.12); color: white; padding: 0.4rem 0.85rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.18);">
+                        <?= htmlspecialchars($offre['type_contrat']) ?>
+                      </span>
+                    </div>
+
+                    <!-- Titre offre -->
+                    <h3 class="fw-bold mb-2" style="font-size: 1.2rem; line-height: 1.35; color: white;">
+                      <?= htmlspecialchars($offre['titre']) ?>
+                    </h3>
+
+                    <!-- Meta info -->
+                    <div class="mb-3" style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                      <div class="mb-1"><i class="fas fa-map-marker-alt me-2" style="color: <?= $colors[0] ?>;"></i><?= htmlspecialchars($offre['lieu']) ?></div>
+                      <?php if ($daysLeft !== ''): ?>
+                        <div><i class="fas fa-clock me-2" style="color: <?= $isUrgent ? '#fb7185' : $colors[0] ?>;"></i>
+                          <span style="<?= $isUrgent ? 'color:#fb7185; font-weight:600;' : '' ?>"><?= htmlspecialchars($daysLeft) ?></span>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+
+                    <!-- Stats candidatures -->
+                    <div class="d-flex align-items-center mb-3 pb-3" style="border-bottom: 1px solid rgba(255,255,255,0.1); gap: 0.5rem;">
+                      <div style="width: 32px; height: 32px; background: rgba(0, 212, 255, 0.18); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-users" style="color: #00D4FF; font-size: 0.8rem;"></i>
+                      </div>
+                      <div style="font-size: 0.82rem; color: rgba(255,255,255,0.85);">
+                        <strong style="color: white;"><?= (int)$offre['nb_candidatures'] ?></strong> candidature<?= ((int)$offre['nb_candidatures'] > 1) ? 's' : '' ?>
+                      </div>
+                    </div>
+
+                    <!-- CTA -->
+                    <a href="/gestion_users/controller/OffreEmploiController.php?espace=front&action=details&id=<?= (int)$offre['id'] ?>" class="btn w-100" style="background: linear-gradient(135deg, <?= $colors[0] ?>, <?= $colors[1] ?>); color: white; border: none; padding: 0.7rem; border-radius: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 6px 18px <?= $colors[0] ?>40;">
+                      Voir l'offre <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php else: ?>
+          <!-- Empty state -->
+          <div class="row mb-5">
+            <div class="col-lg-8 mx-auto text-center">
+              <div style="background: rgba(255,255,255,0.06); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.12); border-radius: 1.25rem; padding: 3rem 2rem; color: white;">
+                <i class="fas fa-briefcase mb-3" style="font-size: 3rem; color: rgba(0, 212, 255, 0.6);"></i>
+                <h3 class="fw-bold mb-2" style="color: white;">Aucune offre ouverte pour le moment</h3>
+                <p style="color: rgba(255,255,255,0.7);">Revenez bientot pour decouvrir de nouvelles opportunites.</p>
+              </div>
+            </div>
+          </div>
+        <?php endif; ?>
+
+        <!-- Description + CTA + Stats -->
+        <div class="row align-items-center mt-4">
+          <div class="col-lg-7 col-md-12 mb-4 mb-lg-0">
+            <p style="color: rgba(255,255,255,0.9); font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+              Notre plateforme connecte les meilleurs talents avec les opportunites les plus inspirantes.
+              Soumettez votre candidature en quelques clics et beneficiez d'une analyse IA personnalisee
+              pour maximiser vos chances de reussite.
+            </p>
+
+            <div class="d-flex flex-wrap gap-3">
+              <a href="/gestion_users/controller/OffreEmploiController.php?espace=front&action=liste" class="btn btn-lg" style="background: white; color: #525fe1; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(0,0,0,0.2);">
+                <i class="fas fa-briefcase me-2"></i>Voir toutes les offres
+              </a>
+
+              <?php if ($isLoggedIn && ($userRole === 'encadrant' || $userRole === 'admin')): ?>
+                <a href="/gestion_users/controller/OffreEmploiController.php?espace=front&action=liste" class="btn btn-lg" style="background: transparent; color: white; border: 2px solid rgba(255,255,255,0.4); padding: 0.75rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+                  <i class="fas fa-paper-plane me-2"></i>Candidater maintenant
+                </a>
+              <?php elseif ($isLoggedIn): ?>
+                <div class="d-inline-block" style="cursor: not-allowed;">
+                  <button disabled class="btn btn-lg" style="background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); border: 2px solid rgba(255,255,255,0.15); padding: 0.75rem 2rem; border-radius: 50px; font-weight: 600; pointer-events: none;">
+                    <i class="fas fa-lock me-2"></i>Candidater
+                  </button>
+                </div>
+                <small style="color: rgba(255,255,255,0.7); align-self: center;">
+                  <i class="fas fa-info-circle me-1"></i>Reserve aux <strong>encadrants</strong>
+                </small>
+              <?php else: ?>
+                <a href="/gestion_users/view/template/sign-in.php" class="btn btn-lg" style="background: transparent; color: white; border: 2px solid rgba(255,255,255,0.4); padding: 0.75rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+                  <i class="fas fa-sign-in-alt me-2"></i>Se connecter pour postuler
+                </a>
+              <?php endif; ?>
+            </div>
+          </div>
+
+          <div class="col-lg-5 col-md-12">
+            <!-- Stats grid -->
+            <div class="row g-3 text-center">
+              <div class="col-4">
+                <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 1rem; padding: 1.25rem 0.5rem; border: 1px solid rgba(255,255,255,0.15); transition: transform 0.3s ease;">
+                  <div style="font-size: 2rem; font-weight: 800; color: white; line-height: 1;"><?= (int)$homeOffresStats['total'] ?></div>
+                  <div style="font-size: 0.72rem; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem;">Offres totales</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 1rem; padding: 1.25rem 0.5rem; border: 1px solid rgba(255,255,255,0.15);">
+                  <div style="font-size: 2rem; font-weight: 800; color: white; line-height: 1;"><?= (int)$homeOffresStats['ouvertes'] ?></div>
+                  <div style="font-size: 0.72rem; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem;">Ouvertes</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 1rem; padding: 1.25rem 0.5rem; border: 1px solid rgba(255,255,255,0.15);">
+                  <div style="font-size: 2rem; font-weight: 800; color: white; line-height: 1;"><?= (int)$homeOffresStats['candidatures'] ?></div>
+                  <div style="font-size: 0.72rem; color: rgba(255,255,255,0.7); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem;">Candidatures</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <!-- END OFFRES D'EMPLOI SECTION -->
 
     <!-- START MODERN FOOTER -->
     <footer class="modern-footer bg-dark text-white py-5">

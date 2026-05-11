@@ -25,54 +25,53 @@ $formatDateTime = static function ($value): string {
         return $value;
     }
 };
+
+$BO = '/gestion_users/view/backoffice/src';
 ?>
 <!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Back Office - Statistiques</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="../dasher-1.0.0/src/assets/css/theme.css" />
-    <style>
-        body { background: #f6f8fc; font-family: 'Public Sans', sans-serif; }
-        .emploi-shell { min-height: 100vh; }
-        .emploi-sidebar { width: 280px; background: #0f172a; color: #fff; }
-        .emploi-sidebar a { color: rgba(255,255,255,.8); text-decoration: none; }
-        .emploi-sidebar a:hover, .emploi-sidebar .active { color: #fff; }
-        .emploi-main { flex: 1; min-width: 0; }
-        .emploi-topbar { background: #fff; border-bottom: 1px solid #e5e7eb; }
-        .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
-        .section-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
-        .chart-wrap { position: relative; min-height: 320px; }
-        .small-muted { color: #64748b; font-size: .92rem; }
-        @media (max-width: 991.98px) { .emploi-sidebar { width: 100%; } }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Back Office - Statistiques | EduMatch Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="<?= $BO ?>/assets/css/theme.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <script src="<?= $BO ?>/assets/js/vendors/color-modes.js"></script>
+  <script>
+    if(localStorage.getItem('sidebarExpanded')==='false'){document.documentElement.classList.add('collapsed');document.documentElement.classList.remove('expanded');}
+    else{document.documentElement.classList.remove('collapsed');document.documentElement.classList.add('expanded');}
+  </script>
+  <style>
+    .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+    .section-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+    .chart-wrap { position: relative; min-height: 320px; }
+    .small-muted { color: #64748b; font-size: .92rem; }
+  </style>
 </head>
 <body>
-    <div class="emploi-shell d-flex">
-        <aside class="emploi-sidebar d-none d-lg-flex flex-column">
-            
-            <?php $activeTab = 'stats'; include __DIR__ . '/../partials/nav.php'; ?>
-        </aside>
+  <div>
+    <?php include __DIR__ . '/../../../partials_php/sidebar.php'; ?>
+    <div id="content" class="position-relative h-100">
+      <?php include __DIR__ . '/../../../partials_php/topbar.php'; ?>
+      <div class="custom-container">
 
-        <div class="emploi-main">
-            <header class="emploi-topbar px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>
-                    <p class="mb-1 text-secondary small">Back Office</p>
-                    <h1 class="h4 mb-0">Tableau de bord des statistiques</h1>
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <a class="btn btn-outline-primary" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=exportStatsPdf" target="_blank">Exporter en PDF</a>
-                    <a class="btn btn-outline-secondary" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste">Retour aux offres</a>
-                    <a class="btn btn-primary" href="/gestion_users/controller/CandidatureController.php?espace=back&action=liste">Voir les candidatures</a>
-                </div>
-            </header>
+        <div class="row mb-6 g-6 align-items-end">
+          <div class="col-lg-8">
+            <p class="text-uppercase text-secondary small mb-2">Module Offres d'emploi</p>
+            <h1 class="mb-0">Tableau de bord des statistiques</h1>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a class="btn btn-outline-primary me-2" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=exportStatsPdf" target="_blank">Exporter en PDF</a>
+            <a class="btn btn-outline-secondary me-2" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste">Retour aux offres</a>
+            <a class="btn btn-primary" href="/gestion_users/controller/CandidatureController.php?espace=back&action=liste">Voir les candidatures</a>
+          </div>
+        </div>
 
-            <main class="container-fluid p-4 p-lg-5">
-                <div class="row g-4 mb-4">
+        <div class="row g-4 mb-4">
                     <div class="col-md-6 col-xl-3">
                         <div class="card metric-card h-100">
                             <div class="card-body">
@@ -208,12 +207,16 @@ $formatDateTime = static function ($value): string {
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js"></script>
+  <script src="<?= $BO ?>/assets/js/main.js"></script>
+  <script src="<?= $BO ?>/assets/js/vendors/sidebarnav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script>
         const offerLabels = <?= json_encode(array_values($chartData['offer_labels']), JSON_UNESCAPED_UNICODE) ?>;
         const offerCounts = <?= json_encode(array_values($chartData['offer_counts']), JSON_UNESCAPED_UNICODE) ?>;

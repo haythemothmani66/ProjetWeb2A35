@@ -5,8 +5,17 @@ uploads/photos/*.png
 !uploads/photos/default.png
 !uploads/photos/.gitkeep
 
+# Uploads CV candidatures (fichiers utilisateurs, ne pas versionner)
+uploads/cv/*.pdf
+uploads/cv/*.doc
+uploads/cv/*.docx
+!uploads/cv/.gitkeep
+
 # Environment variables (API keys)
 .env
+
+# Config sensibles (cles API personnelles - voir .example pour template)
+config/recaptcha.php
 
 # Temp files
 *.txt

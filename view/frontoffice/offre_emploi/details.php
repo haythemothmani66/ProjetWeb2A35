@@ -29,20 +29,20 @@ $isOpen = $status === 'ouverte';
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title><?= htmlspecialchars((string) $offre['titre']) ?> - EduMatch</title>
-    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/gestion_users/assets/bootstrap/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="assets/fonts/font-awesome.min.css">
-    <link rel="stylesheet" href="assets/fonts/themify-icons.css">
-    <link rel="stylesheet" href="assets/css/animate.css">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="/gestion_users/assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="/gestion_users/assets/fonts/themify-icons.css">
+    <link rel="stylesheet" href="/gestion_users/assets/css/animate.css">
+    <link rel="stylesheet" href="/gestion_users/assets/css/style.css">
     <style>
         .offer-hero {
             padding: 84px 0 28px;
             background:
                 linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.98)),
-                url('assets/img/bg/home-bg3.jpg') center/cover no-repeat;
+                url('/gestion_users/assets/img/bg/home-bg3.jpg') center/cover no-repeat;
         }
 
         .offer-hero-panel {
@@ -218,7 +218,7 @@ $isOpen = $status === 'ouverte';
                     </div>
                     <div class="col-lg-4">
                         <div class="detail-visual">
-                            <img src="assets/img/course/2.png" class="img-fluid" alt="Aperçu offre">
+                            <img src="/gestion_users/assets/img/course/2.png" class="img-fluid" alt="Aperçu offre">
                         </div>
                     </div>
                 </div>
@@ -256,8 +256,21 @@ $isOpen = $status === 'ouverte';
                         </div>
 
                         <div class="offer-actions">
-                            <?php if ($isOpen): ?>
+                            <?php
+                              $_userRole = $_SESSION['user_role'] ?? '';
+                              $_canApply = !empty($_SESSION['user_id']) && in_array($_userRole, ['encadrant', 'admin'], true);
+                            ?>
+                            <?php if ($isOpen && $_canApply): ?>
                                 <a href="/gestion_users/controller/CandidatureController.php?espace=front&action=ajouter&offre=<?= (int) $offre['id'] ?>" class="btn btn-primary btn-lg">Candidater maintenant</a>
+                            <?php elseif ($isOpen && empty($_SESSION['user_id'])): ?>
+                                <a href="/gestion_users/view/template/sign-in.php" class="btn btn-outline-primary btn-lg">
+                                    <i class="fa-solid fa-lock me-1"></i> Se connecter pour postuler
+                                </a>
+                            <?php elseif ($isOpen): ?>
+                                <div class="alert alert-info mb-0">
+                                    <i class="fa-solid fa-info-circle me-1"></i>
+                                    La candidature est reservee aux encadrants. Votre compte (<strong><?= htmlspecialchars($_userRole) ?></strong>) ne permet pas de postuler.
+                                </div>
                             <?php else: ?>
                                 <div class="alert alert-warning mb-0">Cette offre n'est pas ouverte aux candidatures pour le moment.</div>
                             <?php endif; ?>
@@ -269,9 +282,66 @@ $isOpen = $status === 'ouverte';
         </div>
     </section>
 
-    <script src="assets/js/jquery-1.12.4.min.js"></script>
-    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
-    <script src="assets/js/wow.min.js"></script>
-    <script src="assets/js/scripts.js"></script>
+    <!-- FOOTER EduMatch -->
+    <footer class="modern-footer bg-dark text-white py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <a href="/gestion_users/view/template/index.php" class="text-decoration-none">
+              <img src="/gestion_users/assets/img/logo.png" alt="EduMatch Logo" class="mb-3" style="height: 50px;">
+            </a>
+            <p class="mt-3 text-light opacity-75">Plateforme intelligente de mise en relation des etudiants avec des professeurs experts dans toutes les matieres academiques pour des experiences d'apprentissage personnalisees.</p>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Plateforme</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="/gestion_users/view/template/index.php" class="text-light text-decoration-none">Accueil</a></li>
+              <?php if (empty($_SESSION['user_id'])): ?>
+              <li class="mb-2"><a href="/gestion_users/view/template/sign-in.php" class="text-light text-decoration-none">Connexion</a></li>
+              <li class="mb-2"><a href="/gestion_users/view/template/sign-up.php" class="text-light text-decoration-none">Inscription</a></li>
+              <?php else: ?>
+              <li class="mb-2"><a href="/gestion_users/view/template/profil.php" class="text-light text-decoration-none">Mon Profil</a></li>
+              <li class="mb-2"><a href="/gestion_users/auth/logout" class="text-light text-decoration-none">Deconnexion</a></li>
+              <?php endif; ?>
+            </ul>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Matieres academiques</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematiques</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Programmation</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Algorithmique</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Langues</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences humaines</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-4 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Coordonnees</h5>
+            <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Tunis, Tunisie</p>
+            <p class="mb-2"><i class="fas fa-phone me-2"></i>+216 90 549 254</p>
+            <p class="mb-2"><i class="fas fa-envelope me-2"></i>edumatch@gmail.com</p>
+          </div>
+        </div>
+        <hr class="my-4 opacity-25">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. Tous droits reserves.</p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <a href="#" class="text-light text-decoration-none me-3">Politique de confidentialite</a>
+            <a href="#" class="text-light text-decoration-none me-3">Conditions d'utilisation</a>
+            <a href="#" class="text-light text-decoration-none">Assistance</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <!-- END FOOTER -->
+
+    <script src="/gestion_users/assets/js/jquery-1.12.4.min.js"></script>
+    <script src="/gestion_users/assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/gestion_users/assets/js/jquery-simple-mobilemenu.js"></script>
+    <script src="/gestion_users/assets/js/wow.min.js"></script>
+    <script src="/gestion_users/assets/js/scripts.js"></script>
 </body>
 </html>

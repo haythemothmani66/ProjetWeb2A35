@@ -33,10 +33,10 @@ foreach ($offres as $offreItem) {
 }
 
 $images = [
-    'assets/img/course/1.png',
-    'assets/img/course/2.png',
-    'assets/img/course/3.png',
-    'assets/img/course/4.png',
+    '/gestion_users/assets/img/course/1.png',
+    '/gestion_users/assets/img/course/2.png',
+    '/gestion_users/assets/img/course/3.png',
+    '/gestion_users/assets/img/course/4.png',
 ];
 ?>
 <!DOCTYPE html>
@@ -46,23 +46,23 @@ $images = [
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Offres d'emploi - EduMatch</title>
-    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/gestion_users/assets/bootstrap/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="assets/fonts/font-awesome.min.css">
-    <link rel="stylesheet" href="assets/fonts/themify-icons.css">
-    <link rel="stylesheet" href="assets/owlcarousel/css/owl.carousel.css">
-    <link rel="stylesheet" href="assets/owlcarousel/css/owl.theme.css">
-    <link rel="stylesheet" href="assets/css/jquery-simple-mobilemenu.css">
-    <link rel="stylesheet" href="assets/css/magnific-popup.css">
-    <link rel="stylesheet" href="assets/css/animate.css">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="/gestion_users/assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="/gestion_users/assets/fonts/themify-icons.css">
+    <link rel="stylesheet" href="/gestion_users/assets/owlcarousel/css/owl.carousel.css">
+    <link rel="stylesheet" href="/gestion_users/assets/owlcarousel/css/owl.theme.css">
+    <link rel="stylesheet" href="/gestion_users/assets/css/jquery-simple-mobilemenu.css">
+    <link rel="stylesheet" href="/gestion_users/assets/css/magnific-popup.css">
+    <link rel="stylesheet" href="/gestion_users/assets/css/animate.css">
+    <link rel="stylesheet" href="/gestion_users/assets/css/style.css">
     <style>
         .page-surface {
             background:
                 linear-gradient(180deg, rgba(255, 255, 255, .84), rgba(255, 255, 255, .96)),
-                url('assets/img/bg/section-top.jpg') center/cover no-repeat fixed;
+                url('/gestion_users/assets/img/bg/section-top.jpg') center/cover no-repeat fixed;
         }
 
         .hero-offer {
@@ -327,6 +327,16 @@ $images = [
 
     <?php include $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/view/template/_navbar.php'; ?>
 
+    <?php if (($_GET['error'] ?? '') === 'role'): ?>
+        <div class="container mt-3">
+            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                <i class="fa-solid fa-lock me-2"></i>
+                <strong>Acces refuse :</strong> seuls les comptes <strong>encadrant</strong> et <strong>admin</strong> peuvent postuler aux offres d'emploi.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <section class="hero-offer page-surface">
         <div class="container">
             <div class="hero-panel">
@@ -358,7 +368,7 @@ $images = [
                     </div>
                     <div class="col-lg-4 d-none d-lg-block">
                         <div class="hero-panel" style="padding: 18px; background: rgba(255,255,255,.56); box-shadow:none; border-radius: 22px;">
-                            <img src="assets/img/course/1.png" alt="Aperçu offre" class="img-fluid rounded-4 shadow-sm">
+                            <img src="/gestion_users/assets/img/course/1.png" alt="Aperçu offre" class="img-fluid rounded-4 shadow-sm">
                         </div>
                     </div>
                 </div>
@@ -368,9 +378,8 @@ $images = [
 
     <section id="offres" class="section-padding filter-shell">
         <div class="container">
-            <form method="get" action="index.php" class="mb-4">
+            <form method="get" action="/gestion_users/controller/OffreEmploiController.php" class="mb-4">
                 <input type="hidden" name="espace" value="front">
-                <input type="hidden" name="module" value="offreemploi">
                 <input type="hidden" name="action" value="liste">
 
                 <div class="row g-3">
@@ -462,8 +471,21 @@ $images = [
                                     </div>
                                     <div class="offer-actions">
                                         <a href="/gestion_users/controller/OffreEmploiController.php?espace=front&action=details&id=<?= (int) $offre['id'] ?>" class="btn_one text-center">Voir détails</a>
-                                        <?php if (($offre['statut'] ?? '') === 'ouverte'): ?>
+                                        <?php
+                                          $_userRole = $_SESSION['user_role'] ?? '';
+                                          $_canApply = !empty($_SESSION['user_id']) && in_array($_userRole, ['encadrant', 'admin'], true);
+                                          $_offreOuverte = (($offre['statut'] ?? '') === 'ouverte');
+                                        ?>
+                                        <?php if ($_offreOuverte && $_canApply): ?>
                                             <a href="/gestion_users/controller/CandidatureController.php?espace=front&action=ajouter&offre=<?= (int) $offre['id'] ?>" class="btn btn-outline-primary">Candidater</a>
+                                        <?php elseif ($_offreOuverte && empty($_SESSION['user_id'])): ?>
+                                            <a href="/gestion_users/view/template/sign-in.php" class="btn btn-outline-secondary" title="Connectez-vous pour postuler">
+                                                <i class="fa-solid fa-lock me-1"></i> Se connecter pour postuler
+                                            </a>
+                                        <?php elseif ($_offreOuverte): ?>
+                                            <button type="button" class="btn btn-outline-secondary" disabled title="Reserve aux encadrants">
+                                                <i class="fa-solid fa-lock me-1"></i> Reserve aux encadrants
+                                            </button>
                                         <?php else: ?>
                                             <button type="button" class="btn btn-outline-secondary" disabled>Offre fermée</button>
                                         <?php endif; ?>
@@ -480,29 +502,74 @@ $images = [
         </div>
     </section>
 
-    <footer class="footer-default">
-        <div class="footer-bottom">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12 text-center">
-                        <p>&copy; 2026 Eduleb - Module Offres d'emploi.</p>
-                    </div>
-                </div>
-            </div>
+    <!-- FOOTER EduMatch -->
+    <footer class="modern-footer bg-dark text-white py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <a href="/gestion_users/view/template/index.php" class="text-decoration-none">
+              <img src="/gestion_users/assets/img/logo.png" alt="EduMatch Logo" class="mb-3" style="height: 50px;">
+            </a>
+            <p class="mt-3 text-light opacity-75">Plateforme intelligente de mise en relation des etudiants avec des professeurs experts dans toutes les matieres academiques pour des experiences d'apprentissage personnalisees.</p>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Plateforme</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="/gestion_users/view/template/index.php" class="text-light text-decoration-none">Accueil</a></li>
+              <?php if (empty($_SESSION['user_id'])): ?>
+              <li class="mb-2"><a href="/gestion_users/view/template/sign-in.php" class="text-light text-decoration-none">Connexion</a></li>
+              <li class="mb-2"><a href="/gestion_users/view/template/sign-up.php" class="text-light text-decoration-none">Inscription</a></li>
+              <?php else: ?>
+              <li class="mb-2"><a href="/gestion_users/view/template/profil.php" class="text-light text-decoration-none">Mon Profil</a></li>
+              <li class="mb-2"><a href="/gestion_users/auth/logout" class="text-light text-decoration-none">Deconnexion</a></li>
+              <?php endif; ?>
+            </ul>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Matieres academiques</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematiques</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Programmation</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Algorithmique</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Langues</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences humaines</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-4 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Coordonnees</h5>
+            <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Tunis, Tunisie</p>
+            <p class="mb-2"><i class="fas fa-phone me-2"></i>+216 90 549 254</p>
+            <p class="mb-2"><i class="fas fa-envelope me-2"></i>edumatch@gmail.com</p>
+          </div>
         </div>
+        <hr class="my-4 opacity-25">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. Tous droits reserves.</p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <a href="#" class="text-light text-decoration-none me-3">Politique de confidentialite</a>
+            <a href="#" class="text-light text-decoration-none me-3">Conditions d'utilisation</a>
+            <a href="#" class="text-light text-decoration-none">Assistance</a>
+          </div>
+        </div>
+      </div>
     </footer>
+    <!-- END FOOTER -->
 
-    <script src="assets/js/jquery-1.12.4.min.js"></script>
-    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
-    <script src="assets/owlcarousel/js/owl.carousel.min.js"></script>
-    <script src="assets/js/jquery-simple-mobilemenu.js"></script>
-    <script src="assets/js/wow.min.js"></script>
-    <script src="assets/js/jquery.inview.min.js"></script>
-    <script src="assets/js/jquery.magnific-popup.min.js"></script>
-    <script src="assets/js/modernizr-2.8.3.min.js"></script>
-    <script src="assets/js/scrolltopcontrol.js"></script>
-    <script src="assets/js/superMarquee.min.js"></script>
-    <script src="assets/js/scripts.js"></script>
+
+    <script src="/gestion_users/assets/js/jquery-1.12.4.min.js"></script>
+    <script src="/gestion_users/assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/gestion_users/assets/owlcarousel/js/owl.carousel.min.js"></script>
+    <script src="/gestion_users/assets/js/jquery-simple-mobilemenu.js"></script>
+    <script src="/gestion_users/assets/js/wow.min.js"></script>
+    <script src="/gestion_users/assets/js/jquery.inview.min.js"></script>
+    <script src="/gestion_users/assets/js/jquery.magnific-popup.min.js"></script>
+    <script src="/gestion_users/assets/js/modernizr-2.8.3.min.js"></script>
+    <script src="/gestion_users/assets/js/scrolltopcontrol.js"></script>
+    <script src="/gestion_users/assets/js/superMarquee.min.js"></script>
+    <script src="/gestion_users/assets/js/scripts.js"></script>
     <script>
         (function () {
             const searchInput = document.getElementById('q');

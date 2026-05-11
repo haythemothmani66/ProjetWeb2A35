@@ -1,47 +1,47 @@
+<?php $BO = '/gestion_users/view/backoffice/src'; ?>
 <!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Back Office - Ajouter offre</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="../dasher-1.0.0/src/assets/css/theme.css" />
-    <script src="../dasher-1.0.0/src/assets/js/vendors/color-modes.js"></script>
-    <style>
-        body { background: #f6f8fc; font-family: 'Public Sans', sans-serif; }
-        .emploi-shell { min-height: 100vh; }
-        .emploi-sidebar { width: 280px; background: #0f172a; color: #fff; }
-        .emploi-sidebar a { color: rgba(255,255,255,.8); text-decoration: none; }
-        .emploi-sidebar a:hover, .emploi-sidebar .active { color: #fff; }
-        .emploi-main { flex: 1; min-width: 0; }
-        .emploi-topbar { background: #fff; border-bottom: 1px solid #e5e7eb; }
-        .metric-card { border: 0; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
-        .field-error { border: 2px solid #dc3545 !important; background-color: #fff5f5 !important; }
-        .field-error-text { color: #dc3545; font-size: .875rem; margin-top: .35rem; display: none; }
-        .field-error-text.visible { display: block; }
-        @media (max-width: 991.98px) { .emploi-sidebar { width: 100%; } }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Back Office - Ajouter offre | EduMatch Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap" />
+  <link rel="stylesheet" href="<?= $BO ?>/assets/css/theme.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css" />
+  <script src="<?= $BO ?>/assets/js/vendors/color-modes.js"></script>
+  <script>
+    if(localStorage.getItem('sidebarExpanded')==='false'){document.documentElement.classList.add('collapsed');document.documentElement.classList.remove('expanded');}
+    else{document.documentElement.classList.remove('collapsed');document.documentElement.classList.add('expanded');}
+  </script>
+  <style>
+    .field-error { border: 2px solid #dc3545 !important; background-color: #fff5f5 !important; }
+    .field-error-text { color: #dc3545; font-size: .875rem; margin-top: .35rem; display: none; }
+    .field-error-text.visible { display: block; }
+  </style>
 </head>
 <body>
-    <div class="emploi-shell d-flex">
-        <aside class="emploi-sidebar d-none d-lg-flex flex-column">
-            
-            <?php $activeTab = 'ajouter'; include __DIR__ . '/../partials/nav.php'; ?>
-        </aside>
+  <div>
+    <?php include __DIR__ . '/../../../partials_php/sidebar.php'; ?>
+    <div id="content" class="position-relative h-100">
+      <?php include __DIR__ . '/../../../partials_php/topbar.php'; ?>
+      <div class="custom-container">
 
-        <div class="emploi-main">
-            <header class="emploi-topbar px-4 py-3 d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="mb-1 text-secondary small">Module Offres d'emploi</p>
-                    <h1 class="h4 mb-0">Ajouter une offre</h1>
-                </div>
-                <a class="btn btn-outline-secondary" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste">Retour liste</a>
-            </header>
+        <div class="row mb-6 g-6 align-items-end">
+          <div class="col-lg-8">
+            <p class="text-uppercase text-secondary small mb-2">Module Offres d'emploi</p>
+            <h1 class="mb-0">Ajouter une offre</h1>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <a class="btn btn-outline-secondary" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste">
+              <i class="ti ti-arrow-left me-1"></i> Retour liste
+            </a>
+          </div>
+        </div>
 
-            <main class="container-fluid p-4 p-lg-5">
-                <div class="card metric-card">
+                <div class="card border-0 shadow-sm">
                     <div class="card-body p-4">
                         <?php
                         $fieldErrors = $fieldErrors ?? [];
@@ -76,20 +76,20 @@
                                 <div class="field-error-text<?= !empty($fieldErrors['type_contrat']) ? ' visible' : '' ?>" data-error-for="type_contrat"><?= $errorFor('type_contrat') ?></div>
                             </div>
                             <div class="col-md-6">
-                                <label for="datelimite" class="form-label">Date limite *</label>
-                                <input type="datetime-local" id="datelimite" name="datelimite" class="form-control<?= !empty($fieldErrors['date_limite']) ? ' field-error' : '' ?>" value="<?= $old('date_limite') ?>">
-                                <div class="field-error-text<?= !empty($fieldErrors['date_limite']) ? ' visible' : '' ?>" data-error-for="datelimite"><?= $errorFor('date_limite') ?></div>
+                                <label for="date_limite" class="form-label">Date limite *</label>
+                                <input type="datetime-local" id="date_limite" name="date_limite" class="form-control<?= !empty($fieldErrors['date_limite']) ? ' field-error' : '' ?>" value="<?= $old('date_limite') ?>">
+                                <div class="field-error-text<?= !empty($fieldErrors['date_limite']) ? ' visible' : '' ?>" data-error-for="date_limite"><?= $errorFor('date_limite') ?></div>
                             </div>
 
                             <div class="col-md-6">
-                                <label for="salairemin" class="form-label">Salaire min</label>
-                                <input type="number" step="0.01" id="salairemin" name="salairemin" class="form-control<?= !empty($fieldErrors['salaire_min']) ? ' field-error' : '' ?>" value="<?= $old('salaire_min') ?>">
-                                <div class="field-error-text<?= !empty($fieldErrors['salaire_min']) ? ' visible' : '' ?>" data-error-for="salairemin"><?= $errorFor('salaire_min') ?></div>
+                                <label for="salaire_min" class="form-label">Salaire min</label>
+                                <input type="number" step="0.01" id="salaire_min" name="salaire_min" class="form-control<?= !empty($fieldErrors['salaire_min']) ? ' field-error' : '' ?>" value="<?= $old('salaire_min') ?>">
+                                <div class="field-error-text<?= !empty($fieldErrors['salaire_min']) ? ' visible' : '' ?>" data-error-for="salaire_min"><?= $errorFor('salaire_min') ?></div>
                             </div>
                             <div class="col-md-6">
-                                <label for="salairemax" class="form-label">Salaire max</label>
-                                <input type="number" step="0.01" id="salairemax" name="salairemax" class="form-control<?= !empty($fieldErrors['salaire_max']) ? ' field-error' : '' ?>" value="<?= $old('salaire_max') ?>">
-                                <div class="field-error-text<?= !empty($fieldErrors['salaire_max']) ? ' visible' : '' ?>" data-error-for="salairemax"><?= $errorFor('salaire_max') ?></div>
+                                <label for="salaire_max" class="form-label">Salaire max</label>
+                                <input type="number" step="0.01" id="salaire_max" name="salaire_max" class="form-control<?= !empty($fieldErrors['salaire_max']) ? ' field-error' : '' ?>" value="<?= $old('salaire_max') ?>">
+                                <div class="field-error-text<?= !empty($fieldErrors['salaire_max']) ? ' visible' : '' ?>" data-error-for="salaire_max"><?= $errorFor('salaire_max') ?></div>
                             </div>
 
                             <div class="col-12">
@@ -118,12 +118,15 @@
                         </form>
                     </div>
                 </div>
-            </main>
-        </div>
-    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../dasher-1.0.0/src/assets/js/main.js"></script>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js"></script>
+  <script src="<?= $BO ?>/assets/js/main.js"></script>
+  <script src="<?= $BO ?>/assets/js/vendors/sidebarnav.js"></script>
     <script>
         (function () {
             const form = document.getElementById('offre-form');
@@ -133,8 +136,8 @@
                 titre: 'Le titre est obligatoire.',
                 description: 'La description est obligatoire.',
                 lieu: 'Le lieu est obligatoire.',
-                typecontrat: 'Le type de contrat est obligatoire.',
-                datelimite: 'La date limite est obligatoire.'
+                type_contrat: 'Le type de contrat est obligatoire.',
+                date_limite: 'La date limite est obligatoire.'
             };
 
             const textLikePattern = /^(?=.*[A-Za-zÀ-ÿ])[A-Za-zÀ-ÿ0-9\s\-'.\/,]{2,100}$/;

@@ -393,6 +393,25 @@ class CandidatureController
                 'statut' => 'en_attente',
             ]);
 
+            // Envoi mail de confirmation au candidat
+            try {
+                require_once __DIR__ . '/../../api/Mailer.php';
+                $mailer = new Mailer();
+                $mailer->sendFromTemplate(
+                    $formData['email'],
+                    'Confirmation de candidature - ' . ($selectedOffer['titre'] ?? 'EduMatch'),
+                    __DIR__ . '/../../view/emails/candidature_recue.php',
+                    [
+                        'candidat_nom'        => $formData['prenom'] . ' ' . $formData['nom'],
+                        'offre_titre'         => $selectedOffer['titre'] ?? '',
+                        'offre_lieu'          => $selectedOffer['lieu'] ?? '',
+                        'offre_type_contrat'  => $selectedOffer['type_contrat'] ?? '',
+                    ]
+                );
+            } catch (Throwable $mailEx) {
+                error_log('Confirmation email failed for candidature #' . $newId . ': ' . $mailEx->getMessage());
+            }
+
             try {
                 $analysis = $this->cvMatchService->analyze([
                     'cv_file_path' => $cvUploadData['cv_file_path'],

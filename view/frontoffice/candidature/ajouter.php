@@ -22,6 +22,14 @@ $recaptchaSiteKey = $recaptchaSiteKey ?? '';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Jost:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS eduleb (pour navbar EduMatch + footer) -->
+    <link rel="stylesheet" href="/gestion_users/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="/gestion_users/assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="/gestion_users/assets/fonts/themify-icons.css">
+    <link rel="stylesheet" href="/gestion_users/assets/css/jquery-simple-mobilemenu.css">
+    <link rel="stylesheet" href="/gestion_users/assets/css/style.css">
+    <!-- Bootstrap 5.3 (Pour le formulaire candidature) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
@@ -127,24 +135,12 @@ $recaptchaSiteKey = $recaptchaSiteKey ?? '';
         }
     </style>
 </head>
-<body>
-    <div class="shell">
-        <div class="topbar py-3">
-            <div class="container d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="brand-dot">PW</div>
-                    <div>
-                        <div class="fw-bold">ProjetWeb2A35</div>
-                        <small class="text-white-50">Formulaire de candidature</small>
-                    </div>
-                </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <a href="/gestion_users/controller/OffreEmploiController.php?espace=front&action=liste" class="btn-secondary-job">Offres ouvertes</a>
-                    <a href="/gestion_users/controller/CandidatureController.php?espace=back&action=liste" class="btn-secondary-job">Administration</a>
-                </div>
-            </div>
-        </div>
+<body data-spy="scroll" data-offset="80">
+    <div class="preloaders"><span class="loader"></span></div>
 
+    <?php include $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/view/template/_navbar.php'; ?>
+
+    <div class="shell">
         <main class="container py-5">
             <div class="row g-4 align-items-start">
                 <div class="col-lg-5">
@@ -183,7 +179,7 @@ $recaptchaSiteKey = $recaptchaSiteKey ?? '';
                         <?php endif; ?>
 
                         <form method="post" class="row g-3" novalidate autocomplete="off" enctype="multipart/form-data" id="candidature-form">
-                            <input type="hidden" name="offreid" value="<?= htmlspecialchars((string) $formData['offre_id']) ?>">
+                            <input type="hidden" name="offre_id" value="<?= htmlspecialchars((string) $formData['offre_id']) ?>">
                             <?php if (!empty($fieldErrors['offre_id'])): ?>
                                 <div class="col-12">
                                     <div class="alert alert-warning mb-0"><?= htmlspecialchars((string) $fieldErrors['offre_id']) ?></div>
@@ -224,8 +220,8 @@ $recaptchaSiteKey = $recaptchaSiteKey ?? '';
                             </div>
 
                             <div class="col-12">
-                                <label class="form-label" for="lettremotivation">Lettre de motivation *</label>
-                                <textarea id="lettremotivation" name="lettremotivation" class="form-control<?= !empty($fieldErrors['lettre_motivation']) ? ' field-error' : '' ?>" rows="8" autocomplete="new-password"><?= htmlspecialchars((string) $formData['lettre_motivation']) ?></textarea>
+                                <label class="form-label" for="lettre_motivation">Lettre de motivation *</label>
+                                <textarea id="lettre_motivation" name="lettre_motivation" class="form-control<?= !empty($fieldErrors['lettre_motivation']) ? ' field-error' : '' ?>" rows="8" autocomplete="new-password"><?= htmlspecialchars((string) $formData['lettre_motivation']) ?></textarea>
                                 <?php if (!empty($fieldErrors['lettre_motivation'])): ?>
                                     <div class="field-error-text"><?= htmlspecialchars((string) $fieldErrors['lettre_motivation']) ?></div>
                                 <?php endif; ?>
@@ -254,6 +250,67 @@ $recaptchaSiteKey = $recaptchaSiteKey ?? '';
         </main>
     </div>
 
+    <!-- FOOTER EduMatch -->
+    <footer class="modern-footer bg-dark text-white py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4 col-md-6 mb-4">
+            <a href="/gestion_users/view/template/index.php" class="text-decoration-none">
+              <img src="/gestion_users/assets/img/logo.png" alt="EduMatch Logo" class="mb-3" style="height: 50px;">
+            </a>
+            <p class="mt-3 text-light opacity-75">Plateforme intelligente de mise en relation des etudiants avec des professeurs experts dans toutes les matieres academiques pour des experiences d'apprentissage personnalisees.</p>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Plateforme</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="/gestion_users/view/template/index.php" class="text-light text-decoration-none">Accueil</a></li>
+              <?php if (empty($_SESSION['user_id'])): ?>
+              <li class="mb-2"><a href="/gestion_users/view/template/sign-in.php" class="text-light text-decoration-none">Connexion</a></li>
+              <li class="mb-2"><a href="/gestion_users/view/template/sign-up.php" class="text-light text-decoration-none">Inscription</a></li>
+              <?php else: ?>
+              <li class="mb-2"><a href="/gestion_users/view/template/profil.php" class="text-light text-decoration-none">Mon Profil</a></li>
+              <li class="mb-2"><a href="/gestion_users/auth/logout" class="text-light text-decoration-none">Deconnexion</a></li>
+              <?php endif; ?>
+            </ul>
+          </div>
+          <div class="col-lg-2 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Matieres academiques</h5>
+            <ul class="list-unstyled">
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematiques</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Programmation</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Algorithmique</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Langues</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences humaines</a></li>
+            </ul>
+          </div>
+          <div class="col-lg-4 col-md-6 mb-4">
+            <h5 class="fw-bold mb-3">Coordonnees</h5>
+            <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Tunis, Tunisie</p>
+            <p class="mb-2"><i class="fas fa-phone me-2"></i>+216 90 549 254</p>
+            <p class="mb-2"><i class="fas fa-envelope me-2"></i>edumatch@gmail.com</p>
+          </div>
+        </div>
+        <hr class="my-4 opacity-25">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. Tous droits reserves.</p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <a href="#" class="text-light text-decoration-none me-3">Politique de confidentialite</a>
+            <a href="#" class="text-light text-decoration-none me-3">Conditions d'utilisation</a>
+            <a href="#" class="text-light text-decoration-none">Assistance</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <!-- END FOOTER -->
+
+    <!-- JS eduleb (pour navbar mobile + dropdown user) -->
+    <script src="/gestion_users/assets/js/jquery-1.12.4.min.js"></script>
+    <script src="/gestion_users/assets/js/jquery-simple-mobilemenu.js"></script>
+    <script src="/gestion_users/assets/js/scripts.js"></script>
+    <!-- Bootstrap 5.3 (Pour le formulaire) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <?php if (!empty($recaptchaSiteKey) && $recaptchaSiteKey !== 'your-site-key'): ?>
         <script src="https://www.google.com/recaptcha/api.js" async defer></script>
