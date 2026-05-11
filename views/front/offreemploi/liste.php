@@ -6,6 +6,7 @@ $filterState = $filterState ?? [
     'sort_dir' => 'desc',
     'sort_fields' => ['titre', 'lieu', 'typecontrat', 'datecreation', 'datelimite', 'statut'],
 ];
+
 $formatDateTime = static function ($value): string {
     $value = trim((string) $value);
 
@@ -19,6 +20,24 @@ $formatDateTime = static function ($value): string {
         return $value;
     }
 };
+
+$moduleLinks = [
+    "Offre d'emploi" => 'index.php?espace=front&module=offreemploi&action=liste',
+];
+
+$activeCount = 0;
+foreach ($offres as $offreItem) {
+    if (($offreItem['statut'] ?? '') === 'ouverte') {
+        $activeCount++;
+    }
+}
+
+$images = [
+    'assets/img/course/1.png',
+    'assets/img/course/2.png',
+    'assets/img/course/3.png',
+    'assets/img/course/4.png',
+];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -26,107 +45,277 @@ $formatDateTime = static function ($value): string {
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Offres d'emploi - Front Office</title>
-    <link rel="stylesheet" href="../assets/bootstrap/css/bootstrap.min.css">
+    <title>Offres d'emploi - EduMatch</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="../assets/fonts/font-awesome.min.css">
-    <link rel="stylesheet" href="../assets/fonts/themify-icons.css">
-    <link rel="stylesheet" href="../assets/owlcarousel/css/owl.carousel.css">
-    <link rel="stylesheet" href="../assets/owlcarousel/css/owl.theme.css">
-    <link rel="stylesheet" href="../assets/css/jquery-simple-mobilemenu.css">
-    <link rel="stylesheet" href="../assets/css/magnific-popup.css">
-    <link rel="stylesheet" href="../assets/css/animate.css">
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/fonts/themify-icons.css">
+    <link rel="stylesheet" href="assets/owlcarousel/css/owl.carousel.css">
+    <link rel="stylesheet" href="assets/owlcarousel/css/owl.theme.css">
+    <link rel="stylesheet" href="assets/css/jquery-simple-mobilemenu.css">
+    <link rel="stylesheet" href="assets/css/magnific-popup.css">
+    <link rel="stylesheet" href="assets/css/animate.css">
+    <link rel="stylesheet" href="assets/css/style.css">
     <style>
-        .search-row-hide {
-            display: none !important;
+        .page-surface {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, .84), rgba(255, 255, 255, .96)),
+                url('assets/img/bg/section-top.jpg') center/cover no-repeat fixed;
+        }
+
+        .hero-offer {
+            position: relative;
+            padding: 95px 0 65px;
+            overflow: hidden;
+        }
+
+        .hero-offer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 18% 15%, rgba(82, 95, 225, .18), transparent 28%), radial-gradient(circle at 85% 20%, rgba(0, 214, 201, .14), transparent 24%);
+            pointer-events: none;
+        }
+
+        .hero-panel {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, .82);
+            border: 1px solid rgba(15, 23, 42, .08);
+            border-radius: 30px;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, .10);
+            padding: 34px;
+            backdrop-filter: blur(12px);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: rgba(82, 95, 225, .10);
+            color: #4250d8;
+            font-weight: 700;
+            font-size: .9rem;
+            margin-bottom: 18px;
+        }
+
+        .hero-title {
+            font-family: 'Jost', sans-serif;
+            font-size: clamp(1.7rem, 4.5vw, 3.5rem);
+            line-height: .98;
+            letter-spacing: -.04em;
+            margin: 0 0 16px;
+        }
+
+        .hero-copy {
+            max-width: 72ch;
+            color: #5b6478;
+            font-size: 1.05rem;
+            line-height: 1.85;
+            margin-bottom: 24px;
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 22px;
+        }
+
+        .stat-card {
+            border-radius: 22px;
+            background: rgba(248, 250, 255, .9);
+            border: 1px solid rgba(15, 23, 42, .06);
+            padding: 16px;
+        }
+
+        .stat-card strong {
+            display: block;
+            font-family: 'Jost', sans-serif;
+            font-size: 1.6rem;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .stat-card span {
+            color: #64748b;
+            font-size: .95rem;
+        }
+
+        .filter-shell {
+            margin-top: -24px;
+            position: relative;
+            z-index: 2;
         }
 
         .filter-card {
             border: 0;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, .08);
-            border-radius: 18px;
+            border-radius: 28px;
+            box-shadow: 0 16px 50px rgba(15, 23, 42, .08);
+            overflow: hidden;
+        }
+
+        .filter-card .card-body {
+            padding: 28px;
         }
 
         .filter-title {
             font-size: .82rem;
-            letter-spacing: .04em;
+            letter-spacing: .05em;
             text-transform: uppercase;
             color: #64748b;
             font-weight: 700;
+            margin-bottom: 10px;
         }
 
         .radio-inline-wrap {
             display: flex;
-            gap: 1.25rem;
+            gap: 1rem;
             flex-wrap: wrap;
         }
 
-        .home_course .row > [class*="col-"] {
+        .toolbar-row {
+            margin: 20px 0 8px;
+            align-items: center;
+        }
+
+        .toolbar-row .badge {
+            border-radius: 999px;
+            padding: .55rem .9rem;
+        }
+
+        .offer-grid {
+            margin-top: 18px;
+        }
+
+        .offer-grid .col-lg-4,
+        .offer-grid .col-md-6,
+        .offer-grid .col-sm-12 {
             display: flex;
         }
 
-        .home_course .single_course {
+        .single_course.offer-card {
+            width: 100%;
             display: flex;
             flex-direction: column;
-            width: 100%;
-            height: 100%;
-            min-height: 390px;
-        }
-
-        .home_course .single_c_img {
-            height: 200px;
+            min-height: 100%;
+            border-radius: 26px;
             overflow: hidden;
+            background: #fff;
+            box-shadow: 0 14px 40px rgba(15, 23, 42, .08);
+            transition: transform .2s ease, box-shadow .2s ease;
         }
 
-        .home_course .single_c_img img {
+        .single_course.offer-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 24px 50px rgba(15, 23, 42, .12);
+        }
+
+        .single_c_img {
+            position: relative;
+            overflow: hidden;
+            height: 220px;
+        }
+
+        .single_c_img img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .home_course .single_course h4 {
-            margin: 14px 16px 8px;
-            min-height: 2.6em;
-            line-height: 1.3;
-            display: -webkit-box;
-            line-clamp: 2;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+        .offer-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0) 20%, rgba(2, 6, 23, .6) 100%);
+            z-index: 1;
         }
 
-        .home_course .single_course h4 a {
-            display: inline-block;
-            line-height: 1.3;
+        .offer-body {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 22px;
+            flex: 1;
         }
 
-        .home_course .single_course p {
-            min-height: 0;
-            margin: 0 16px 6px;
-            line-height: 1.25;
+        .offer-title {
+            font-family: 'Jost', sans-serif;
+            font-size: 1.35rem;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .offer-title a {
+            color: #0b104a;
+            text-decoration: none;
+        }
+
+        .offer-title a:hover {
+            color: #525fe1;
+        }
+
+        .offer-meta {
+            display: grid;
+            gap: 8px;
+            color: #5b6478;
+            font-size: .96rem;
+        }
+
+        .offer-meta p {
+            margin: 0;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .home_course .offre-card-actions {
+        .offer-actions {
             margin-top: auto;
-            margin-left: 16px;
-            margin-right: 16px;
-            margin-bottom: 12px;
-            min-height: 78px;
+            display: grid;
+            gap: 10px;
+            padding-top: 8px;
         }
 
-        @media (max-width: 768px) {
-            .home_course .single_course {
-                min-height: 380px;
+        .offer-actions .btn-outline-primary {
+            border-color: rgba(82, 95, 225, .25);
+            color: #4250d8;
+        }
+
+        .empty-state {
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, .07);
+            padding: 24px;
+        }
+
+        @media (max-width: 991.98px) {
+            .hero-offer {
+                padding-top: 72px;
             }
 
-            .home_course .single_c_img {
-                height: 190px;
+            .hero-panel {
+                padding: 26px;
+            }
+
+            .hero-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .filter-shell {
+                margin-top: 0;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .single_c_img {
+                height: 200px;
+            }
+
+            .filter-card .card-body {
+                padding: 20px;
             }
         }
     </style>
@@ -136,61 +325,49 @@ $formatDateTime = static function ($value): string {
         <span class="loader"></span>
     </div>
 
-    <div id="navigation" class="navbar-light bg-faded site-navigation">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-20 align-self-center">
-                    <div class="site-logo">
-                        <a href="../view/template/index.html"><img src="../assets/img/logo.png" alt="logo"></a>
-                    </div>
-                </div>
-                <div class="col-60 d-flex">
-                    <nav id="main-menu">
-                        <ul>
-                            <li><a href="index.php?espace=front&module=offreemploi&action=liste">Offres d'emploi</a></li>
-                            <li><a href="../view/template/about.html">About</a></li>
-                            <li><a href="../view/template/contact.html">Contact</a></li>
-                        </ul>
-                    </nav>
-                </div>
-                <div class="col-20 d-none d-xl-block text-end align-self-center">
-                    <a href="index.php?espace=back&module=offreemploi&action=liste" class="btn_one">Back Office</a>
-                </div>
-                <ul class="mobile_menu">
-                    <li><a href="index.php?espace=front&module=offreemploi&action=liste">Offres</a></li>
-                    <li><a href="index.php?espace=back&module=offreemploi&action=liste">Back Office</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+    <?php include __DIR__ . '/../partials/navbar.php'; ?>
 
-    <section class="section-top">
+    <section class="hero-offer page-surface">
         <div class="container">
-            <div class="col-lg-10 offset-lg-1 text-center">
-                <div class="section-top-title wow fadeInRight" data-wow-duration="1s" data-wow-delay="0.3s" data-wow-offset="0">
-                    <h1>Offres d'emploi disponibles</h1>
-                    <ul>
-                        <li><a href="index.php?espace=front&module=offreemploi&action=liste">Front Office</a></li>
-                        <li> / Liste des offres</li>
-                    </ul>
+            <div class="hero-panel">
+                <div class="row align-items-center g-4">
+                    <div class="col-lg-8">
+                        <div class="eyebrow"><i class="fa-solid fa-briefcase"></i> Offres d'emploi disponibles</div>
+                        <h1 class="hero-title">Des opportunités claires, avec un parcours de candidature direct.</h1>
+                        <p class="hero-copy">
+                            Explorez les postes ouverts, comparez les détails importants et accédez en un clic au formulaire de candidature.
+                            Le design met en avant les offres actives et garde les actions essentielles visibles sans surcharge.
+                        </p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="#offres" class="btn_one">Voir les offres</a>
+                        </div>
+                        <div class="hero-stats">
+                            <div class="stat-card">
+                                <strong><?= count($offres) ?></strong>
+                                <span>offres affichées</span>
+                            </div>
+                            <div class="stat-card">
+                                <strong><?= (int) $activeCount ?></strong>
+                                <span>offres ouvertes</span>
+                            </div>
+                            <div class="stat-card">
+                                <strong>1 clic</strong>
+                                <span>vers la candidature</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 d-none d-lg-block">
+                        <div class="hero-panel" style="padding: 18px; background: rgba(255,255,255,.56); box-shadow:none; border-radius: 22px;">
+                            <img src="assets/img/course/1.png" alt="Aperçu offre" class="img-fluid rounded-4 shadow-sm">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="home_course section-padding">
+    <section id="offres" class="section-padding filter-shell">
         <div class="container">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-3">
-                        <div>
-                            <strong>Candidature active.</strong> Une offre ouverte peut maintenant recevoir une candidature directement depuis cette page.
-                        </div>
-                        <a href="index.php?espace=front&module=candidature&action=liste" class="btn btn-sm btn-primary">Acceder au formulaire</a>
-                    </div>
-                </div>
-            </div>
-
             <form method="get" action="index.php" class="mb-4">
                 <input type="hidden" name="espace" value="front">
                 <input type="hidden" name="module" value="offreemploi">
@@ -199,16 +376,16 @@ $formatDateTime = static function ($value): string {
                 <div class="row g-3">
                     <div class="col-lg-6">
                         <div class="card filter-card h-100">
-                            <div class="card-body p-4">
-                                <div class="filter-title mb-2">Recherche globale</div>
+                            <div class="card-body">
+                                <div class="filter-title">Recherche globale</div>
                                 <label class="form-label" for="q">Texte à rechercher</label>
                                 <input
                                     type="text"
                                     id="q"
                                     name="q"
-                                    class="form-control"
+                                    class="form-control form-control-lg"
                                     value="<?= htmlspecialchars((string) ($filterState['q'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                                    placeholder="Rechercher..."
+                                    placeholder="Titre, lieu, contrat, statut..."
                                     autocomplete="off"
                                 >
                             </div>
@@ -217,28 +394,28 @@ $formatDateTime = static function ($value): string {
 
                     <div class="col-lg-6">
                         <div class="card filter-card h-100">
-                            <div class="card-body p-4">
-                                <div class="filter-title mb-2">Zone de tri</div>
+                            <div class="card-body">
+                                <div class="filter-title">Tri</div>
                                 <label class="form-label" for="sort_by">Trier par</label>
-                                <select id="sort_by" name="sort_by" class="form-select mb-3">
+                                <select id="sort_by" name="sort_by" class="form-select form-select-lg mb-3">
                                     <?php $selectedSortBy = (string) ($filterState['sort_by'] ?? 'datecreation'); ?>
-                                    <option value="titre" <?= $selectedSortBy === 'titre' ? 'selected' : '' ?>>titre</option>
-                                    <option value="lieu" <?= $selectedSortBy === 'lieu' ? 'selected' : '' ?>>lieu</option>
-                                    <option value="typecontrat" <?= $selectedSortBy === 'typecontrat' ? 'selected' : '' ?>>type de contrat</option>
-                                    <option value="datecreation" <?= $selectedSortBy === 'datecreation' ? 'selected' : '' ?>>date de creation</option>
-                                    <option value="datelimite" <?= $selectedSortBy === 'datelimite' ? 'selected' : '' ?>>date limite</option>
-                                    <option value="statut" <?= $selectedSortBy === 'statut' ? 'selected' : '' ?>>statut</option>
+                                    <option value="titre" <?= $selectedSortBy === 'titre' ? 'selected' : '' ?>>Titre</option>
+                                    <option value="lieu" <?= $selectedSortBy === 'lieu' ? 'selected' : '' ?>>Lieu</option>
+                                    <option value="typecontrat" <?= $selectedSortBy === 'typecontrat' ? 'selected' : '' ?>>Type de contrat</option>
+                                    <option value="datecreation" <?= $selectedSortBy === 'datecreation' ? 'selected' : '' ?>>Date de création</option>
+                                    <option value="datelimite" <?= $selectedSortBy === 'datelimite' ? 'selected' : '' ?>>Date limite</option>
+                                    <option value="statut" <?= $selectedSortBy === 'statut' ? 'selected' : '' ?>>Statut</option>
                                 </select>
 
                                 <?php $selectedSortDir = (string) ($filterState['sort_dir'] ?? 'desc'); ?>
                                 <div class="radio-inline-wrap">
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="sort_dir" id="sort_dir_asc" value="asc" <?= $selectedSortDir === 'asc' ? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="sort_dir_asc">ascending</label>
+                                        <label class="form-check-label" for="sort_dir_asc">Croissant</label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="sort_dir" id="sort_dir_desc" value="desc" <?= $selectedSortDir !== 'asc' ? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="sort_dir_desc">descending</label>
+                                        <label class="form-check-label" for="sort_dir_desc">Décroissant</label>
                                     </div>
                                 </div>
                             </div>
@@ -252,45 +429,47 @@ $formatDateTime = static function ($value): string {
                 </div>
             </form>
 
-            <div class="row mb-3">
-                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div class="text-secondary small">Les résultats se filtrent en direct pendant la saisie.</div>
-                    <span id="offre-count-badge" class="badge bg-primary"><?= count($offres) ?> offre(s)</span>
-                </div>
+            <div class="d-flex justify-content-end mb-4">
+                <span id="offre-count-badge" class="badge bg-primary"><?= count($offres) ?> offre(s)</span>
             </div>
 
-            <div class="row">
+            <div class="row offer-grid">
                 <?php if (empty($offres)): ?>
                     <div class="col-12">
-                        <div class="alert alert-info">Aucune offre disponible pour le moment.</div>
+                        <div class="empty-state text-center">
+                            <h3 class="mb-2">Aucune offre disponible pour le moment</h3>
+                            <p class="text-secondary mb-0">Revenez plus tard ou réinitialisez les filtres pour afficher les dernières opportunités.</p>
+                        </div>
                     </div>
                 <?php else: ?>
-                    <?php
-                    $images = [
-                        '../assets/img/course/1.png',
-                        '../assets/img/course/2.png',
-                        '../assets/img/course/3.png',
-                        '../assets/img/course/4.png',
-                    ];
-                    ?>
                     <?php foreach ($offres as $index => $offre): ?>
-                        <div class="col-lg-4 col-sm-6 col-xs-12 offre-card">
-                            <div class="single_course">
+                        <div class="col-lg-4 col-md-6 col-sm-12 offre-card mb-4">
+                            <article class="single_course offer-card">
                                 <div class="single_c_img">
-                                    <img src="<?= htmlspecialchars($images[$index % count($images)]) ?>" class="img-fluid" alt="offre-image" />
-                                    <span class="badge <?= ($offre['statut'] === 'ouverte') ? 'bg-success' : 'bg-danger' ?>"><?= htmlspecialchars((string) $offre['statut']) ?></span>
+                                    <img src="<?= htmlspecialchars($images[$index % count($images)], ENT_QUOTES, 'UTF-8') ?>" class="img-fluid" alt="offre-image">
+                                    <div class="offer-overlay"></div>
                                 </div>
-                                <h4><a href="index.php?espace=front&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>"><?= htmlspecialchars((string) $offre['titre']) ?></a></h4>
-                                <p><span class="ti-location-pin"></span> <?= htmlspecialchars((string) $offre['lieu']) ?></p>
-                                <p><span class="ti-briefcase"></span> <?= htmlspecialchars((string) $offre['typecontrat']) ?></p>
-                                <p><span class="ti-calendar"></span> Date limite: <?= htmlspecialchars($formatDateTime($offre['datelimite'])) ?></p>
-                                <div class="d-grid gap-2 offre-card-actions">
-                                    <a href="index.php?espace=front&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>" class="btn_one">Voir details</a>
-                                    <?php if (($offre['statut'] ?? '') === 'ouverte'): ?>
-                                        <a href="index.php?espace=front&module=candidature&action=ajouter&offreid=<?= (int) $offre['id'] ?>" class="btn btn-outline-primary">Candidater</a>
-                                    <?php endif; ?>
+                                <div class="offer-body">
+                                    <h3 class="offer-title">
+                                        <a href="index.php?espace=front&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>">
+                                            <?= htmlspecialchars((string) $offre['titre']) ?>
+                                        </a>
+                                    </h3>
+                                    <div class="offer-meta">
+                                        <p><span class="ti-location-pin"></span> <?= htmlspecialchars((string) $offre['lieu']) ?></p>
+                                        <p><span class="ti-briefcase"></span> <?= htmlspecialchars((string) $offre['typecontrat']) ?></p>
+                                        <p><span class="ti-calendar"></span> Date limite: <?= htmlspecialchars($formatDateTime($offre['datelimite'])) ?></p>
+                                    </div>
+                                    <div class="offer-actions">
+                                        <a href="index.php?espace=front&module=offreemploi&action=details&id=<?= (int) $offre['id'] ?>" class="btn_one text-center">Voir détails</a>
+                                        <?php if (($offre['statut'] ?? '') === 'ouverte'): ?>
+                                            <a href="index.php?espace=front&module=candidature&action=ajouter&offreid=<?= (int) $offre['id'] ?>" class="btn btn-outline-primary">Candidater</a>
+                                        <?php else: ?>
+                                            <button type="button" class="btn btn-outline-secondary" disabled>Offre fermée</button>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                            </div>
+                            </article>
                         </div>
                     <?php endforeach; ?>
                     <div class="col-12">
@@ -313,17 +492,17 @@ $formatDateTime = static function ($value): string {
         </div>
     </footer>
 
-    <script src="../assets/js/jquery-1.12.4.min.js"></script>
-    <script src="../assets/bootstrap/js/bootstrap.min.js"></script>
-    <script src="../assets/owlcarousel/js/owl.carousel.min.js"></script>
-    <script src="../assets/js/jquery-simple-mobilemenu.js"></script>
-    <script src="../assets/js/wow.min.js"></script>
-    <script src="../assets/js/jquery.inview.min.js"></script>
-    <script src="../assets/js/jquery.magnific-popup.min.js"></script>
-    <script src="../assets/js/modernizr-2.8.3.min.js"></script>
-    <script src="../assets/js/scrolltopcontrol.js"></script>
-    <script src="../assets/js/superMarquee.min.js"></script>
-    <script src="../assets/js/scripts.js"></script>
+    <script src="assets/js/jquery-1.12.4.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/owlcarousel/js/owl.carousel.min.js"></script>
+    <script src="assets/js/jquery-simple-mobilemenu.js"></script>
+    <script src="assets/js/wow.min.js"></script>
+    <script src="assets/js/jquery.inview.min.js"></script>
+    <script src="assets/js/jquery.magnific-popup.min.js"></script>
+    <script src="assets/js/modernizr-2.8.3.min.js"></script>
+    <script src="assets/js/scrolltopcontrol.js"></script>
+    <script src="assets/js/superMarquee.min.js"></script>
+    <script src="assets/js/scripts.js"></script>
     <script>
         (function () {
             const searchInput = document.getElementById('q');
@@ -342,40 +521,30 @@ $formatDateTime = static function ($value): string {
                     .replace(/[\u0300-\u036f]/g, '');
             }
 
-            function updateCount(visibleCount) {
-                if (countBadge) {
-                    countBadge.textContent = visibleCount + ' offre(s)';
-                }
-            }
-
-            function filterOffers() {
+            function updateList() {
                 const query = normalize(searchInput.value.trim());
                 let visibleCount = 0;
 
-                offerCards.forEach(function (card) {
+                offerCards.forEach((card) => {
                     const text = normalize(card.textContent || '');
-                    const isMatch = query === '' || text.includes(query);
-                    card.classList.toggle('search-row-hide', !isMatch);
-                    if (isMatch) {
+                    const visible = query === '' || text.includes(query);
+                    card.style.display = visible ? '' : 'none';
+                    if (visible) {
                         visibleCount += 1;
                     }
                 });
 
+                if (countBadge) {
+                    countBadge.textContent = `${visibleCount} offre(s)`;
+                }
+
                 if (noResultAlert) {
                     noResultAlert.classList.toggle('d-none', visibleCount !== 0);
                 }
-
-                updateCount(visibleCount);
             }
 
-            searchInput.addEventListener('input', filterOffers);
-            searchInput.addEventListener('keydown', function (event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                }
-            });
-
-            filterOffers();
+            searchInput.addEventListener('input', updateList);
+            updateList();
         })();
     </script>
 </body>

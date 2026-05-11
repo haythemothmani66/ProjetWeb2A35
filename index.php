@@ -8,11 +8,12 @@ $dotenv->load();
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/models/OffreEmploi.php';
 require_once __DIR__ . '/models/Candidature.php';
+require_once __DIR__ . '/controllers/front/HomeController.php';
 require_once __DIR__ . '/helpers/Mailer.php';
 require_once __DIR__ . '/helpers/CvMatchService.php';
 
 $espace = $_GET['espace'] ?? 'front';
-$module = $_GET['module'] ?? 'offreemploi';
+$module = $_GET['module'] ?? null;
 $action = $_GET['action'] ?? 'liste';
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
@@ -164,5 +165,29 @@ switch ($module) {
         break;
 }
 
-http_response_code(404);
-echo 'Module or space not found';
+    if ($module === null) {
+        $page = $_GET['page'] ?? 'home';
+
+        switch ($page) {
+            case 'connexion':
+                $controller = new AuthController();
+                $controller->connexion();
+                break;
+
+            case 'inscription':
+                $controller = new AuthController();
+                $controller->inscription();
+                break;
+
+            case 'home':
+            default:
+                $controller = new HomeController();
+                $controller->index();
+                break;
+        }
+
+        exit;
+    }
+
+    http_response_code(404);
+    echo 'Module or space not found';
