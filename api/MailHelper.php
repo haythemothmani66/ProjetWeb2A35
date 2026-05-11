@@ -335,4 +335,201 @@ class MailHelper
             return false;
         }
     }
+
+    // ============================================================
+    // RESERVATIONS DE SEANCES
+    // ============================================================
+
+    /**
+     * Envoi a l'encadrant : nouvelle reservation a accepter/refuser
+     * Le mail contient 2 liens uniques (token) pour accepter ou refuser
+     */
+    public static function sendReservationToEncadrant(
+        string $emailEncadrant,
+        string $nomEncadrant,
+        string $nomEtudiant,
+        string $dateReservation,
+        string $heureDebut,
+        string $heureFin,
+        string $matiere,
+        string $sujet,
+        string $mode,
+        string $token
+    ): bool {
+        try {
+            $mailer = self::createMailer();
+            $mailer->addAddress($emailEncadrant);
+
+            $base = "http://localhost/gestion_users/api/reservation_response.php";
+            $acceptLink = $base . "?token=" . urlencode($token) . "&action=accept";
+            $refuseLink = $base . "?token=" . urlencode($token) . "&action=refuse";
+            $modeLabel = ($mode === 'presentiel') ? 'Presentiel' : 'En ligne';
+            $sujetSafe = htmlspecialchars($sujet ?: 'Non precise');
+
+            $mailer->Subject = "Nouvelle reservation - " . $nomEtudiant;
+            $mailer->Body = "
+                <!DOCTYPE html>
+                <html><head><style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #6366f1 0%, #8B5CF6 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .info-box { background: white; border-radius: 8px; padding: 15px; margin: 15px 0; }
+                    .info-box p { margin: 5px 0; }
+                    .btn-accept { display: inline-block; background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 5px; }
+                    .btn-refuse { display: inline-block; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 5px; }
+                    .footer { text-align: center; padding: 20px; font-size: 12px; color: #999; }
+                </style></head>
+                <body><div class='container'>
+                    <div class='header'>
+                        <h1>Nouvelle demande de reservation</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Bonjour <strong>{$nomEncadrant}</strong>,</p>
+                        <p>L'etudiant <strong>{$nomEtudiant}</strong> souhaite reserver une seance avec vous.</p>
+                        <div class='info-box'>
+                            <p><strong>📅 Date :</strong> {$dateReservation}</p>
+                            <p><strong>⏰ Horaire :</strong> {$heureDebut} - {$heureFin}</p>
+                            <p><strong>📚 Matiere :</strong> {$matiere}</p>
+                            <p><strong>💬 Sujet :</strong> {$sujetSafe}</p>
+                            <p><strong>🌐 Mode :</strong> {$modeLabel}</p>
+                        </div>
+                        <p>Cliquez sur l'un des boutons ci-dessous pour repondre :</p>
+                        <p style='text-align: center;'>
+                            <a href='{$acceptLink}' class='btn-accept'>✓ Accepter</a>
+                            <a href='{$refuseLink}' class='btn-refuse'>✕ Refuser</a>
+                        </p>
+                        <p style='font-size: 12px; color: #666; margin-top: 20px;'>
+                            Ce lien est unique et ne peut etre utilise qu'une fois. Conservez-le confidentiel.
+                        </p>
+                        <p>Cordialement,<br><strong>L'equipe EduMatch</strong></p>
+                    </div>
+                    <div class='footer'><p>&copy; 2026 EduMatch. Tous droits reserves.</p></div>
+                </div></body></html>
+            ";
+            $mailer->AltBody = "Nouvelle reservation de {$nomEtudiant} le {$dateReservation} a {$heureDebut}. Accepter : {$acceptLink} | Refuser : {$refuseLink}";
+
+            return $mailer->send();
+        } catch (Exception $e) {
+            error_log("MailHelper::sendReservationToEncadrant failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Envoi a l'etudiant : reponse de l'encadrant (acceptee ou refusee)
+     */
+    public static function sendReservationStatusToEtudiant(
+        string $emailEtudiant,
+        string $nomEtudiant,
+        string $nomEncadrant,
+        string $dateReservation,
+        string $heureDebut,
+        string $heureFin,
+        string $matiere,
+        string $statut       // 'acceptee' ou 'refusee'
+    ): bool {
+        try {
+            $mailer = self::createMailer();
+            $mailer->addAddress($emailEtudiant);
+
+            $isAccepted = ($statut === 'acceptee');
+            $title = $isAccepted ? 'Reservation acceptee !' : 'Reservation refusee';
+            $color = $isAccepted ? '#10b981' : '#ef4444';
+            $icon  = $isAccepted ? '✓' : '✕';
+            $message = $isAccepted
+                ? "Bonne nouvelle ! Votre demande de seance a ete <strong>acceptee</strong> par {$nomEncadrant}."
+                : "Votre demande de seance a ete <strong>refusee</strong> par {$nomEncadrant}. Vous pouvez essayer un autre creneau ou un autre encadrant.";
+
+            $mailer->Subject = $title . " - EduMatch";
+            $mailer->Body = "
+                <!DOCTYPE html>
+                <html><head><style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: {$color}; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .header h1 { margin: 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .info-box { background: white; border-radius: 8px; padding: 15px; margin: 15px 0; }
+                    .info-box p { margin: 5px 0; }
+                    .footer { text-align: center; padding: 20px; font-size: 12px; color: #999; }
+                </style></head>
+                <body><div class='container'>
+                    <div class='header'>
+                        <h1>{$icon} {$title}</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Bonjour <strong>{$nomEtudiant}</strong>,</p>
+                        <p>{$message}</p>
+                        <div class='info-box'>
+                            <p><strong>👤 Encadrant :</strong> {$nomEncadrant}</p>
+                            <p><strong>📅 Date :</strong> {$dateReservation}</p>
+                            <p><strong>⏰ Horaire :</strong> {$heureDebut} - {$heureFin}</p>
+                            <p><strong>📚 Matiere :</strong> {$matiere}</p>
+                        </div>
+                        <p>Vous pouvez consulter toutes vos reservations sur votre tableau de bord EduMatch.</p>
+                        <p>Cordialement,<br><strong>L'equipe EduMatch</strong></p>
+                    </div>
+                    <div class='footer'><p>&copy; 2026 EduMatch. Tous droits reserves.</p></div>
+                </div></body></html>
+            ";
+            $mailer->AltBody = "{$title} - Encadrant {$nomEncadrant} le {$dateReservation} a {$heureDebut} ({$matiere}).";
+
+            return $mailer->send();
+        } catch (Exception $e) {
+            error_log("MailHelper::sendReservationStatusToEtudiant failed: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Envoi a l'encadrant : l'etudiant a annule sa reservation
+     */
+    public static function sendCancellationToEncadrant(
+        string $emailEncadrant,
+        string $nomEncadrant,
+        string $nomEtudiant,
+        string $dateReservation,
+        string $heureDebut,
+        string $matiere
+    ): bool {
+        try {
+            $mailer = self::createMailer();
+            $mailer->addAddress($emailEncadrant);
+
+            $mailer->Subject = "Reservation annulee - EduMatch";
+            $mailer->Body = "
+                <!DOCTYPE html>
+                <html><head><style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: #f59e0b; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .info-box { background: white; border-radius: 8px; padding: 15px; margin: 15px 0; }
+                    .footer { text-align: center; padding: 20px; font-size: 12px; color: #999; }
+                </style></head>
+                <body><div class='container'>
+                    <div class='header'><h1>Reservation annulee</h1></div>
+                    <div class='content'>
+                        <p>Bonjour <strong>{$nomEncadrant}</strong>,</p>
+                        <p>L'etudiant <strong>{$nomEtudiant}</strong> a annule sa reservation prevue avec vous :</p>
+                        <div class='info-box'>
+                            <p><strong>📅 Date :</strong> {$dateReservation}</p>
+                            <p><strong>⏰ Horaire :</strong> {$heureDebut}</p>
+                            <p><strong>📚 Matiere :</strong> {$matiere}</p>
+                        </div>
+                        <p>Ce creneau est de nouveau disponible.</p>
+                        <p>Cordialement,<br><strong>L'equipe EduMatch</strong></p>
+                    </div>
+                    <div class='footer'><p>&copy; 2026 EduMatch. Tous droits reserves.</p></div>
+                </div></body></html>
+            ";
+            $mailer->AltBody = "Reservation annulee par {$nomEtudiant} le {$dateReservation} a {$heureDebut} ({$matiere}).";
+
+            return $mailer->send();
+        } catch (Exception $e) {
+            error_log("MailHelper::sendCancellationToEncadrant failed: " . $e->getMessage());
+            return false;
+        }
+    }
 }

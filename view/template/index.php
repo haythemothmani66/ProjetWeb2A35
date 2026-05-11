@@ -211,8 +211,8 @@ try {
             Deja inscrit ? <i class="fas fa-sign-in-alt ms-2"></i>
           </a>
           <?php else: ?>
-          <a href="profil.php" class="btn btn-light btn-lg" style="background: white; color: #f5576c; border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
-            Mon Profil <i class="fas fa-user ms-2"></i>
+          <a href="/gestion_users/view/frontoffice/encadrants_list.php" class="btn btn-light btn-lg" style="background: white; color: #f5576c; border: none; padding: 1rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+            Reserver une seance <i class="fas fa-calendar-plus ms-2"></i>
           </a>
           <?php endif; ?>
         </div>

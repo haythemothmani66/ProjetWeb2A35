@@ -66,6 +66,15 @@ if (!empty($_SESSION['user_id'])) {
             <i class="fas fa-chevron-down dropdown-caret"></i>
             <div class="user-dropdown-menu" id="userDropdownMenu">
               <a href="<?= $baseUrl ?>/view/template/profil.php"><i class="fas fa-user"></i> Mon Profil</a>
+              <?php $_r = $_SESSION['user_role'] ?? ''; ?>
+              <?php if ($_r === 'etudiant' || $_r === 'admin'): ?>
+                <a href="<?= $baseUrl ?>/view/frontoffice/encadrants_list.php"><i class="fas fa-calendar-plus"></i> Reserver une seance</a>
+                <a href="<?= $baseUrl ?>/view/frontoffice/mes_reservations.php"><i class="fas fa-calendar-check"></i> Mes reservations</a>
+              <?php endif; ?>
+              <?php if ($_r === 'encadrant' || $_r === 'admin'): ?>
+                <a href="<?= $baseUrl ?>/view/encadrant/dashboard_reservations.php"><i class="fas fa-chalkboard-teacher"></i> Mes seances</a>
+                <a href="<?= $baseUrl ?>/view/encadrant/disponibilites.php"><i class="fas fa-clock"></i> Mes disponibilites</a>
+              <?php endif; ?>
               <hr>
               <a href="<?= $baseUrl ?>/auth/logout"><i class="fas fa-sign-out-alt"></i> Deconnexion</a>
             </div>
