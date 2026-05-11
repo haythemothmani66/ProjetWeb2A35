@@ -144,7 +144,7 @@ class FrontofficeQuizzesController
             'passed' => $passed,
         ];
 
-        header('Location: index.php?route=frontoffice/quizzes/result&id=' . $quizId);
+        header('Location: ' . frontofficeRoute('quizzes', 'result', ['id' => $quizId]));
         exit;
     }
 
@@ -163,7 +163,7 @@ class FrontofficeQuizzesController
         $result = $_SESSION['last_quiz_result'] ?? null;
 
         if (!$result || (int) ($result['quiz_id'] ?? 0) !== $quizId) {
-            header('Location: index.php?route=frontoffice/quizzes/take&id=' . $quizId);
+            header('Location: ' . frontofficeRoute('quizzes', 'take', ['id' => $quizId]));
             exit;
         }
 

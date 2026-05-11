@@ -298,7 +298,11 @@
                                     <i class="fas fa-flag" style="color: #ff9800;"></i> Status
                                 </span>
                                 <span class="detail-value">
-                                    <?= $passed ? 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Passed' : 'ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Failed' ?>
+                                    <?php if ($passed): ?>
+                                        <i class="fas fa-check-circle" style="color: #22c55e;"></i> Passed
+                                    <?php else: ?>
+                                        <i class="fas fa-times-circle" style="color: #ef4444;"></i> Failed
+                                    <?php endif; ?>
                                 </span>
                             </div>
                         </div>

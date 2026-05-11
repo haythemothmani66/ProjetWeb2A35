@@ -280,6 +280,7 @@
     <script src="https://cdn.jsdelivr.net/npm/simplebar@6.2.5/dist/simplebar.min.js"></script>
     <script src="<?= $BO ?>/assets/js/main.js"></script>
     <script src="<?= $BO ?>/assets/js/vendors/sidebarnav.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
         (function () {
             const ctx = document.getElementById('levelChart');

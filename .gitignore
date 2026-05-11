@@ -17,6 +17,15 @@ uploads/courses/*.jpeg
 uploads/courses/*.png
 !uploads/courses/.gitkeep
 
+# Uploads devoirs (fichiers utilisateurs, ne pas versionner)
+uploads/devoirs/*.pdf
+uploads/devoirs/*.doc
+uploads/devoirs/*.docx
+uploads/devoirs/*.png
+uploads/devoirs/*.jpg
+uploads/devoirs/*.jpeg
+!uploads/devoirs/.gitkeep
+
 # Environment variables (API keys)
 .env
 

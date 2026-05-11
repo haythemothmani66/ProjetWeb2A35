@@ -61,7 +61,7 @@ class FrontofficeCertificatesController
             ]);
         }
 
-        header('Location: index.php?route=frontoffice/certificates/show&id=' . $certId);
+        header('Location: ' . frontofficeRoute('certificates', 'show', ['id' => $certId]));
         exit;
     }
 

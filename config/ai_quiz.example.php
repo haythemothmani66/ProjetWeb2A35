@@ -2,12 +2,17 @@
 /**
  * Config IA pour module Quiz - AiCourseGenerator (generation cours via IA)
  *
- * Utilise Groq (compatible OpenAI chat completions API) avec llama-3.3-70b
- * Lit la cle depuis .env (gitignored) pour ne pas exposer de cle sur GitHub
+ * INSTRUCTIONS POUR COEQUIPIERS :
+ * 1. Copier ce fichier en `config/ai_quiz.php`
+ * 2. Ajouter GROQ_API_KEY dans le fichier .env a la racine (deja gitignored) :
+ *    GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx
+ * 3. Recuperer une cle sur https://console.groq.com/keys
+ *
+ * Provider : Groq (compatible OpenAI chat completions API)
+ * Modele recommande : llama-3.3-70b-versatile (gratuit, rapide, bon en multilingue)
  */
 declare(strict_types=1);
 
-// Lecture .env (helper deja existant dans config/ai.php, on le reutilise s'il existe)
 if (!function_exists('_loadDotEnvFile')) {
     function _loadDotEnvFile(string $path): array {
         $vars = [];

@@ -278,13 +278,27 @@
         document.getElementById('nextBtn').style.display = 'none';
         document.getElementById('feedbackBox').innerText = '';
 
-        const optionsHtml = q.responses.map(res => `
-            <button class="option-btn" onclick="handleSelect(${res.id}, ${res.is_correct}, '${res.response_text.replace(/'/g, "\\'")}')">
-                <span>${res.response_text}</span>
-                <span class="ai-choice-badge" id="ai-badge-${res.id}">AI CHOICE</span>
-            </button>
-        `).join('');
-        document.getElementById('qOptions').innerHTML = optionsHtml;
+        // Build buttons via DOM API to safely render texts that may contain HTML chars like <img>, <video>, etc.
+        const container = document.getElementById('qOptions');
+        container.innerHTML = '';
+        q.responses.forEach(res => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.dataset.responseId = res.id; // permet handleSelect de retrouver le bon bouton ensuite
+            btn.addEventListener('click', () => handleSelect(parseInt(res.id), parseInt(res.is_correct), String(res.response_text)));
+
+            const textSpan = document.createElement('span');
+            textSpan.textContent = res.response_text; // textContent = pas d'interpretation HTML
+
+            const aiBadge = document.createElement('span');
+            aiBadge.className = 'ai-choice-badge';
+            aiBadge.id = `ai-badge-${res.id}`;
+            aiBadge.textContent = 'AI CHOICE';
+
+            btn.appendChild(textSpan);
+            btn.appendChild(aiBadge);
+            container.appendChild(btn);
+        });
     }
 
     function handleSelect(selectedId, isCorrect, text) {
@@ -316,8 +330,8 @@
         if (aiBadge) aiBadge.style.display = 'block';
 
         buttons.forEach(btn => {
-            const btnId = parseInt(btn.getAttribute('onclick').match(/\d+/)[0]);
-            if (btnId === correctRes.id) btn.classList.add('correct');
+            const btnId = parseInt(btn.dataset.responseId || '0');
+            if (btnId === parseInt(correctRes.id)) btn.classList.add('correct');
             if (btnId === selectedId && !userWon) btn.classList.add('wrong');
         });
 
