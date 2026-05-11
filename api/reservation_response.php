@@ -69,13 +69,15 @@ if (!in_array($action, ['accept', 'refuse'], true)) {
 try {
     $pdo = Config::getConnexion();
 
-    // Recuperer la reservation
+    // Recuperer la reservation + adresse encadrant (utile si presentiel)
     $stmt = $pdo->prepare("
         SELECT r.*,
                ue.nom AS encadrant_nom, ue.prenom AS encadrant_prenom, ue.email AS encadrant_email,
+               pe.adresse AS encadrant_adresse,
                us.nom AS etudiant_nom, us.prenom AS etudiant_prenom, us.email AS etudiant_email
         FROM reservations r
         INNER JOIN user ue ON ue.id = r.id_encadrant
+        LEFT JOIN profil pe ON pe.user_id = ue.id
         INNER JOIN user us ON us.id = r.id_etudiant
         WHERE r.token_action = ?
         LIMIT 1
@@ -108,7 +110,7 @@ try {
     $upd = $pdo->prepare("UPDATE reservations SET statut = ?, date_reponse = NOW() WHERE id_reservation = ?");
     $upd->execute([$newStatut, $res['id_reservation']]);
 
-    // Envoyer mail a l'etudiant
+    // Envoyer mail a l'etudiant (avec adresse si presentiel + acceptee)
     MailHelper::sendReservationStatusToEtudiant(
         $res['etudiant_email'],
         trim($res['etudiant_prenom'] . ' ' . $res['etudiant_nom']),
@@ -117,7 +119,9 @@ try {
         substr($res['heure_debut'], 0, 5),
         substr($res['heure_fin'], 0, 5),
         $res['matiere'],
-        $newStatut
+        $newStatut,
+        $res['mode'] ?? null,
+        $res['encadrant_adresse'] ?? null
     );
 
     // Page de confirmation pour l'encadrant

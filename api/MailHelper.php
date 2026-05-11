@@ -354,7 +354,8 @@ class MailHelper
         string $matiere,
         string $sujet,
         string $mode,
-        string $token
+        string $token,
+        ?string $adresse = null
     ): bool {
         try {
             $mailer = self::createMailer();
@@ -365,6 +366,11 @@ class MailHelper
             $refuseLink = $base . "?token=" . urlencode($token) . "&action=refuse";
             $modeLabel = ($mode === 'presentiel') ? 'Presentiel' : 'En ligne';
             $sujetSafe = htmlspecialchars($sujet ?: 'Non precise');
+            $adresseBlock = '';
+            if ($mode === 'presentiel' && !empty($adresse)) {
+                $adresseSafe = htmlspecialchars($adresse);
+                $adresseBlock = "<p><strong>📍 Adresse :</strong> {$adresseSafe}</p>";
+            }
 
             $mailer->Subject = "Nouvelle reservation - " . $nomEtudiant;
             $mailer->Body = "
@@ -393,6 +399,7 @@ class MailHelper
                             <p><strong>📚 Matiere :</strong> {$matiere}</p>
                             <p><strong>💬 Sujet :</strong> {$sujetSafe}</p>
                             <p><strong>🌐 Mode :</strong> {$modeLabel}</p>
+                            {$adresseBlock}
                         </div>
                         <p>Cliquez sur l'un des boutons ci-dessous pour repondre :</p>
                         <p style='text-align: center;'>
@@ -427,7 +434,9 @@ class MailHelper
         string $heureDebut,
         string $heureFin,
         string $matiere,
-        string $statut       // 'acceptee' ou 'refusee'
+        string $statut,       // 'acceptee' ou 'refusee'
+        ?string $mode = null,
+        ?string $adresse = null
     ): bool {
         try {
             $mailer = self::createMailer();
@@ -440,6 +449,13 @@ class MailHelper
             $message = $isAccepted
                 ? "Bonne nouvelle ! Votre demande de seance a ete <strong>acceptee</strong> par {$nomEncadrant}."
                 : "Votre demande de seance a ete <strong>refusee</strong> par {$nomEncadrant}. Vous pouvez essayer un autre creneau ou un autre encadrant.";
+
+            // Si seance acceptee + presentiel : ajouter l'adresse pour rappel
+            $adresseBlock = '';
+            if ($isAccepted && $mode === 'presentiel' && !empty($adresse)) {
+                $adresseSafe = htmlspecialchars($adresse);
+                $adresseBlock = "<p><strong>📍 Adresse de la seance :</strong> {$adresseSafe}</p>";
+            }
 
             $mailer->Subject = $title . " - EduMatch";
             $mailer->Body = "
@@ -466,6 +482,7 @@ class MailHelper
                             <p><strong>📅 Date :</strong> {$dateReservation}</p>
                             <p><strong>⏰ Horaire :</strong> {$heureDebut} - {$heureFin}</p>
                             <p><strong>📚 Matiere :</strong> {$matiere}</p>
+                            {$adresseBlock}
                         </div>
                         <p>Vous pouvez consulter toutes vos reservations sur votre tableau de bord EduMatch.</p>
                         <p>Cordialement,<br><strong>L'equipe EduMatch</strong></p>

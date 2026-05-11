@@ -38,7 +38,7 @@ class ReservationController
     {
         $sql = "
             SELECT u.id, u.nom, u.prenom, u.email, u.photo, u.telephone,
-                   p.bio_text, p.niveau, p.specialite, p.etablissement_ecole, p.ville, p.pays
+                   p.bio_text, p.niveau, p.specialite, p.etablissement_ecole, p.ville, p.pays, p.adresse
             FROM user u
             LEFT JOIN profil p ON p.user_id = u.id
             WHERE u.role = 'encadrant' AND u.statut = 1
@@ -76,7 +76,7 @@ class ReservationController
     {
         $stmt = $this->conn->prepare("
             SELECT u.id, u.nom, u.prenom, u.email, u.photo, u.telephone,
-                   p.bio_text, p.niveau, p.specialite, p.etablissement_ecole, p.ville, p.pays
+                   p.bio_text, p.niveau, p.specialite, p.etablissement_ecole, p.ville, p.pays, p.adresse
             FROM user u
             LEFT JOIN profil p ON p.user_id = u.id
             WHERE u.id = ? AND u.role = 'encadrant'
@@ -295,7 +295,7 @@ class ReservationController
             $stud = $studStmt->fetch(PDO::FETCH_ASSOC);
             $nomEtudiant = trim(($stud['prenom'] ?? '') . ' ' . ($stud['nom'] ?? ''));
 
-            // Envoi mail a l'encadrant
+            // Envoi mail a l'encadrant (avec adresse si presentiel)
             MailHelper::sendReservationToEncadrant(
                 $enc['email'],
                 trim(($enc['prenom'] ?? '') . ' ' . ($enc['nom'] ?? '')),
@@ -306,7 +306,8 @@ class ReservationController
                 $matiere,
                 $sujet ?? '',
                 $mode,
-                $token
+                $token,
+                $enc['adresse'] ?? null
             );
 
             return ['success' => true, 'message' => 'Reservation envoyee ! L\'encadrant a recu votre demande par email.', 'reservation_id' => $resId];
@@ -322,7 +323,7 @@ class ReservationController
     {
         $stmt = $this->conn->prepare("
             SELECT r.*, u.nom AS encadrant_nom, u.prenom AS encadrant_prenom, u.email AS encadrant_email, u.photo AS encadrant_photo,
-                   p.specialite AS encadrant_specialite
+                   p.specialite AS encadrant_specialite, p.adresse AS encadrant_adresse
             FROM reservations r
             INNER JOIN user u ON u.id = r.id_encadrant
             LEFT JOIN profil p ON p.user_id = u.id

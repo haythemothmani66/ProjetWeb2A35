@@ -14,11 +14,22 @@ $stmt->execute([$id]);
 $user = $stmt->fetch();
 if (!$user) { $_SESSION['errors'] = ["Utilisateur introuvable."]; header('Location: users.php'); exit; }
 
+// Recuperer specialite + adresse actuelles depuis profil (utile pour encadrants)
+$pStmt = $db->prepare("SELECT specialite, adresse FROM profil WHERE user_id = ? LIMIT 1");
+$pStmt->execute([$id]);
+$profilRow = $pStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+$currentSpecialite = (string) ($profilRow['specialite'] ?? '');
+$currentAdresse    = (string) ($profilRow['adresse'] ?? '');
+
 $nom = $formData['nom'] ?? $user['nom'];
 $prenom = $formData['prenom'] ?? $user['prenom'];
 $email = $formData['email'] ?? $user['email'];
 $telephone = $formData['telephone'] ?? $user['telephone'];
 $role = $formData['role'] ?? $user['role'];
+$verifStudent = isset($formData['verification_student']) ? (int)$formData['verification_student'] : (int)$user['verification_student'];
+$statutCompte = isset($formData['statut']) ? (int)$formData['statut'] : (int)$user['statut'];
+$specialite = $formData['specialite'] ?? $currentSpecialite;
+$adresse    = $formData['adresse']    ?? $currentAdresse;
 $BO = '/gestion_users/view/backoffice/src';
 ?>
 <!DOCTYPE html>
@@ -100,6 +111,7 @@ $BO = '/gestion_users/view/backoffice/src';
                   <select name="role" class="form-select">
                     <option value="etudiant" <?= $role==='etudiant'?'selected':'' ?>>Etudiant</option>
                     <option value="encadrant" <?= $role==='encadrant'?'selected':'' ?>>Encadrant</option>
+                    <option value="partenariat" <?= $role==='partenariat'?'selected':'' ?>>Partenariat</option>
                     <option value="admin" <?= $role==='admin'?'selected':'' ?>>Admin</option>
                   </select>
                 </div>
@@ -107,6 +119,53 @@ $BO = '/gestion_users/view/backoffice/src';
                   <label class="form-label">Nouvelle photo</label>
                   <input type="file" name="photo" class="form-control" accept=".jpg,.jpeg,.png">
                   <small class="text-secondary">Laisser vide pour garder l'actuelle</small>
+                </div>
+
+                <!-- Verification etudiant (manuel par admin) -->
+                <div class="col-md-6">
+                  <label class="form-label">Verification <span class="text-secondary small">(etudiant)</span></label>
+                  <select name="verification_student" class="form-select">
+                    <option value="0" <?= $verifStudent === 0 ? 'selected' : '' ?>>Non verifie</option>
+                    <option value="1" <?= $verifStudent === 1 ? 'selected' : '' ?>>Verifie</option>
+                  </select>
+                  <small class="text-secondary">Verifier manuellement un etudiant active aussi son compte.</small>
+                </div>
+
+                <!-- Statut du compte (Actif / Bloque) -->
+                <div class="col-md-6">
+                  <label class="form-label">Statut du compte</label>
+                  <select name="statut" class="form-select">
+                    <option value="1" <?= $statutCompte === 1 ? 'selected' : '' ?>>Actif</option>
+                    <option value="0" <?= $statutCompte === 0 ? 'selected' : '' ?>>Bloque</option>
+                  </select>
+                  <small class="text-secondary">Bloquer empeche la connexion de l'utilisateur.</small>
+                </div>
+
+                <!-- Specialite (encadrants uniquement) -->
+                <div class="col-md-6 encadrant-only" id="specialiteWrapper" style="display: <?= $role === 'encadrant' ? 'block' : 'none' ?>;">
+                  <label class="form-label">Specialite <span class="text-secondary small">(encadrants)</span></label>
+                  <select name="specialite" id="editSpecialite" class="form-select">
+                    <option value="">-- Selectionnez une specialite --</option>
+                    <?php
+                    $specialitesList = [
+                        'Mathematiques','Physique','Chimie','Informatique','Programmation',
+                        'Algorithmique','Bases de donnees','Reseaux','Cybersecurite',
+                        'Intelligence Artificielle','Data Science','Developpement Web',
+                        'Developpement Mobile','Genie Logiciel','Anglais','Francais',
+                        'Arabe','Espagnol','Economie','Gestion','Comptabilite','Autre',
+                    ];
+                    foreach ($specialitesList as $sp): ?>
+                      <option value="<?= htmlspecialchars($sp) ?>" <?= $specialite === $sp ? 'selected' : '' ?>><?= htmlspecialchars($sp) ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                  <small class="text-secondary">Utilise dans la recherche d'encadrants.</small>
+                </div>
+
+                <!-- Adresse (encadrants uniquement, pour seances en presentiel) -->
+                <div class="col-md-6 encadrant-only" id="adresseWrapper" style="display: <?= $role === 'encadrant' ? 'block' : 'none' ?>;">
+                  <label class="form-label">Adresse <span class="text-secondary small">(encadrants - presentiel)</span></label>
+                  <input type="text" name="adresse" id="editAdresse" class="form-control" value="<?= htmlspecialchars($adresse) ?>" placeholder="Ex : 12 rue de la Liberte, Tunis">
+                  <small class="text-secondary">Visible par les etudiants reservant en presentiel.</small>
                 </div>
               </div>
               <div class="d-flex gap-3 mt-5">
@@ -126,5 +185,32 @@ $BO = '/gestion_users/view/backoffice/src';
   <script src="<?= $BO ?>/assets/js/vendors/sidebarnav.js"></script>
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="/gestion_users/assets/js/validation.js"></script>
+
+  <!-- Toggle specialite + adresse selon role -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var roleSelect = document.querySelector('select[name="role"]');
+    var specialiteWrapper = document.getElementById('specialiteWrapper');
+    var specialiteSelect = document.getElementById('editSpecialite');
+    var adresseWrapper = document.getElementById('adresseWrapper');
+    var adresseInput = document.getElementById('editAdresse');
+
+    function toggleEncadrantFields() {
+      if (!roleSelect) return;
+      var isEnc = roleSelect.value === 'encadrant';
+      if (specialiteWrapper) specialiteWrapper.style.display = isEnc ? 'block' : 'none';
+      if (adresseWrapper)    adresseWrapper.style.display    = isEnc ? 'block' : 'none';
+      if (!isEnc) {
+        if (specialiteSelect) specialiteSelect.value = '';
+        if (adresseInput) adresseInput.value = '';
+      }
+    }
+
+    if (roleSelect) {
+      roleSelect.addEventListener('change', toggleEncadrantFields);
+      toggleEncadrantFields();
+    }
+  });
+  </script>
 </body>
 </html>

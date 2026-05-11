@@ -199,11 +199,24 @@ foreach ($slots as $s) {
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Mode <span class="text-danger">*</span></label>
-                            <select name="mode" class="form-control" required>
+                            <select name="mode" id="modeSelect" class="form-control" required>
                                 <option value="en_ligne">En ligne (visio)</option>
-                                <option value="presentiel">Presentiel</option>
+                                <option value="presentiel" <?= empty($encadrant['adresse']) ? 'disabled' : '' ?>>
+                                    Presentiel<?= empty($encadrant['adresse']) ? ' (indisponible - adresse manquante)' : '' ?>
+                                </option>
                             </select>
                         </div>
+
+                        <!-- Adresse de l'encadrant : visible seulement si mode=presentiel -->
+                        <?php if (!empty($encadrant['adresse'])): ?>
+                          <div class="mb-3" id="adresseEncadrantBlock" style="display: none; background: linear-gradient(135deg, #ddd6fe, #c7d2fe); border-radius: 0.75rem; padding: 1rem; border-left: 4px solid #6366f1;">
+                              <div class="fw-bold mb-1" style="color: #4338ca;">
+                                  <i class="fas fa-map-marker-alt me-2"></i>Adresse de la seance
+                              </div>
+                              <p class="mb-1" style="font-size: 0.92rem;"><?= htmlspecialchars($encadrant['adresse']) ?></p>
+                              <small class="text-muted">Veuillez vous y rendre a l'heure de la seance. L'adresse sera rappelee dans l'email de confirmation.</small>
+                          </div>
+                        <?php endif; ?>
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Notes complementaires</label>
@@ -279,6 +292,18 @@ foreach ($slots as $s) {
                 return false;
             }
         });
+
+        // Toggle affichage adresse selon mode (presentiel)
+        var modeSelect = document.getElementById('modeSelect');
+        var adresseBlock = document.getElementById('adresseEncadrantBlock');
+        function toggleAdresseBlock() {
+            if (!adresseBlock || !modeSelect) return;
+            adresseBlock.style.display = (modeSelect.value === 'presentiel') ? 'block' : 'none';
+        }
+        if (modeSelect) {
+            modeSelect.addEventListener('change', toggleAdresseBlock);
+            toggleAdresseBlock();
+        }
     });
     </script>
 </body>

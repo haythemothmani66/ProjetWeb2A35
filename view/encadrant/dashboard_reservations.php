@@ -34,10 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo = Config::getConnexion();
         $check = $pdo->prepare("
             SELECT r.*, us.email AS etudiant_email, us.nom AS etudiant_nom, us.prenom AS etudiant_prenom,
-                   ue.nom AS encadrant_nom, ue.prenom AS encadrant_prenom
+                   ue.nom AS encadrant_nom, ue.prenom AS encadrant_prenom,
+                   pe.adresse AS encadrant_adresse
             FROM reservations r
             INNER JOIN user us ON us.id = r.id_etudiant
             INNER JOIN user ue ON ue.id = r.id_encadrant
+            LEFT JOIN profil pe ON pe.user_id = ue.id
             WHERE r.id_reservation = ? AND r.id_encadrant = ?
         ");
         $check->execute([$idRes, $userId]);
@@ -46,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($res && $res['statut'] === 'en_attente') {
             $result = $ctrl->updateStatus($idRes, $newStatut, $notes ?: null);
             if ($result['success']) {
-                // Envoyer mail a l'etudiant
+                // Envoyer mail a l'etudiant (avec adresse si presentiel + acceptee)
                 MailHelper::sendReservationStatusToEtudiant(
                     $res['etudiant_email'],
                     trim($res['etudiant_prenom'] . ' ' . $res['etudiant_nom']),
@@ -55,7 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     substr($res['heure_debut'], 0, 5),
                     substr($res['heure_fin'], 0, 5),
                     $res['matiere'],
-                    $newStatut
+                    $newStatut,
+                    $res['mode'] ?? null,
+                    $res['encadrant_adresse'] ?? null
                 );
                 $flash = ['success' => true, 'message' => 'Reservation ' . ($newStatut === 'acceptee' ? 'acceptee' : 'refusee') . ' et email envoye a l\'etudiant.'];
             } else {

@@ -130,6 +130,10 @@ class UserController {
         $email     = trim($_POST['email']      ?? '');
         $telephone = trim($_POST['telephone']  ?? '');
         $role      = trim($_POST['role']       ?? 'etudiant');
+        $verifStudent = isset($_POST['verification_student']) ? (int) $_POST['verification_student'] : null;
+        $statutCompte = isset($_POST['statut']) ? (int) $_POST['statut'] : null;
+        $specialite   = trim($_POST['specialite'] ?? '');
+        $adresseEnc   = trim($_POST['adresse'] ?? '');
 
         // --- Nom ---
         if (empty($nom))                         $errors[] = "Le nom est obligatoire.";
@@ -153,6 +157,23 @@ class UserController {
 
         // --- Rôle ---
         if (!in_array($role, ['admin', 'encadrant', 'etudiant', 'partenariat'])) $errors[] = "Rôle invalide.";
+
+        // --- Verification student & statut (optionnels mais valides si presents) ---
+        if ($verifStudent !== null && !in_array($verifStudent, [0, 1], true)) $errors[] = "Valeur de verification invalide.";
+        if ($statutCompte !== null && !in_array($statutCompte, [0, 1], true)) $errors[] = "Valeur de statut invalide.";
+
+        // --- Specialite + Adresse (uniquement si encadrant) ---
+        if ($role !== 'encadrant') {
+            $specialite = '';
+            $adresseEnc = '';
+        } else {
+            if (mb_strlen($specialite) > 100) {
+                $errors[] = "La specialite ne doit pas depasser 100 caracteres.";
+            }
+            if (!empty($adresseEnc) && mb_strlen($adresseEnc) > 255) {
+                $errors[] = "L'adresse ne doit pas depasser 255 caracteres.";
+            }
+        }
 
         if (empty($errors)) {
             $stmt = $this->db->prepare("SELECT id FROM user WHERE email = ? AND id != ? LIMIT 1");
@@ -188,11 +209,47 @@ class UserController {
             $user->setTelephone($telephone);
             $user->setRole($role);
 
-            $stmt = $this->db->prepare("UPDATE user SET nom=?, prenom=?, email=?, telephone=?, role=?, photo=? WHERE id=?");
+            // Recuperer les valeurs actuelles si non transmises (champs optionnels)
+            $stmtCur = $this->db->prepare("SELECT verification_student, statut FROM user WHERE id = ? LIMIT 1");
+            $stmtCur->execute([$id]);
+            $cur = $stmtCur->fetch(PDO::FETCH_ASSOC);
+            $finalVerif  = $verifStudent !== null ? $verifStudent : (int)$cur['verification_student'];
+            $finalStatut = $statutCompte !== null ? $statutCompte : (int)$cur['statut'];
+
+            // Si l'admin verifie manuellement un etudiant, on active aussi le compte
+            if ($finalVerif === 1 && (int)$cur['verification_student'] === 0) {
+                $finalStatut = 1;
+            }
+
+            $stmt = $this->db->prepare("UPDATE user SET nom=?, prenom=?, email=?, telephone=?, role=?, photo=?, verification_student=?, statut=? WHERE id=?");
             $stmt->execute([
                 $user->getNom(), $user->getPrenom(), $user->getEmail(),
-                $user->getTelephone(), $user->getRole(), $photo, $user->getId()
+                $user->getTelephone(), $user->getRole(), $photo,
+                $finalVerif, $finalStatut,
+                $user->getId()
             ]);
+
+            // Specialite : mise a jour de profil
+            // - Si role = encadrant : on UPSERT la specialite
+            // - Sinon : on met specialite a NULL (au cas ou l'utilisateur etait encadrant avant)
+            $existsStmt = $this->db->prepare("SELECT id_profil FROM profil WHERE user_id = ? LIMIT 1");
+            $existsStmt->execute([$id]);
+            $hasProfil = (bool) $existsStmt->fetchColumn();
+
+            if ($role === 'encadrant') {
+                $specValue = $specialite !== '' ? $specialite : null;
+                $adrValue  = $adresseEnc !== '' ? $adresseEnc : null;
+                if ($hasProfil) {
+                    $this->db->prepare("UPDATE profil SET specialite = ?, adresse = ? WHERE user_id = ?")->execute([$specValue, $adrValue, $id]);
+                } else {
+                    $this->db->prepare("INSERT INTO profil (user_id, specialite, adresse, created_at) VALUES (?, ?, ?, NOW())")->execute([$id, $specValue, $adrValue]);
+                }
+            } else {
+                // Role autre que encadrant : on retire specialite et adresse
+                if ($hasProfil) {
+                    $this->db->prepare("UPDATE profil SET specialite = NULL, adresse = NULL WHERE user_id = ?")->execute([$id]);
+                }
+            }
 
             $_SESSION['success'] = "Utilisateur modifié avec succès.";
             header('Location: /gestion_users/view/backoffice/src/pages/backoffice/users.php');
@@ -200,7 +257,11 @@ class UserController {
         }
 
         $_SESSION['errors']    = $errors;
-        $_SESSION['form_data'] = compact('nom', 'prenom', 'email', 'telephone', 'role');
+        $_SESSION['form_data'] = compact('nom', 'prenom', 'email', 'telephone', 'role', 'verifStudent', 'statutCompte', 'specialite') + [
+            'verification_student' => $verifStudent,
+            'statut'  => $statutCompte,
+            'adresse' => $adresseEnc,
+        ];
         header('Location: /gestion_users/view/backoffice/src/pages/backoffice/edit-user.php?id=' . $id);
         exit;
     }

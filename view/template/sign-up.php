@@ -92,6 +92,47 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
                 <option value="partenariat" <?= ($formData['role']??'')==='partenariat'?'selected':'' ?>>Partenariat</option>
               </select>
             </div>
+
+            <!-- Champ Specialite : visible uniquement si role=encadrant -->
+            <div class="mb-3" id="specialiteWrapper" style="display: <?= (($formData['role']??'')==='encadrant') ? 'block' : 'none' ?>;">
+              <label class="form-label fw-semibold">Specialite <span class="text-danger">*</span> <small class="text-muted">(encadrants)</small></label>
+              <select class="form-select" id="signupSpecialite" name="specialite">
+                <?php $sp = $formData['specialite'] ?? ''; ?>
+                <option value="">-- Selectionnez votre specialite --</option>
+                <option value="Mathematiques" <?= $sp==='Mathematiques'?'selected':'' ?>>Mathematiques</option>
+                <option value="Physique" <?= $sp==='Physique'?'selected':'' ?>>Physique</option>
+                <option value="Chimie" <?= $sp==='Chimie'?'selected':'' ?>>Chimie</option>
+                <option value="Informatique" <?= $sp==='Informatique'?'selected':'' ?>>Informatique</option>
+                <option value="Programmation" <?= $sp==='Programmation'?'selected':'' ?>>Programmation</option>
+                <option value="Algorithmique" <?= $sp==='Algorithmique'?'selected':'' ?>>Algorithmique</option>
+                <option value="Bases de donnees" <?= $sp==='Bases de donnees'?'selected':'' ?>>Bases de donnees</option>
+                <option value="Reseaux" <?= $sp==='Reseaux'?'selected':'' ?>>Reseaux</option>
+                <option value="Cybersecurite" <?= $sp==='Cybersecurite'?'selected':'' ?>>Cybersecurite</option>
+                <option value="Intelligence Artificielle" <?= $sp==='Intelligence Artificielle'?'selected':'' ?>>Intelligence Artificielle</option>
+                <option value="Data Science" <?= $sp==='Data Science'?'selected':'' ?>>Data Science</option>
+                <option value="Developpement Web" <?= $sp==='Developpement Web'?'selected':'' ?>>Developpement Web</option>
+                <option value="Developpement Mobile" <?= $sp==='Developpement Mobile'?'selected':'' ?>>Developpement Mobile</option>
+                <option value="Genie Logiciel" <?= $sp==='Genie Logiciel'?'selected':'' ?>>Genie Logiciel</option>
+                <option value="Anglais" <?= $sp==='Anglais'?'selected':'' ?>>Anglais</option>
+                <option value="Francais" <?= $sp==='Francais'?'selected':'' ?>>Francais</option>
+                <option value="Arabe" <?= $sp==='Arabe'?'selected':'' ?>>Arabe</option>
+                <option value="Espagnol" <?= $sp==='Espagnol'?'selected':'' ?>>Espagnol</option>
+                <option value="Economie" <?= $sp==='Economie'?'selected':'' ?>>Economie</option>
+                <option value="Gestion" <?= $sp==='Gestion'?'selected':'' ?>>Gestion</option>
+                <option value="Comptabilite" <?= $sp==='Comptabilite'?'selected':'' ?>>Comptabilite</option>
+                <option value="Autre" <?= $sp==='Autre'?'selected':'' ?>>Autre</option>
+              </select>
+              <small class="text-muted">Vos etudiants vous trouveront grace a cette specialite.</small>
+              <div class="text-danger small mt-1" id="err-specialite"></div>
+            </div>
+
+            <!-- Champ Adresse : visible uniquement si role=encadrant (utilise pour les seances en presentiel) -->
+            <div class="mb-3" id="adresseWrapper" style="display: <?= (($formData['role']??'')==='encadrant') ? 'block' : 'none' ?>;">
+              <label class="form-label fw-semibold">Adresse <span class="text-danger">*</span> <small class="text-muted">(encadrants - pour seances en presentiel)</small></label>
+              <input type="text" class="form-control" id="signupAdresse" name="adresse" placeholder="Ex : 12 rue de la Liberte, Tunis, Tunisie" value="<?= htmlspecialchars($formData['adresse'] ?? '') ?>">
+              <small class="text-muted">Cette adresse sera visible par les etudiants qui reservent une seance en presentiel.</small>
+              <div class="text-danger small mt-1" id="err-adresse"></div>
+            </div>
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label fw-semibold">Mot de passe <span class="text-danger">*</span></label>
@@ -158,5 +199,35 @@ unset($_SESSION['errors'], $_SESSION['success'], $_SESSION['form_data']);
     <script src="../../assets/js/wow.min.js"></script>
     <script src="../../assets/js/scripts.js"></script>
     <script src="../../assets/js/validation.js"></script>
+
+    <!-- Toggle Specialite + Adresse selon role -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var roleSelect = document.getElementById('signupRole');
+      var specialiteWrapper = document.getElementById('specialiteWrapper');
+      var specialiteInput = document.getElementById('signupSpecialite');
+      var adresseWrapper = document.getElementById('adresseWrapper');
+      var adresseInput = document.getElementById('signupAdresse');
+
+      function toggleEncadrantFields() {
+        if (roleSelect.value === 'encadrant') {
+          specialiteWrapper.style.display = 'block';
+          specialiteInput.required = true;
+          adresseWrapper.style.display = 'block';
+          adresseInput.required = true;
+        } else {
+          specialiteWrapper.style.display = 'none';
+          specialiteInput.required = false;
+          specialiteInput.value = '';
+          adresseWrapper.style.display = 'none';
+          adresseInput.required = false;
+          adresseInput.value = '';
+        }
+      }
+
+      roleSelect.addEventListener('change', toggleEncadrantFields);
+      toggleEncadrantFields();
+    });
+    </script>
   </body>
 </html>

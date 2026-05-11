@@ -109,13 +109,15 @@ class AuthController {
     public function doSignup(): void {
         $errors = [];
 
-        $nom       = trim($_POST['nom']       ?? '');
-        $prenom    = trim($_POST['prenom']     ?? '');
-        $email     = trim($_POST['email']      ?? '');
-        $password  = trim($_POST['password']   ?? '');
-        $confirm   = trim($_POST['confirm']    ?? '');
-        $telephone = trim($_POST['telephone']  ?? '');
-        $role      = trim($_POST['role']       ?? 'etudiant');
+        $nom        = trim($_POST['nom']         ?? '');
+        $prenom     = trim($_POST['prenom']      ?? '');
+        $email      = trim($_POST['email']       ?? '');
+        $password   = trim($_POST['password']    ?? '');
+        $confirm    = trim($_POST['confirm']     ?? '');
+        $telephone  = trim($_POST['telephone']   ?? '');
+        $role       = trim($_POST['role']        ?? 'etudiant');
+        $specialite = trim($_POST['specialite']  ?? '');
+        $adresse    = trim($_POST['adresse']     ?? '');
 
         // --- Nom ---
         if (empty($nom))                         $errors[] = "Le nom est obligatoire.";
@@ -151,6 +153,26 @@ class AuthController {
 
         // --- Rôle ---
         if (!in_array($role, ['encadrant', 'etudiant', 'partenariat'])) $errors[] = "Rôle invalide.";
+
+        // --- Specialite + Adresse (obligatoires si role=encadrant) ---
+        if ($role === 'encadrant') {
+            if (empty($specialite)) {
+                $errors[] = "La specialite est obligatoire pour les encadrants.";
+            } elseif (mb_strlen($specialite) > 100) {
+                $errors[] = "La specialite ne doit pas depasser 100 caracteres.";
+            }
+            if (empty($adresse)) {
+                $errors[] = "L'adresse est obligatoire pour les encadrants (utilisee pour les seances en presentiel).";
+            } elseif (mb_strlen($adresse) < 5) {
+                $errors[] = "L'adresse doit contenir au moins 5 caracteres.";
+            } elseif (mb_strlen($adresse) > 255) {
+                $errors[] = "L'adresse ne doit pas depasser 255 caracteres.";
+            }
+        } else {
+            // Reset si pas encadrant
+            $specialite = '';
+            $adresse = '';
+        }
 
         if (empty($errors)) {
             $stmt = $this->db->prepare("SELECT id FROM user WHERE email = ? LIMIT 1");
@@ -199,8 +221,37 @@ class AuthController {
             $profil = new Profil();
             $profil->setUserId((int)$userId);
 
-            $stmt2 = $this->db->prepare("INSERT INTO profil (user_id, created_at) VALUES (?, NOW())");
-            $stmt2->execute([$profil->getUserId()]);
+            // Si encadrant : on stocke specialite + adresse, sinon profil vide
+            if ($role === 'encadrant' && !empty($specialite)) {
+                $stmt2 = $this->db->prepare("INSERT INTO profil (user_id, specialite, adresse, created_at) VALUES (?, ?, ?, NOW())");
+                $stmt2->execute([$profil->getUserId(), $specialite, $adresse]);
+
+                // Creation automatique de disponibilites par defaut pour le nouvel encadrant
+                // lundi-vendredi 8h-12h + 14h-18h (modifiable ensuite dans "Mes disponibilites")
+                $defaultSlots = [
+                    ['lundi',    '08:00:00', '12:00:00'],
+                    ['lundi',    '14:00:00', '18:00:00'],
+                    ['mardi',    '08:00:00', '12:00:00'],
+                    ['mardi',    '14:00:00', '18:00:00'],
+                    ['mercredi', '08:00:00', '12:00:00'],
+                    ['mercredi', '14:00:00', '18:00:00'],
+                    ['jeudi',    '08:00:00', '12:00:00'],
+                    ['jeudi',    '14:00:00', '18:00:00'],
+                    ['vendredi', '08:00:00', '12:00:00'],
+                    ['vendredi', '14:00:00', '18:00:00'],
+                ];
+                $dispoStmt = $this->db->prepare("INSERT INTO disponibilites (id_encadrant, jour_semaine, heure_debut, heure_fin, actif) VALUES (?, ?, ?, ?, 1)");
+                foreach ($defaultSlots as $slot) {
+                    try {
+                        $dispoStmt->execute([(int)$userId, $slot[0], $slot[1], $slot[2]]);
+                    } catch (PDOException $e) {
+                        // Ignorer silencieusement si la table disponibilites n'existe pas encore
+                    }
+                }
+            } else {
+                $stmt2 = $this->db->prepare("INSERT INTO profil (user_id, created_at) VALUES (?, NOW())");
+                $stmt2->execute([$profil->getUserId()]);
+            }
 
             $this->sendVerificationEmail($email, $nom, $token);
 
@@ -210,7 +261,7 @@ class AuthController {
         }
 
         $_SESSION['errors']    = $errors;
-        $_SESSION['form_data'] = compact('nom', 'prenom', 'email', 'telephone', 'role');
+        $_SESSION['form_data'] = compact('nom', 'prenom', 'email', 'telephone', 'role', 'specialite', 'adresse');
         header('Location: /gestion_users/view/template/sign-up.php');
         exit;
     }

@@ -142,6 +142,12 @@ $statusConfig = [
                             <div class="info-line"><i class="fas fa-book"></i> <strong>Matiere :</strong> <?= htmlspecialchars($r['matiere']) ?></div>
                             <div class="info-line"><i class="fas fa-calendar"></i> <?= htmlspecialchars($r['date_reservation']) ?> a <?= substr($r['heure_debut'], 0, 5) ?> - <?= substr($r['heure_fin'], 0, 5) ?></div>
                             <div class="info-line"><i class="fas fa-<?= $r['mode'] === 'en_ligne' ? 'video' : 'map-marker-alt' ?>"></i> <?= $r['mode'] === 'en_ligne' ? 'En ligne' : 'Presentiel' ?></div>
+                            <?php if ($r['mode'] === 'presentiel' && $r['statut'] === 'acceptee' && !empty($r['encadrant_adresse'])): ?>
+                                <div class="info-line mt-2 p-2" style="background: linear-gradient(135deg, #ddd6fe, #c7d2fe); border-radius: 0.5rem; border-left: 4px solid #6366f1;">
+                                    <i class="fas fa-map-marker-alt" style="color: #4338ca;"></i>
+                                    <strong>Adresse de la seance :</strong> <?= htmlspecialchars($r['encadrant_adresse']) ?>
+                                </div>
+                            <?php endif; ?>
                             <?php if (!empty($r['sujet'])): ?>
                                 <div class="info-line"><i class="fas fa-comment"></i> <em><?= htmlspecialchars(mb_substr($r['sujet'], 0, 80)) ?><?= mb_strlen($r['sujet']) > 80 ? '...' : '' ?></em></div>
                             <?php endif; ?>
