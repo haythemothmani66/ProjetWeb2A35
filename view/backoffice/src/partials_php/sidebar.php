@@ -122,6 +122,39 @@
         <span class="text">Candidatures</span>
       </a>
     </li>
+
+    <li class="nav-item">
+      <div class="nav-heading">Quiz &amp; Formations</div>
+      <hr class="mx-5 nav-line mb-1" />
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/controller/QuizController.php?espace=back&resource=dashboard&action=index">
+        <span class="nav-icon"><i class="ti ti-chart-pie"></i></span>
+        <span class="text">Tableau de bord Quiz</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/controller/QuizController.php?espace=back&resource=courses&action=index">
+        <span class="nav-icon"><i class="ti ti-book"></i></span>
+        <span class="text">Cours</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/controller/QuizController.php?espace=back&resource=courses&action=stats">
+        <span class="nav-icon"><i class="ti ti-chart-bar"></i></span>
+        <span class="text">Stats cours</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/controller/QuizController.php?espace=back&resource=certificates&action=index">
+        <span class="nav-icon"><i class="ti ti-certificate"></i></span>
+        <span class="text">Certificats</span>
+      </a>
+    </li>
   </ul>
 </div>
 
@@ -147,6 +180,8 @@
       <li class="nav-item"><a class="nav-link" href="/gestion_users/public/index.php?url=AdminParticipation/index"><i class="ti ti-users me-2"></i><span>Participations</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste"><i class="ti ti-briefcase me-2"></i><span>Offres d'emploi</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/controller/CandidatureController.php?espace=back&action=liste"><i class="ti ti-file-text me-2"></i><span>Candidatures</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="/gestion_users/controller/QuizController.php?espace=back&resource=courses&action=index"><i class="ti ti-book me-2"></i><span>Cours &amp; Quiz</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="/gestion_users/controller/QuizController.php?espace=back&resource=certificates&action=index"><i class="ti ti-certificate me-2"></i><span>Certificats</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/view/template/index.php"><i class="ti ti-home me-2"></i><span>FrontOffice</span></a></li>
       <li class="nav-item"><a class="nav-link text-danger" href="/gestion_users/auth/logout"><i class="ti ti-logout me-2"></i><span>Deconnexion</span></a></li>
     </ul>

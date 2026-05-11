@@ -73,7 +73,7 @@ if (!empty($_SESSION['user_id'])) {
               </ul>
             </li>
             <li><a href="<?= $baseUrl ?>/public/index.php?url=Home/index">EVENEMENT</a></li>
-            <li><a href="#">QUIZ</a></li>
+            <li><a href="<?= $baseUrl ?>/controller/QuizController.php?espace=front&resource=courses&action=index">QUIZ</a></li>
             <li><a href="<?= $baseUrl ?>/controller/OffreEmploiController.php?espace=front&action=liste">OFFRE D'EMPLOI</a></li>
           </ul>
         </nav>
@@ -125,7 +125,7 @@ if (!empty($_SESSION['user_id'])) {
           </ul>
         </li>
         <li><a href="<?= $baseUrl ?>/public/index.php?url=Home/index">Evenement</a></li>
-        <li><a href="#">Quiz</a></li>
+        <li><a href="<?= $baseUrl ?>/controller/QuizController.php?espace=front&resource=courses&action=index">Quiz</a></li>
         <li><a href="<?= $baseUrl ?>/controller/OffreEmploiController.php?espace=front&action=liste">Offre d'emploi</a></li>
         <?php if (!empty($_SESSION['user_id'])): ?>
         <li><a href="<?= $baseUrl ?>/view/template/profil.php">Mon Profil</a></li>

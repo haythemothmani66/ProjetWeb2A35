@@ -11,6 +11,12 @@ uploads/cv/*.doc
 uploads/cv/*.docx
 !uploads/cv/.gitkeep
 
+# Uploads images cours (generees par admin)
+uploads/courses/*.jpg
+uploads/courses/*.jpeg
+uploads/courses/*.png
+!uploads/courses/.gitkeep
+
 # Environment variables (API keys)
 .env
 

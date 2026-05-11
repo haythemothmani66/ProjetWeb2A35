@@ -84,12 +84,33 @@ try {
         'ouvertes' => (int) $pdoHome->query("SELECT COUNT(*) FROM offre_emploi WHERE statut='ouverte'")->fetchColumn(),
         'candidatures' => (int) $pdoHome->query("SELECT COUNT(*) FROM candidature")->fetchColumn(),
     ];
+
+    // 3 cours publies les plus recents (avec nb quiz + nb lessons)
+    $stmtCourses = $pdoHome->query("
+        SELECT c.id, c.title, c.description, c.image, c.level, c.status, c.created_at,
+               (SELECT COUNT(*) FROM quizzes q WHERE q.course_id = c.id) AS nb_quizzes,
+               (SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id) AS nb_lessons
+        FROM courses c
+        WHERE c.status = 'published'
+        ORDER BY c.created_at DESC, c.id DESC
+        LIMIT 3
+    ");
+    $homeCourses = $stmtCourses->fetchAll(PDO::FETCH_ASSOC);
+
+    // Stats globales quiz/formations
+    $homeQuizStats = [
+        'courses'      => (int) $pdoHome->query("SELECT COUNT(*) FROM courses WHERE status='published'")->fetchColumn(),
+        'quizzes'      => (int) $pdoHome->query("SELECT COUNT(*) FROM quizzes")->fetchColumn(),
+        'certificates' => (int) $pdoHome->query("SELECT COUNT(*) FROM certificates")->fetchColumn(),
+    ];
 } catch (Throwable $e) {
     $homeEvents = [];
     $homePartners = [];
     $homeRecentDevoirs = [];
     $homeOffres = [];
     $homeOffresStats = ['total' => 0, 'ouvertes' => 0, 'candidatures' => 0];
+    $homeCourses = [];
+    $homeQuizStats = ['courses' => 0, 'quizzes' => 0, 'certificates' => 0];
 }
 ?>
 <!doctype html>
@@ -153,6 +174,19 @@ try {
         background: white !important;
         color: #1e1b4b !important;
         transform: translateY(-2px);
+      }
+      /* ===== Section Quiz home (creative course cards) ===== */
+      .course-card-home:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 25px 50px rgba(82,95,225,0.18) !important;
+        border-color: rgba(82,95,225,0.3) !important;
+      }
+      .course-card-home a.btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.08);
+      }
+      .quiz-section .col-4 > div:hover {
+        transform: translateY(-4px);
       }
       /* ===== Section Offres d'emploi home (creative cards) ===== */
       .job-card-creative:hover {
@@ -440,6 +474,169 @@ try {
       </div>
     </section>
     <!-- END DEVOIRS SECTION -->
+
+    <!-- START QUIZ & FORMATIONS SECTION (Creative) -->
+    <section class="quiz-section py-5" style="background: linear-gradient(135deg, #f5f3ff 0%, #eef0ff 50%, #e0e7ff 100%); position: relative; overflow: hidden;">
+      <!-- Decorations -->
+      <div style="position: absolute; top: -80px; left: -80px; width: 380px; height: 380px; background: radial-gradient(circle, rgba(82,95,225,0.14) 0%, transparent 60%); border-radius: 50%; pointer-events: none;"></div>
+      <div style="position: absolute; bottom: -100px; right: -100px; width: 420px; height: 420px; background: radial-gradient(circle, rgba(0,212,255,0.10) 0%, transparent 60%); border-radius: 50%; pointer-events: none;"></div>
+
+      <div class="container position-relative">
+
+        <!-- Header -->
+        <div class="row mb-5 text-center">
+          <div class="col-lg-8 mx-auto">
+            <span class="badge mb-3" style="background: linear-gradient(135deg, #525fe1, #3b47c9); color: white; padding: 0.5rem 1.25rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; letter-spacing: 1px; box-shadow: 0 8px 20px rgba(82, 95, 225, 0.3);">
+              <i class="fas fa-graduation-cap me-1"></i> FORMATIONS & QUIZ
+            </span>
+            <h2 class="display-5 fw-bold mb-3" style="color: #0b104a;">Apprenez et certifiez vos competences</h2>
+            <p class="lead mb-0" style="color: #4b5563;">
+              Suivez des cours interactifs, passez des quiz et obtenez vos certificats officiels pour valoriser vos competences.
+            </p>
+          </div>
+        </div>
+
+        <?php if (!empty($homeCourses)): ?>
+          <!-- Cards cours recents -->
+          <div class="row g-4 mb-5">
+            <?php
+              $levelColors = [
+                'beginner'     => ['#00D4FF', '#525fe1'],
+                'intermediate' => ['#525fe1', '#3b47c9'],
+                'advanced'     => ['#a855f7', '#8b5cf6'],
+              ];
+              $levelLabels = [
+                'beginner'     => 'Debutant',
+                'intermediate' => 'Intermediaire',
+                'advanced'     => 'Avance',
+              ];
+              foreach ($homeCourses as $course):
+                $lvl = strtolower((string)($course['level'] ?? 'beginner'));
+                $colors = $levelColors[$lvl] ?? ['#525fe1', '#3b47c9'];
+                $label = $levelLabels[$lvl] ?? ucfirst($lvl);
+                $desc = (string) ($course['description'] ?? '');
+                $shortDesc = mb_strlen($desc) > 95 ? mb_substr($desc, 0, 95) . '...' : $desc;
+            ?>
+              <div class="col-lg-4 col-md-6">
+                <div class="course-card-home h-100" style="background: #ffffff; border-radius: 1.25rem; overflow: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 10px 30px rgba(82,95,225,0.08); border: 1px solid rgba(82,95,225,0.08);">
+                  <!-- Accent bar haut -->
+                  <div style="height: 5px; background: linear-gradient(90deg, <?= $colors[0] ?>, <?= $colors[1] ?>);"></div>
+
+                  <div style="padding: 1.75rem; color: #0b104a;">
+                    <!-- Header card : icone graduation + badge level -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div style="width: 56px; height: 56px; background: linear-gradient(135deg, <?= $colors[0] ?>, <?= $colors[1] ?>); border-radius: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px <?= $colors[0] ?>40;">
+                        <i class="fas fa-graduation-cap text-white" style="font-size: 1.4rem;"></i>
+                      </div>
+                      <span class="badge" style="background: linear-gradient(135deg, <?= $colors[0] ?>, <?= $colors[1] ?>); color: white; padding: 0.4rem 0.85rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;">
+                        <?= htmlspecialchars($label) ?>
+                      </span>
+                    </div>
+
+                    <!-- Titre cours -->
+                    <h3 class="fw-bold mb-2" style="font-size: 1.2rem; line-height: 1.35;">
+                      <?= htmlspecialchars($course['title']) ?>
+                    </h3>
+
+                    <!-- Description courte -->
+                    <p class="mb-3" style="font-size: 0.9rem; line-height: 1.55; color: #5b6478; min-height: 3em;">
+                      <?= htmlspecialchars($shortDesc) ?>
+                    </p>
+
+                    <!-- Stats cours : nb lessons + nb quizzes -->
+                    <div class="d-flex align-items-center mb-3 pb-3" style="border-bottom: 1px solid rgba(82,95,225,0.12); gap: 1.25rem;">
+                      <div class="d-flex align-items-center gap-2" style="font-size: 0.82rem; color: #4b5563;">
+                        <div style="width: 28px; height: 28px; background: rgba(82,95,225,0.12); border-radius: 7px; display: flex; align-items: center; justify-content: center;">
+                          <i class="fas fa-book-open" style="color: #525fe1; font-size: 0.75rem;"></i>
+                        </div>
+                        <span><strong style="color: #0b104a;"><?= (int)$course['nb_lessons'] ?></strong> lecon<?= ((int)$course['nb_lessons'] > 1) ? 's' : '' ?></span>
+                      </div>
+                      <div class="d-flex align-items-center gap-2" style="font-size: 0.82rem; color: #4b5563;">
+                        <div style="width: 28px; height: 28px; background: rgba(0,212,255,0.15); border-radius: 7px; display: flex; align-items: center; justify-content: center;">
+                          <i class="fas fa-question-circle" style="color: #00D4FF; font-size: 0.75rem;"></i>
+                        </div>
+                        <span><strong style="color: #0b104a;"><?= (int)$course['nb_quizzes'] ?></strong> quiz</span>
+                      </div>
+                    </div>
+
+                    <!-- CTA -->
+                    <a href="/gestion_users/controller/QuizController.php?espace=front&resource=courses&action=show&id=<?= (int)$course['id'] ?>" class="btn w-100" style="background: linear-gradient(135deg, <?= $colors[0] ?>, <?= $colors[1] ?>); color: white; border: none; padding: 0.7rem; border-radius: 0.75rem; font-weight: 600; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 6px 18px <?= $colors[0] ?>40;">
+                      Voir le cours <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php else: ?>
+          <div class="row mb-5">
+            <div class="col-lg-8 mx-auto text-center">
+              <div style="background: white; border-radius: 1.25rem; padding: 3rem 2rem; box-shadow: 0 10px 30px rgba(82,95,225,0.08);">
+                <i class="fas fa-graduation-cap mb-3" style="font-size: 3rem; color: rgba(82,95,225,0.4);"></i>
+                <h3 class="fw-bold mb-2" style="color: #0b104a;">Aucun cours publie pour le moment</h3>
+                <p style="color: #6b7280;">Revenez bientot pour decouvrir nos formations.</p>
+              </div>
+            </div>
+          </div>
+        <?php endif; ?>
+
+        <!-- Description + CTA + Stats -->
+        <div class="row align-items-center mt-4">
+          <div class="col-lg-7 col-md-12 mb-4 mb-lg-0">
+            <p style="color: #4b5563; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.5rem;">
+              Notre plateforme combine apprentissage interactif et evaluation intelligente. Chaque cours
+              propose des lecons structurees, des quiz adaptes et la possibilite d'obtenir un certificat
+              officiel valorisable sur votre CV.
+            </p>
+
+            <div class="d-flex flex-wrap gap-3">
+              <a href="/gestion_users/controller/QuizController.php?espace=front&resource=courses&action=index" class="btn btn-lg" style="background: linear-gradient(135deg, #525fe1, #3b47c9); color: white; border: none; padding: 0.85rem 2rem; border-radius: 50px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; box-shadow: 0 10px 30px rgba(82, 95, 225, 0.3);">
+                <i class="fas fa-graduation-cap me-2"></i>Decouvrir tous les cours
+              </a>
+
+              <?php if ($isLoggedIn && ($userRole === 'encadrant' || $userRole === 'admin')): ?>
+                <a href="/gestion_users/controller/QuizController.php?espace=back&resource=courses&action=create" class="btn btn-lg" style="background: white; color: #525fe1; border: 2px solid #525fe1; padding: 0.75rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+                  <i class="fas fa-plus me-2"></i>Creer un cours
+                </a>
+              <?php elseif ($isLoggedIn && $userRole === 'etudiant'): ?>
+                <a href="/gestion_users/controller/QuizController.php?espace=front&resource=courses&action=index" class="btn btn-lg" style="background: white; color: #525fe1; border: 2px solid #525fe1; padding: 0.75rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+                  <i class="fas fa-play me-2"></i>Passer un quiz
+                </a>
+              <?php elseif (!$isLoggedIn): ?>
+                <a href="/gestion_users/view/template/sign-in.php" class="btn btn-lg" style="background: white; color: #525fe1; border: 2px solid #525fe1; padding: 0.75rem 2rem; border-radius: 50px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+                  <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                </a>
+              <?php endif; ?>
+            </div>
+          </div>
+
+          <div class="col-lg-5 col-md-12">
+            <div class="row g-3 text-center">
+              <div class="col-4">
+                <div style="background: white; border-radius: 1rem; padding: 1.25rem 0.5rem; box-shadow: 0 6px 20px rgba(82,95,225,0.08); border: 1px solid rgba(82,95,225,0.12); transition: transform 0.3s ease;">
+                  <div style="font-size: 2rem; font-weight: 800; color: #525fe1; line-height: 1;"><?= (int)$homeQuizStats['courses'] ?></div>
+                  <div style="font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem;">Cours publies</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div style="background: white; border-radius: 1rem; padding: 1.25rem 0.5rem; box-shadow: 0 6px 20px rgba(0,212,255,0.10); border: 1px solid rgba(0,212,255,0.15);">
+                  <div style="font-size: 2rem; font-weight: 800; color: #00D4FF; line-height: 1;"><?= (int)$homeQuizStats['quizzes'] ?></div>
+                  <div style="font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem;">Quiz disponibles</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div style="background: white; border-radius: 1rem; padding: 1.25rem 0.5rem; box-shadow: 0 6px 20px rgba(168,85,247,0.10); border: 1px solid rgba(168,85,247,0.15);">
+                  <div style="font-size: 2rem; font-weight: 800; color: #a855f7; line-height: 1;"><?= (int)$homeQuizStats['certificates'] ?></div>
+                  <div style="font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 0.5rem;">Certificats</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <!-- END QUIZ & FORMATIONS SECTION -->
 
     <!-- START EVENEMENTS SECTION -->
     <section class="evenements-section py-5" style="background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%); position: relative; overflow: hidden;">
