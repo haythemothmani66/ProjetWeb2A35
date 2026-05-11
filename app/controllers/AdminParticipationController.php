@@ -30,11 +30,12 @@ class AdminParticipationController extends Controller {
                   LEFT JOIN evenements e ON p.id_evenement = e.id_evenement";
         $conditions = [];
         if ($search !== '') {
-            $conditions[] = "(p.nom_participant LIKE :search
-                        OR p.email LIKE :search
-                        OR p.statut_participation LIKE :search
-                        OR p.mode_participation LIKE :search
-                        OR e.titre LIKE :search)";
+            // Placeholders uniques (PDO mode strict)
+            $conditions[] = "(p.nom_participant LIKE :search1
+                        OR p.email LIKE :search2
+                        OR p.statut_participation LIKE :search3
+                        OR p.mode_participation LIKE :search4
+                        OR e.titre LIKE :search5)";
         }
         if ($statusFilter !== '') {
             $conditions[] = "p.statut_participation = :status_filter";
@@ -46,7 +47,12 @@ class AdminParticipationController extends Controller {
 
         $stmt = $this->db()->prepare($query);
         if ($search !== '') {
-            $stmt->bindValue(':search', '%' . $search . '%');
+            $like = '%' . $search . '%';
+            $stmt->bindValue(':search1', $like);
+            $stmt->bindValue(':search2', $like);
+            $stmt->bindValue(':search3', $like);
+            $stmt->bindValue(':search4', $like);
+            $stmt->bindValue(':search5', $like);
         }
         if ($statusFilter !== '') {
             $stmt->bindValue(':status_filter', $statusFilter);

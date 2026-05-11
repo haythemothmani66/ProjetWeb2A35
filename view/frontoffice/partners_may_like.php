@@ -1,16 +1,16 @@
-<?php
+﻿<?php
 if (session_status() !== PHP_SESSION_ACTIVE) { session_start(); }
 require_once $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/config/database.php';
 $baseUrl = '/gestion_users';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-		<title>EduMatch AI - Smart Recommendations</title>			
+		<title>EduMatch AI - Recommandations intelligentes</title>			
 		<link rel="stylesheet" href="<?= $baseUrl ?>/assets/bootstrap/css/bootstrap.min.css">		
 		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -266,9 +266,9 @@ $baseUrl = '/gestion_users';
 			<div class="container">
 				<div class="row">
 					<div class="col-lg-10 offset-lg-1">
-						<span style="color: var(--ai-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">AI-Powered Discovery</span>
-						<h1 class="ai-main-title">Partners You May Like</h1>
-						<p style="color: #94a3b8; font-size: 1.2rem; max-width: 700px; margin: 0 auto;">Our intelligent engine analyzes thousands of data points to find organizations that perfectly match your academic and professional goals.</p>
+						<span style="color: var(--ai-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">Decouverte propulsee par l'IA</span>
+						<h1 class="ai-main-title">Partenaires qui pourraient vous interesser</h1>
+						<p style="color: #94a3b8; font-size: 1.2rem; max-width: 700px; margin: 0 auto;">Notre moteur intelligent analyse des milliers de donnees pour trouver les organisations qui correspondent parfaitement a vos objectifs academiques et professionnels.</p>
 					</div>
 				</div>
 			</div>
@@ -280,7 +280,7 @@ $baseUrl = '/gestion_users';
 			<div class="container">
                 <div id="loader" class="text-center py-5">
                     <div class="ai-loader"><div></div></div>
-                    <p class="mt-4" style="font-weight: 600; color: #64748b;">Synchronizing with neural engine...</p>
+                    <p class="mt-4" style="font-weight: 600; color: #64748b;">Synchronisation avec le moteur neuronal...</p>
                 </div>
 
 				<div class="row" id="partners-grid" style="display: none;">
@@ -293,7 +293,7 @@ $baseUrl = '/gestion_users';
 		<!-- START FOOTER -->
 		<footer class="footer py-5" style="background: #0f172a; color: white; border-top: 1px solid rgba(255,255,255,0.05);">
 			<div class="container text-center">
-				<p class="mb-0 opacity-50">&copy; 2026 EduMatch AI. Powering the future of academic connections.</p>
+				<p class="mb-0 opacity-50">&copy; 2026 EduMatch AI. Propulse l'avenir des connexions academiques.</p>
 			</div>
 		</footer>
 		<!-- END FOOTER -->
@@ -359,7 +359,21 @@ $baseUrl = '/gestion_users';
                                         `);
                                     }
 
-                                    const logo = partner.logo ? '<?= $baseUrl ?>/' + partner.logo : 'https://via.placeholder.com/150';
+                                    // Placeholder SVG inline (data URI) - jamais casse, pas de dependance
+                                    const placeholderLogo = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs><rect width="150" height="150" fill="url(#g)" rx="20"/><text x="75" y="95" font-family="Arial" font-size="60" fill="white" text-anchor="middle" font-weight="700">🏢</text></svg>');
+                                    let logo = placeholderLogo;
+                                    if (partner.logo) {
+                                        if (/^https?:\/\//i.test(partner.logo)) {
+                                            // URL externe (Unsplash, etc.)
+                                            logo = partner.logo;
+                                        } else if (partner.logo.indexOf('assets/uploads/') === 0) {
+                                            // Chemin relatif vers uploads
+                                            logo = '<?= $baseUrl ?>/' + partner.logo;
+                                        } else {
+                                            // Nom de fichier seul (legacy uploads)
+                                            logo = '<?= $baseUrl ?>/assets/uploads/partners/' + partner.logo;
+                                        }
+                                    }
                                     const score = Math.round(partner.similarity_score || 0);
                                     
                                     let badgesHtml = '<div class="badges-wrapper">';
@@ -387,10 +401,10 @@ $baseUrl = '/gestion_users';
                                             <div class="partner-card">
                                                 <div class="d-flex justify-content-between align-items-start">
                                                     <div class="partner-logo-container">
-                                                        <img src="${logo}" alt="${partner.organization_name}" class="partner-logo">
+                                                        <img src="${logo}" alt="${partner.organization_name}" class="partner-logo" onerror="this.onerror=null;this.src='${placeholderLogo}';">
                                                     </div>
                                                     <div class="text-end">
-                                                        <span class="match-label">Compatibility</span>
+                                                        <span class="match-label">Compatibilite</span>
                                                         <div style="font-size: 1.2rem; font-weight: 800; color: #1e293b;">${score}%</div>
                                                     </div>
                                                 </div>
@@ -403,11 +417,11 @@ $baseUrl = '/gestion_users';
 
                                                 ${badgesHtml}
                                                 
-                                                <p style="font-size: 0.95rem; color: #475569; line-height: 1.6; flex-grow: 1;">${partner.description || 'No description available.'}</p>
+                                                <p style="font-size: 0.95rem; color: #475569; line-height: 1.6; flex-grow: 1;">${partner.description || 'Aucune description disponible.'}</p>
                                                 
                                                 <div class="mt-4">
                                                     <a href="partner_details.php?id=${partner.id}" class="btn btn-primary w-100" style="background: var(--ai-primary); border: none; border-radius: 12px; padding: 12px; font-weight: 600; transition: all 0.3s ease;">
-                                                        Explore Profile <i class="fas fa-chevron-right ms-2"></i>
+                                                        Explorer le profil <i class="fas fa-chevron-right ms-2"></i>
                                                     </a>
                                                 </div>
                                             </div>
@@ -416,13 +430,13 @@ $baseUrl = '/gestion_users';
                                     grid.append(card);
                                 });
                             } else {
-                                grid.html('<div class="col-12 text-center py-5"><p>Neural data is empty. Please check back later!</p></div>');
+                                grid.html('<div class="col-12 text-center py-5"><p>Donnees neuronales vides. Veuillez revenir plus tard !</p></div>');
                             }
                         }, 800);
                     })
                     .catch(error => {
                         $('#loader').hide();
-                        $('#partners-grid').show().html('<div class="col-12 text-center text-danger"><p>Connection error with Neural Engine.</p></div>');
+                        $('#partners-grid').show().html('<div class="col-12 text-center text-danger"><p>Erreur de connexion avec le moteur neuronal.</p></div>');
                     });
             });
         </script>

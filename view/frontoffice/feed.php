@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
@@ -2136,11 +2136,11 @@ $successType = $_GET['success'] ?? '';
           <div class="col-lg-4 col-md-6 mb-4">
             <div class="footer-brand">
               <a href="<?= $baseUrl ?>/view/template/index.php" class="text-decoration-none">
-                <img src="../../assets/img/logo.png" alt="EduMatch Logo" class="mb-3" style="height: 50px;">
+                <img src="../../assets/img/logo.png" alt="Logo EduMatch" class="mb-3" style="height: 50px;">
                 <h3 class="text-white fw-bold">EduMatch</h3>
               </a>
               <p class="mt-3 text-light opacity-75">
-                Smart matching platform connecting students with expert professors across all academic subjects for personalized learning experiences.
+                Plateforme intelligente de mise en relation des etudiants avec des professeurs experts dans toutes les matieres academiques pour des experiences d'apprentissage personnalisees.
               </p>
               <div class="social-links mt-3">
                 <a href="#" class="text-white me-3 fs-4"><i class="fab fa-facebook-f"></i></a>
@@ -2151,37 +2151,37 @@ $successType = $_GET['success'] ?? '';
             </div>
           </div>
           <div class="col-lg-2 col-md-6 mb-4">
-            <h5 class="fw-bold mb-3">Platform</h5>
+            <h5 class="fw-bold mb-3">Plateforme</h5>
             <ul class="list-unstyled">
-              <li class="mb-2"><a href="<?= $baseUrl ?>/view/frontoffice/submit.php" class="text-light text-decoration-none">Submit Requirements</a></li>
-              <li class="mb-2"><a href="<?= $baseUrl ?>/view/frontoffice/feed.php" class="text-light text-decoration-none">Professor Matches</a></li>
-              <li class="mb-2"><a href="#" class="text-light text-decoration-none">How It Works</a></li>
-              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Get Matched</a></li>
+              <li class="mb-2"><a href="<?= $baseUrl ?>/view/frontoffice/submit.php" class="text-light text-decoration-none">Soumettre une demande</a></li>
+              <li class="mb-2"><a href="<?= $baseUrl ?>/view/frontoffice/feed.php" class="text-light text-decoration-none">Mises en relation</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Comment ca marche</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Etre mis en relation</a></li>
             </ul>
           </div>
           <div class="col-lg-2 col-md-6 mb-4">
-            <h5 class="fw-bold mb-3">Academic Subjects</h5>
+            <h5 class="fw-bold mb-3">Matieres academiques</h5>
             <ul class="list-unstyled">
-              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematics</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematiques</a></li>
               <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences</a></li>
-							<li class="mb-2"><a href="#" class="text-light text-decoration-none">coding</a></li>
-							<li class="mb-2"><a href="#" class="text-light text-decoration-none">algorithm</a></li>
-              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Languages</a></li>
-              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Humanities</a></li>
+							<li class="mb-2"><a href="#" class="text-light text-decoration-none">Programmation</a></li>
+							<li class="mb-2"><a href="#" class="text-light text-decoration-none">Algorithmique</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Langues</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences humaines</a></li>
             </ul>
           </div>
           <div class="col-lg-4 col-md-6 mb-4">
-            <h5 class="fw-bold mb-3">Contact Info</h5>
+            <h5 class="fw-bold mb-3">Coordonnees</h5>
             <div class="contact-info">
               <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Tunisia,Tunis</p>
               <p class="mb-2"><i class="fas fa-phone me-2"></i>+216 90 549 254</p>
               <p class="mb-2"><i class="fas fa-envelope me-2"></i>edumatch@gmail.com</p>
             </div>
             <div class="newsletter mt-3">
-              <h6 class="fw-bold mb-2">Stay Updated on Academic Tutoring</h6>
+              <h6 class="fw-bold mb-2">Restez informe sur le tutorat academique</h6>
               <div class="input-group">
-                <input type="email" class="form-control" placeholder="Your email" style="border-radius: 25px 0 0 25px;">
-                <button class="btn btn-primary" type="button" style="border-radius: 0 25px 25px 0;">Subscribe</button>
+                <input type="email" class="form-control" placeholder="Votre email" style="border-radius: 25px 0 0 25px;">
+                <button class="btn btn-primary" type="button" style="border-radius: 0 25px 25px 0;">S'abonner</button>
               </div>
             </div>
           </div>
@@ -2189,12 +2189,12 @@ $successType = $_GET['success'] ?? '';
         <hr class="my-4 opacity-25">
         <div class="row align-items-center">
           <div class="col-md-6">
-            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. All rights reserved.</p>
+            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. Tous droits reserves.</p>
           </div>
           <div class="col-md-6 text-md-end">
-            <a href="#" class="text-light text-decoration-none me-3">Privacy Policy</a>
-            <a href="#" class="text-light text-decoration-none me-3">Terms of Service</a>
-            <a href="#" class="text-light text-decoration-none">Support</a>
+            <a href="#" class="text-light text-decoration-none me-3">Politique de confidentialite</a>
+            <a href="#" class="text-light text-decoration-none me-3">Conditions d'utilisation</a>
+            <a href="#" class="text-light text-decoration-none">Assistance</a>
           </div>
         </div>
       </div>

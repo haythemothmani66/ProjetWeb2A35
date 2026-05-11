@@ -14,15 +14,16 @@
 <?php endif; ?>
 
 <div class="row g-2 mb-3">
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminParticipation/index?status_filter"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Total:</strong> <?php echo (int) ($data['stats']['total'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminParticipation/index?status_filter=inscrit"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Inscrits:</strong> <?php echo (int) ($data['stats']['inscrit'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminParticipation/index?status_filter=confirm%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Confirmes:</strong> <?php echo (int) ($data['stats']['confirme'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminParticipation/index?status_filter=pr%C3%A9sent"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Presents:</strong> <?php echo (int) ($data['stats']['present'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminParticipation/index?status_filter=absent"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Absents:</strong> <?php echo (int) ($data['stats']['absent'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminParticipation/index?status_filter=annul%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Annules:</strong> <?php echo (int) ($data['stats']['annule'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminParticipation/index"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Total:</strong> <?php echo (int) ($data['stats']['total'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminParticipation/index&status_filter=inscrit"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Inscrits:</strong> <?php echo (int) ($data['stats']['inscrit'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminParticipation/index&status_filter=confirm%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Confirmes:</strong> <?php echo (int) ($data['stats']['confirme'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminParticipation/index&status_filter=pr%C3%A9sent"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Presents:</strong> <?php echo (int) ($data['stats']['present'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminParticipation/index&status_filter=absent"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Absents:</strong> <?php echo (int) ($data['stats']['absent'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminParticipation/index&status_filter=annul%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Annules:</strong> <?php echo (int) ($data['stats']['annule'] ?? 0); ?></div></div></a></div>
 </div>
 
-<form method="GET" action="<?php echo BASE_URL; ?>/AdminParticipation/index" class="row g-2 mb-3">
+<form method="GET" action="<?php echo PROJECT_URL; ?>/public/index.php" class="row g-2 mb-3">
+    <input type="hidden" name="url" value="AdminParticipation/index">
     <div class="col-md-6">
         <input type="text" class="form-control" name="search" placeholder="Rechercher par participant, email, evenement ou statut" value="<?php echo htmlspecialchars($data['filters']['search'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
     </div>

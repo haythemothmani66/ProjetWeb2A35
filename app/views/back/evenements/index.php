@@ -15,14 +15,15 @@
 <?php endif; ?>
 
 <div class="row g-2 mb-3">
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminEvenement/index?status_filter"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Total:</strong> <?php echo (int) ($data['stats']['total'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminEvenement/index?status_filter=planifi%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Planifies:</strong> <?php echo (int) ($data['stats']['planifie'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminEvenement/index?status_filter=en%20cours"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>En cours:</strong> <?php echo (int) ($data['stats']['en_cours'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminEvenement/index?status_filter=termin%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Termines:</strong> <?php echo (int) ($data['stats']['termine'] ?? 0); ?></div></div></a></div>
-    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminEvenement/index?status_filter=annul%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Annules:</strong> <?php echo (int) ($data['stats']['annule'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminEvenement/index"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Total:</strong> <?php echo (int) ($data['stats']['total'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminEvenement/index&status_filter=planifi%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Planifies:</strong> <?php echo (int) ($data['stats']['planifie'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminEvenement/index&status_filter=en%20cours"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>En cours:</strong> <?php echo (int) ($data['stats']['en_cours'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminEvenement/index&status_filter=termin%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Termines:</strong> <?php echo (int) ($data['stats']['termine'] ?? 0); ?></div></div></a></div>
+    <div class="col-md-2"><a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminEvenement/index&status_filter=annul%C3%A9"><div class="card border-0 bg-light"><div class="card-body py-2"><strong>Annules:</strong> <?php echo (int) ($data['stats']['annule'] ?? 0); ?></div></div></a></div>
 </div>
 
-<form method="GET" action="<?php echo BASE_URL; ?>/AdminEvenement/index" class="row g-2 mb-3">
+<form method="GET" action="<?php echo PROJECT_URL; ?>/public/index.php" class="row g-2 mb-3">
+    <input type="hidden" name="url" value="AdminEvenement/index">
     <div class="col-md-6">
         <input type="text" class="form-control" name="search" placeholder="Rechercher par titre, categorie, type ou statut" value="<?php echo htmlspecialchars($data['filters']['search'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
     </div>

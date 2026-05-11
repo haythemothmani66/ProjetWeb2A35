@@ -38,8 +38,8 @@ if (!empty($_SESSION['user_id'])) {
       <div class="col-60 d-flex">
         <nav id="main-menu">
           <ul>
-            <li><a href="<?= $baseUrl ?>/view/template/index.php">HOME</a></li>
-            <li><a href="#">ABOUT</a></li>
+            <li><a href="<?= $baseUrl ?>/view/template/index.php">ACCUEIL</a></li>
+            <li><a href="#">A PROPOS</a></li>
             <li class="menu-item-has-children">
               <a href="#">EDUFEED</a>
               <ul>
@@ -81,8 +81,8 @@ if (!empty($_SESSION['user_id'])) {
 
       <!-- Mobile menu -->
       <ul class="mobile_menu">
-        <li><a href="<?= $baseUrl ?>/view/template/index.php">Home</a></li>
-        <li><a href="#">About</a></li>
+        <li><a href="<?= $baseUrl ?>/view/template/index.php">Accueil</a></li>
+        <li><a href="#">A propos</a></li>
         <li>
           <a href="#">Edufeed</a>
           <ul class="sub-menu">

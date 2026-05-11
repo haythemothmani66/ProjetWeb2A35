@@ -23,7 +23,8 @@ class AdminCategorieController extends Controller {
         $query = 'SELECT * FROM categories';
         $conditions = [];
         if ($search !== '') {
-            $conditions[] = '(nom_categorie LIKE :search OR description LIKE :search OR statut LIKE :search)';
+            // Placeholders uniques (PDO mode strict)
+            $conditions[] = '(nom_categorie LIKE :search1 OR description LIKE :search2 OR statut LIKE :search3)';
         }
         if ($statusFilter !== '') {
             $conditions[] = 'statut = :status_filter';
@@ -35,7 +36,10 @@ class AdminCategorieController extends Controller {
 
         $stmt = $this->db()->prepare($query);
         if ($search !== '') {
-            $stmt->bindValue(':search', '%' . $search . '%');
+            $like = '%' . $search . '%';
+            $stmt->bindValue(':search1', $like);
+            $stmt->bindValue(':search2', $like);
+            $stmt->bindValue(':search3', $like);
         }
         if ($statusFilter !== '') {
             $stmt->bindValue(':status_filter', $statusFilter);

@@ -4,53 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="EduMatch — Module événements, webinaires et formations.">
-    <title>Module Événement - Plateforme Éducation</title>
+    <title>EduMatch - Evenements</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- CSS du template eduleb (pour la navbar unifiee _navbar.php) -->
+    <link rel="stylesheet" href="<?php echo PROJECT_URL; ?>/assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="<?php echo PROJECT_URL; ?>/assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="<?php echo PROJECT_URL; ?>/assets/fonts/themify-icons.css">
+    <link rel="stylesheet" href="<?php echo PROJECT_URL; ?>/assets/css/jquery-simple-mobilemenu.css">
+    <link rel="stylesheet" href="<?php echo PROJECT_URL; ?>/assets/css/animate.css">
+    <link rel="stylesheet" href="<?php echo PROJECT_URL; ?>/assets/css/style.css">
+
+    <!-- CSS du module evenement -->
     <link rel="stylesheet" href="<?php echo PROJECT_URL; ?>/public/css/style.css">
+
+    <style>
+      /* ===== Navbar dropdown styles (necessaire pour _navbar.php) ===== */
+      .header-group { display: flex; flex-direction: row; align-items: center; gap: 10px; }
+      .btn-backoffice { background: linear-gradient(135deg, #6366f1, #8B5CF6); color: white; padding: 10px 20px; border-radius: 2px; text-decoration: none; font-weight: 600; font-size: 13px; transition: all 0.3s ease; display: inline-block; text-align: center; border: none; cursor: pointer; }
+      .btn-backoffice:hover { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; text-decoration: none; }
+      .user-dropdown { position: relative; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+      .user-dropdown .user-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #525fe1; }
+      .user-dropdown .user-name { font-weight: 600; font-size: 14px; color: #0b104a; white-space: nowrap; }
+      .user-dropdown .dropdown-caret { font-size: 10px; color: #6c757d; transition: transform 0.2s; }
+      .user-dropdown:hover .dropdown-caret { transform: rotate(180deg); }
+      .user-dropdown-menu { display: none; position: absolute; top: 100%; right: 0; background: white; border-radius: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.12); min-width: 200px; padding: 8px 0; z-index: 1000; margin-top: 8px; }
+      .user-dropdown-menu.show { display: block; }
+      .user-dropdown-menu a { display: flex; align-items: center; gap: 10px; padding: 10px 18px; color: #333; text-decoration: none; font-size: 14px; font-weight: 500; transition: background 0.2s; }
+      .user-dropdown-menu a:hover { background: #f5f7fa; color: #525fe1; }
+      .user-dropdown-menu a i { width: 18px; text-align: center; }
+      .user-dropdown-menu hr { margin: 6px 0; border-color: #eee; }
+
+      /* Espacement apres la navbar pour eviter le chevauchement avec le contenu */
+      body { padding-top: 0; }
+    </style>
+
     <?php if (!empty($data['extra_head'] ?? null)): ?>
     <?php echo $data['extra_head']; ?>
     <?php endif; ?>
 </head>
-<body class="template-front-body">
-    <div id="navigation" class="site-navigation navbar-light bg-white shadow-sm">
-        <div class="container-fluid px-3 px-lg-4">
-            <div class="row align-items-center py-2 g-2">
-                <div class="col-auto">
-                    <div class="site-logo">
-                        <a href="<?php echo BASE_URL; ?>/Home/index" class="text-decoration-none d-flex align-items-center">
-                            <img src="<?php echo PROJECT_URL; ?>/public/images/Logo_EduMatch2.png" alt="EduMatch" class="site-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
-                            <span class="logo-fallback text-gradient-brand fw-bold" style="display:none;font-size:1.35rem;">EduMatch</span>
-                        </a>
-                    </div>
-                </div>
-                <div class="col d-none d-lg-flex justify-content-center">
-                    <nav id="main-menu" aria-label="Navigation principale">
-                        <ul class="list-unstyled d-flex flex-wrap align-items-center gap-1 gap-xl-3 mb-0">
-                            <li><a href="<?php echo BASE_URL; ?>/Home/index">Accueil</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>/AdminEvenement/index">Administration</a></li>
-                        </ul>
-                    </nav>
-                </div>
-                <div class="col-auto ms-auto d-none d-xl-flex align-items-center gap-2">
-                    <a href="<?php echo BASE_URL; ?>/AdminEvenement/index" class="btn-one-header"><i class="fas fa-cog me-1"></i> Administration</a>
-                </div>
-                <div class="col-12 d-lg-none">
-                    <button class="navbar-toggler-custom w-100 d-flex align-items-center justify-content-between" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav" aria-expanded="false" aria-controls="mobileNav">
-                        <span class="small fw-semibold text-muted">Menu</span>
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="collapse mt-2" id="mobileNav">
-                        <ul class="mobile-menu list-unstyled mb-0 py-2">
-                            <li><a href="<?php echo BASE_URL; ?>/Home/index">Accueil</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>/AdminEvenement/index">Administration</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<body>
+    <!-- Navbar unifiee EduMatch -->
+    <?php include $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/view/template/_navbar.php'; ?>
 
     <main class="template-main py-4 py-lg-5">
         <div class="container">

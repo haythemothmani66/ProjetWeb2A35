@@ -33,6 +33,19 @@ $updateStmt->execute([$partnerId]);
 
 // Fetch similar partners for the "Related" section
 $similarPartners = RecommendationService::getRecommendations($conn, $partnerId, 3);
+
+// Helper : resoudre le chemin du logo (URL externe, upload, ou placeholder)
+function resolveLogo($logo) {
+    static $placeholder = null;
+    if ($placeholder === null) {
+        $placeholder = 'data:image/svg+xml;utf8,' . rawurlencode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8B5CF6"/></linearGradient></defs><rect width="150" height="150" fill="url(#g)" rx="20"/><text x="75" y="95" font-family="Arial" font-size="60" fill="white" text-anchor="middle" font-weight="700">🏢</text></svg>');
+    }
+    $logo = trim((string)$logo);
+    if ($logo === '') return $placeholder;
+    if (preg_match('#^https?://#i', $logo)) return $logo;
+    if (strpos($logo, 'assets/uploads/') === 0) return '/gestion_users/' . $logo;
+    return '/gestion_users/assets/uploads/partners/' . $logo;
+}
 ?>
 
 <!DOCTYPE html>
@@ -213,7 +226,7 @@ $similarPartners = RecommendationService::getRecommendations($conn, $partnerId, 
     <div class="hero-profile">
         <div class="container">
             <div class="floating-logo">
-                <img src="<?php echo $partner['logo'] ? '../../' . $partner['logo'] : 'https://via.placeholder.com/150'; ?>" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+                <img src="<?php echo resolveLogo($partner['logo']); ?>" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.onerror=null;this.src='<?php echo resolveLogo(null); ?>';">
             </div>
             <h1 style="font-weight: 800; font-size: 3.5rem;"><?php echo htmlspecialchars($partner['organization_name']); ?></h1>
             <p style="opacity: 0.8; font-size: 1.2rem;"><?php echo htmlspecialchars($partner['partner_type']); ?></p>
@@ -286,7 +299,7 @@ $similarPartners = RecommendationService::getRecommendations($conn, $partnerId, 
                         <?php foreach($similarPartners as $similar): ?>
                             <a href="partner_details.php?id=<?php echo $similar['id']; ?>" style="text-decoration: none; color: inherit;">
                                 <div class="similar-card d-flex align-items-center gap-3">
-                                    <img src="<?php echo $similar['logo'] ? '../../' . $similar['logo'] : 'https://via.placeholder.com/50'; ?>" style="width: 40px; height: 40px; border-radius: 10px; object-fit: contain;">
+                                    <img src="<?php echo resolveLogo($similar['logo']); ?>" style="width: 40px; height: 40px; border-radius: 10px; object-fit: contain;" onerror="this.onerror=null;this.src='<?php echo resolveLogo(null); ?>';">
                                     <div style="font-weight: 700; font-size: 0.9rem;"><?php echo htmlspecialchars($similar['organization_name']); ?></div>
                                 </div>
                             </a>

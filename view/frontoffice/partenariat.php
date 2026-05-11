@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/config/database.php';
 
@@ -18,7 +18,7 @@ if (empty($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', $allo
 $baseUrl = '/gestion_users';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 	<head>
 		<meta charset="utf-8">
@@ -70,10 +70,10 @@ $baseUrl = '/gestion_users';
 			<div class="container">
 				<div class="col-lg-10 offset-lg-1 text-center">
 					<div class="section-top-title wow fadeInRight" data-wow-duration="1s" data-wow-delay="0.3s" data-wow-offset="0">
-						<h1>sponsorship</h1>
+						<h1>Partenariat</h1>
 						<ul>
-							<li><a href="<?= $baseUrl ?>/view/template/index.php">Home</a></li>
-							<li> / sponsorship</li>
+							<li><a href="<?= $baseUrl ?>/view/template/index.php">Accueil</a></li>
+							<li> / Partenariat</li>
 						</ul>
 					</div><!-- //.HERO-TEXT -->
 				</div><!--- END COL -->
@@ -87,28 +87,28 @@ $baseUrl = '/gestion_users';
 				<div class="row justify-content-center">		
 					<div class="col-lg-7 col-sm-12 col-xs-12">
 						<div class="partnership_content" style="line-height: 1.8;">
-							<h2 style="font-size: 28px; color: #1a1a1a; margin-bottom: 20px; font-weight: 700;">Become an EduMatch Partner</h2>
+							<h2 style="font-size: 28px; color: #1a1a1a; margin-bottom: 20px; font-weight: 700;">Devenez partenaire EduMatch</h2>
 
 							<p style="font-size: 16px; color: #555; margin-bottom: 18px;">
-								At <strong>EduMatch</strong>, we believe in the power of collaboration to create meaningful learning opportunities.
-								We partner with organizations, institutions, and innovative companies to connect students with valuable resources, experiences, and knowledge.
+								Chez <strong>EduMatch</strong>, nous croyons au pouvoir de la collaboration pour creer des opportunites d'apprentissage significatives.
+								Nous travaillons avec des organisations, institutions et entreprises innovantes pour connecter les etudiants a des ressources, experiences et connaissances precieuses.
 							</p>
 
 							<p style="font-size: 16px; color: #555; margin-bottom: 18px;">
-								By becoming a partner, you join a growing network dedicated to shaping the future of education.
-								Whether you are a university, a startup, or an established company, EduMatch offers you the opportunity to showcase your expertise, reach a wider audience, and make a real impact.
+								En devenant partenaire, vous rejoignez un reseau croissant dedie a faconner l'avenir de l'education.
+								Que vous soyez une universite, une startup ou une entreprise etablie, EduMatch vous offre l'opportunite de mettre en valeur votre expertise, d'atteindre un public plus large et d'avoir un impact reel.
 							</p>
 
 							<p style="font-size: 16px; color: #555; margin-bottom: 18px;">
-								Fill out the form below to submit your partnership request. Our team will carefully review your application and get back to you as soon as possible.
+								Remplissez le formulaire ci-dessous pour soumettre votre demande de partenariat. Notre equipe examinera attentivement votre candidature et vous repondra dans les plus brefs delais.
 							</p>
 
-							<p style="font-size: 16px; color: #1a1a1a; margin-bottom: 18px;"><strong>Together, let's build better learning experiences.</strong></p>
+							<p style="font-size: 16px; color: #1a1a1a; margin-bottom: 18px;"><strong>Ensemble, construisons de meilleures experiences d'apprentissage.</strong></p>
 						</div>
 					</div><!-- END COL  -->	
 					<div class="col-lg-5 col-sm-12 col-xs-12">
 						<div class="faq_img">
-							<img src="../../assets/img/faq.jpg" alt="faq image" />
+							<img src="../../assets/img/faq.jpg" alt="image partenariat" />
 						</div>
 					</div>					
 				</div><!--END  ROW  -->
@@ -124,8 +124,8 @@ $baseUrl = '/gestion_users';
 					<div class="col-lg-8 offset-lg-2 col-sm-12 col-xs-12">
 						<!-- Form Title -->
 						<div class="form_header text-center" style="margin-bottom: 50px;">
-							<h2 style="font-size: 36px; color: #1a1a1a; margin-bottom: 15px; font-weight: 700;">Become Our Partner</h2>
-							<p style="font-size: 16px; color: #666; line-height: 1.6;">Join our growing network of partners and sponsors. Help us create better educational opportunities worldwide.</p>
+							<h2 style="font-size: 36px; color: #1a1a1a; margin-bottom: 15px; font-weight: 700;">Devenez notre partenaire</h2>
+							<p style="font-size: 16px; color: #666; line-height: 1.6;">Rejoignez notre reseau croissant de partenaires et sponsors. Aidez-nous a creer de meilleures opportunites educatives a travers le monde.</p>
 						</div>
 
 						<!-- Partner Form Card -->
@@ -137,23 +137,23 @@ $baseUrl = '/gestion_users';
 							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
 								<!-- Organization Name -->
 								<div class="form_group">
-									<label for="org_name" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Organization Name *</label>
+									<label for="org_name" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Nom de l'organisation *</label>
 									<input 
 										type="text" 
 										id="org_name"
 										name="organization_name" 
 										class="form_input"
-										placeholder="Enter your organization name"
+										placeholder="Entrez le nom de votre organisation"
 										required
 										style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit;"
 										onInput="validateField(this)"
 									>
-									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Your official organization name</small>
+									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Le nom officiel de votre organisation</small>
 								</div>
 
 								<!-- Partner Type Dropdown -->
 								<div class="form_group">
-									<label for="partner_type" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Type of Partner *</label>
+									<label for="partner_type" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Type de partenaire *</label>
 									<select 
 										id="partner_type"
 										name="partner_type" 
@@ -162,13 +162,13 @@ $baseUrl = '/gestion_users';
 										style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit; background-color: white; cursor: pointer;"
 										onchange="validateField(this)"
 									>
-										<option value="">-- Select Partner Type --</option>
-										<option value="company">Company</option>
-										<option value="university">University</option>
+										<option value="">-- Selectionnez un type --</option>
+										<option value="company">Entreprise</option>
+										<option value="university">Universite</option>
 										<option value="startup">Startup</option>
-										<option value="ngo">NGO</option>
+										<option value="ngo">ONG</option>
 									</select>
-									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Choose your organization type</small>
+									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Choisissez le type de votre organisation</small>
 								</div>
 							</div>
 
@@ -176,7 +176,7 @@ $baseUrl = '/gestion_users';
 							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
 								<!-- Email -->
 								<div class="form_group">
-									<label for="email" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Email Address *</label>
+									<label for="email" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Adresse email *</label>
 									<input 
 										type="email" 
 										id="email"
@@ -187,7 +187,7 @@ $baseUrl = '/gestion_users';
 										style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit;"
 										onInput="validateField(this)"
 									>
-									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">We'll use this to contact you</small>
+									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Nous utiliserons ceci pour vous contacter</small>
 								</div>
 
 								<!-- Telephone -->
@@ -204,7 +204,7 @@ $baseUrl = '/gestion_users';
 										style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit;"
 										onInput="validateField(this)"
 									>
-									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Numbers only (7-15 digits)</small>
+									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Chiffres uniquement (7-15 chiffres)</small>
 								</div>
 							</div>
 
@@ -212,32 +212,32 @@ $baseUrl = '/gestion_users';
 							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
 								<!-- Address -->
 								<div class="form_group">
-									<label for="address" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Address</label>
+									<label for="address" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Adresse</label>
 									<input 
 										type="text" 
 										id="address"
 										name="address" 
 										class="form_input"
-										placeholder="Street address"
+										placeholder="Adresse postale"
 										style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit;"
 										onInput="validateField(this)"
 									>
-									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Your office location</small>
+									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Adresse de votre bureau</small>
 								</div>
 
 								<!-- Country -->
 								<div class="form_group">
-									<label for="country" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Country</label>
+									<label for="country" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Pays</label>
 									<input 
 										type="text" 
 										id="country"
 										name="country" 
 										class="form_input"
-										placeholder="e.g., United States"
+										placeholder="Ex : France"
 										style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit;"
 										onInput="validateField(this)"
 									>
-									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Country of operation</small>
+									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Pays d'activite</small>
 								</div>
 							</div>
 
@@ -245,7 +245,7 @@ $baseUrl = '/gestion_users';
 							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
 								<!-- Domain -->
 								<div class="form_group">
-									<label for="domain" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Website Domain</label>
+									<label for="domain" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Site web</label>
 									<input 
 										type="url" 
 										id="domain"
@@ -255,12 +255,12 @@ $baseUrl = '/gestion_users';
 										style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit;"
 										onInput="validateField(this)"
 									>
-									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Your website URL</small>
+									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">URL de votre site web</small>
 								</div>
 
 								<!-- Logo Upload -->
 								<div class="form_group">
-									<label for="logo" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Organization Logo</label>
+									<label for="logo" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Logo de l'organisation</label>
 									<input 
 										type="file" 
 										id="logo"
@@ -270,39 +270,39 @@ $baseUrl = '/gestion_users';
 										style="width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.3s ease;"
 										onchange="validateField(this)"
 									>
-									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">PNG, JPG (max 2MB)</small>
+									<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">PNG, JPG (max 2 Mo)</small>
 								</div>
 							</div>
 
 							<!-- Description Textarea -->
 							<div class="form_group" style="margin-bottom: 25px;">
-								<label for="auth_key" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Authentication Key *</label>
+								<label for="auth_key" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">Cle d'authentification *</label>
 								<input
 									type="password"
 									id="auth_key"
 									name="auth_key"
 									class="form_input"
-									placeholder="Create your secret key"
+									placeholder="Creez votre cle secrete"
 									autocomplete="new-password"
 									style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit;"
 									onInput="validateField(this)"
 								>
-								<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Required on first submission. Keep it safe: you must provide it to view, modify, or delete this record.</small>
+								<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Obligatoire lors de la premiere soumission. Conservez-la precieusement : elle est requise pour consulter, modifier ou supprimer cet enregistrement.</small>
 							</div>
 
 							<!-- Description Textarea -->
 							<div class="form_group" style="margin-bottom: 30px;">
-								<label for="description" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">About Your Organization</label>
+								<label for="description" style="display: block; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; font-size: 14px;">A propos de votre organisation</label>
 								<textarea 
 									id="description"
 									name="description" 
 									class="form_input"
-									placeholder="Tell us about your organization, what you do, and why you want to be our partner..."
+									placeholder="Parlez-nous de votre organisation, de ce que vous faites et de la raison pour laquelle vous souhaitez devenir notre partenaire..."
 									rows="5"
 									style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; font-family: inherit; resize: vertical; min-height: 120px;"
 									onInput="validateField(this)"
 								></textarea>
-								<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Help us understand your organization</small>
+								<small style="display: block; margin-top: 6px; color: #999; font-size: 13px;">Aidez-nous a comprendre votre organisation</small>
 							</div>
 
 							<!-- Submit Button -->
@@ -323,9 +323,9 @@ $baseUrl = '/gestion_users';
 									onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(255, 127, 80, 0.4)';"
 									onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 15px rgba(255, 127, 80, 0.3)';"
 								>
-									Apply as Partner
+									Postuler comme partenaire
 								</button>
-								<p style="margin-top: 15px; color: #999; font-size: 13px;">We'll review your application and get back to you within 48 hours.</p>
+								<p style="margin-top: 15px; color: #999; font-size: 13px;">Nous examinerons votre candidature et vous repondrons dans les 48 heures.</p>
 							</div>
 						</form>
 					</div>
@@ -652,7 +652,7 @@ $baseUrl = '/gestion_users';
                 <h3 class="text-white fw-bold">EduMatch</h3>
               </a>
               <p class="mt-3 text-light opacity-75">
-                Smart matching platform connecting students with expert professors across all academic subjects for personalized learning experiences.
+                Plateforme intelligente de mise en relation des etudiants avec des professeurs experts dans toutes les matieres academiques pour des experiences d'apprentissage personnalisees.
               </p>
               <div class="social-links mt-3">
                 <a href="#" class="text-white me-3 fs-4"><i class="fab fa-facebook-f"></i></a>
@@ -663,37 +663,37 @@ $baseUrl = '/gestion_users';
             </div>
           </div>
           <div class="col-lg-2 col-md-6 mb-4">
-            <h5 class="fw-bold mb-3">Platform</h5>
+            <h5 class="fw-bold mb-3">Plateforme</h5>
             <ul class="list-unstyled">
-              <li class="mb-2"><a href="submit.html" class="text-light text-decoration-none">Submit Requirements</a></li>
-              <li class="mb-2"><a href="feed.html" class="text-light text-decoration-none">Professor Matches</a></li>
-              <li class="mb-2"><a href="about.html" class="text-light text-decoration-none">How It Works</a></li>
-              <li class="mb-2"><a href="contact.html" class="text-light text-decoration-none">Get Matched</a></li>
+              <li class="mb-2"><a href="submit.html" class="text-light text-decoration-none">Soumettre une demande</a></li>
+              <li class="mb-2"><a href="feed.html" class="text-light text-decoration-none">Mises en relation</a></li>
+              <li class="mb-2"><a href="about.html" class="text-light text-decoration-none">Comment ca marche</a></li>
+              <li class="mb-2"><a href="contact.html" class="text-light text-decoration-none">Etre mis en relation</a></li>
             </ul>
           </div>
           <div class="col-lg-2 col-md-6 mb-4">
-            <h5 class="fw-bold mb-3">Academic Subjects</h5>
+            <h5 class="fw-bold mb-3">Matieres academiques</h5>
             <ul class="list-unstyled">
-              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematics</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Mathematiques</a></li>
               <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences</a></li>
-							<li class="mb-2"><a href="#" class="text-light text-decoration-none">coding</a></li>
-							<li class="mb-2"><a href="#" class="text-light text-decoration-none">algorithm</a></li>
-              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Languages</a></li>
-              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Humanities</a></li>
+							<li class="mb-2"><a href="#" class="text-light text-decoration-none">Programmation</a></li>
+							<li class="mb-2"><a href="#" class="text-light text-decoration-none">Algorithmique</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Langues</a></li>
+              <li class="mb-2"><a href="#" class="text-light text-decoration-none">Sciences humaines</a></li>
             </ul>
           </div>
           <div class="col-lg-4 col-md-6 mb-4">
-            <h5 class="fw-bold mb-3">Contact Info</h5>
+            <h5 class="fw-bold mb-3">Coordonnees</h5>
             <div class="contact-info">
               <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Tunisia,Tunis</p>
               <p class="mb-2"><i class="fas fa-phone me-2"></i>+216 90 549 254</p>
               <p class="mb-2"><i class="fas fa-envelope me-2"></i>edumatch@gmail.com</p>
             </div>
             <div class="newsletter mt-3">
-              <h6 class="fw-bold mb-2">Stay Updated on Academic Tutoring</h6>
+              <h6 class="fw-bold mb-2">Restez informe sur le tutorat academique</h6>
               <div class="input-group">
-                <input type="email" class="form-control" placeholder="Your email" style="border-radius: 25px 0 0 25px;">
-                <button class="btn btn-primary" type="button" style="border-radius: 0 25px 25px 0;">Subscribe</button>
+                <input type="email" class="form-control" placeholder="Votre email" style="border-radius: 25px 0 0 25px;">
+                <button class="btn btn-primary" type="button" style="border-radius: 0 25px 25px 0;">S'abonner</button>
               </div>
             </div>
           </div>
@@ -701,12 +701,12 @@ $baseUrl = '/gestion_users';
         <hr class="my-4 opacity-25">
         <div class="row align-items-center">
           <div class="col-md-6">
-            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. All rights reserved.</p>
+            <p class="mb-0 text-light opacity-75">&copy; 2026 EduMatch. Tous droits reserves.</p>
           </div>
           <div class="col-md-6 text-md-end">
-            <a href="#" class="text-light text-decoration-none me-3">Privacy Policy</a>
-            <a href="#" class="text-light text-decoration-none me-3">Terms of Service</a>
-            <a href="#" class="text-light text-decoration-none">Support</a>
+            <a href="#" class="text-light text-decoration-none me-3">Politique de confidentialite</a>
+            <a href="#" class="text-light text-decoration-none me-3">Conditions d'utilisation</a>
+            <a href="#" class="text-light text-decoration-none">Assistance</a>
           </div>
         </div>
       </div>
@@ -990,12 +990,12 @@ async function checkPartnerStatusAndRedirect(orgName, partnerRecord = null) {
     }
     
     if (!partner) {
-        showToast('Organization not found. Please apply first.', 'error');
+        showToast('Organisation introuvable. Veuillez d''abord postuler.', 'error');
         return false;
     }
     
     if (partner.status === 'approved') {
-        showToast('✅ Your partnership request has been accepted! Redirecting to contract page...', 'success');
+        showToast('\u2705 Votre demande de partenariat a ete acceptee ! Redirection vers la page du contrat...', 'success');
         
         // Store partner info in sessionStorage for the contract page
         sessionStorage.setItem('approved_partner', JSON.stringify({
@@ -1011,10 +1011,10 @@ async function checkPartnerStatusAndRedirect(orgName, partnerRecord = null) {
         }, 2000);
         return true;
     } else if (partner.status === 'pending') {
-        showToast('⏳ Your partnership request is still pending review. We will notify you once approved.', 'warning');
+        showToast('\u23F3 Votre demande de partenariat est toujours en cours d''examen. Nous vous informerons une fois approuvee.', 'warning');
         return false;
     } else if (partner.status === 'rejected') {
-        showToast('❌ Your partnership request has been declined. Please contact us for more information.', 'error');
+        showToast('\u274C Votre demande de partenariat a ete refusee. Veuillez nous contacter pour plus d''informations.', 'error');
         return false;
     }
     
@@ -1078,10 +1078,10 @@ async function displayStatusResult(orgName) {
             statusResultDiv.innerHTML = `
                 <div class="approved-card">
                     <div class="approved-icon">✅</div>
-                    <h4 style="color: #2e7d32; margin-bottom: 10px;">Partnership Approved!</h4>
-                    <p style="color: #1b5e20;">Congratulations! Your partnership request has been accepted by EduMatch.</p>
-                    <p style="color: #1b5e20; margin-top: 10px;">Click the button below to proceed with the partnership contract.</p>
-                    <button id="proceedToContractBtn" class="redirect-btn">Continue to Contract →</button>
+                    <h4 style="color: #2e7d32; margin-bottom: 10px;">Partenariat approuve !</h4>
+                    <p style="color: #1b5e20;">Felicitations ! Votre demande de partenariat a ete acceptee par EduMatch.</p>
+                    <p style="color: #1b5e20; margin-top: 10px;">Cliquez sur le bouton ci-dessous pour proceder au contrat de partenariat.</p>
+                    <button id="proceedToContractBtn" class="redirect-btn">Continuer vers le contrat \u2192</button>
                 </div>
             `;
             
@@ -1101,18 +1101,18 @@ async function displayStatusResult(orgName) {
             statusResultDiv.innerHTML = `
                 <div class="pending-card">
                     <div class="pending-icon">⏳</div>
-                    <h4 style="color: #e65100; margin-bottom: 10px;">Pending Review</h4>
-                    <p style="color: #bf360c;">Your partnership request is currently under review.</p>
-                    <p style="color: #bf360c; margin-top: 10px;">We will notify you once a decision has been made.</p>
+                    <h4 style="color: #e65100; margin-bottom: 10px;">En cours d'examen</h4>
+                    <p style="color: #bf360c;">Votre demande de partenariat est en cours d'examen.</p>
+                    <p style="color: #bf360c; margin-top: 10px;">Nous vous informerons une fois une decision prise.</p>
                 </div>
             `;
         } else if (partner.status === 'rejected') {
             statusResultDiv.innerHTML = `
                 <div class="rejected-card">
                     <div class="rejected-icon">❌</div>
-                    <h4 style="color: #c62828; margin-bottom: 10px;">Not Approved</h4>
-                    <p style="color: #b71c1c;">Your partnership request has not been accepted at this time.</p>
-                    <p style="color: #b71c1c; margin-top: 10px;">Please contact our team for more information.</p>
+                    <h4 style="color: #c62828; margin-bottom: 10px;">Non approuve</h4>
+                    <p style="color: #b71c1c;">Votre demande de partenariat n''a pas ete acceptee pour le moment.</p>
+                    <p style="color: #b71c1c; margin-top: 10px;">Veuillez contacter notre equipe pour plus d''informations.</p>
                 </div>
             `;
         }
@@ -1154,17 +1154,17 @@ async function displayStatusResult(orgName) {
 				function validateOrgName() {
 					const value = fields.orgName.value.trim();
 					if (!value) {
-						return 'Organization name is required.';
+						return 'Le nom de l''organisation est requis.';
 					}
 					if (value.length < 3) {
-						return 'Organization name must contain at least 3 characters.';
+						return 'Le nom de l''organisation doit contenir au moins 3 caracteres.';
 					}
 					return '';
 				}
 
 				function validatePartnerType() {
 					if (!fields.partnerType.value) {
-						return 'Please select a partner type.';
+						return 'Veuillez selectionner un type de partenaire.';
 					}
 					return '';
 				}
@@ -1173,10 +1173,10 @@ async function displayStatusResult(orgName) {
 					const value = fields.email.value.trim();
 					const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 					if (!value) {
-						return 'Email address is required.';
+						return 'L''adresse email est requise.';
 					}
 					if (!emailPattern.test(value)) {
-						return 'Please enter a valid email address (example: contact@company.com).';
+						return 'Veuillez entrer une adresse email valide (exemple : contact@entreprise.com).';
 					}
 					return '';
 				}
@@ -1185,10 +1185,10 @@ async function displayStatusResult(orgName) {
 					const rawValue = fields.phone.value.trim();
 					const digitsOnly = rawValue.replace(/\D/g, '');
 					if (!rawValue) {
-						return 'Phone number is required.';
+						return 'Le numero de telephone est requis.';
 					}
 					if (!/^\d{7,15}$/.test(digitsOnly) || digitsOnly !== rawValue) {
-						return 'Phone number must contain only 7 to 15 digits.';
+						return 'Le numero de telephone doit contenir entre 7 et 15 chiffres uniquement.';
 					}
 					return '';
 				}
@@ -1196,7 +1196,7 @@ async function displayStatusResult(orgName) {
 				function validateAddress() {
 					const value = fields.address.value.trim();
 					if (value && value.length < 5) {
-						return 'Address must contain at least 5 characters when provided.';
+						return 'L''adresse doit contenir au moins 5 caracteres si renseignee.';
 					}
 					return '';
 				}
@@ -1204,7 +1204,7 @@ async function displayStatusResult(orgName) {
 				function validateCountry() {
 					const value = fields.country.value.trim();
 					if (value && value.length < 2) {
-						return 'Country must contain at least 2 characters.';
+						return 'Le pays doit contenir au moins 2 caracteres.';
 					}
 					return '';
 				}
@@ -1215,7 +1215,7 @@ async function displayStatusResult(orgName) {
 						return '';
 					}
 					if (!isHttpUrl(value)) {
-						return 'Website must start with http:// or https:// and be a valid URL.';
+						return 'Le site web doit commencer par http:// ou https:// et etre une URL valide.';
 					}
 					return '';
 				}
@@ -1230,10 +1230,10 @@ async function displayStatusResult(orgName) {
 
 					const file = fields.logo.files[0];
 					if (!file.type.startsWith('image/')) {
-						return 'Logo must be a valid image file (PNG, JPG, WEBP...).';
+						return 'Le logo doit etre un fichier image valide (PNG, JPG, WEBP...).';
 					}
 					if (file.size > 2 * 1024 * 1024) {
-						return 'Logo file exceeds the maximum allowed size (2 MB).';
+						return 'Le fichier logo depasse la taille maximale autorisee (2 Mo).';
 					}
 					return '';
 				}
@@ -1241,7 +1241,7 @@ async function displayStatusResult(orgName) {
 				function validateDescription() {
 					const value = fields.description.value.trim();
 					if (value && value.length < 10) {
-						return 'Description must contain at least 10 characters when provided.';
+						return 'La description doit contenir au moins 10 caracteres si renseignee.';
 					}
 					return '';
 				}
@@ -1249,10 +1249,10 @@ async function displayStatusResult(orgName) {
 				function validateAuthKey() {
 					const value = fields.authKey.value.trim();
 					if (!editingPartnerId && !value) {
-						return 'Authentication key is required.';
+						return 'La cle d''authentification est requise.';
 					}
 					if (value && value.length < 6) {
-						return 'Authentication key must contain at least 6 characters.';
+						return 'La cle d''authentification doit contenir au moins 6 caracteres.';
 					}
 					return '';
 				}
@@ -1298,12 +1298,12 @@ async function displayStatusResult(orgName) {
 
 					if (showGlobalMessage) {
 						if (invalidCount > 0) {
-							showFormAlert('Please correct the highlighted fields before submitting your request.', 'error');
+							showFormAlert('Veuillez corriger les champs en surbrillance avant de soumettre votre demande.', 'error');
 							if (firstInvalidField) {
 								firstInvalidField.focus();
 							}
 						} else {
-							showFormAlert('Partnership request is valid. Your form is ready to submit.', 'success');
+							showFormAlert('Demande de partenariat valide. Votre formulaire est pret a etre envoye.', 'success');
 						}
 					}
 
@@ -1330,7 +1330,7 @@ async function displayStatusResult(orgName) {
 				function resetEditMode() {
 					editingPartnerId = null;
 					if (submitBtn) {
-						submitBtn.textContent = 'Apply as Partner';
+						submitBtn.textContent = 'Postuler comme partenaire';
 					}
 					if (cancelEditBtn) {
 						cancelEditBtn.style.display = 'none';
@@ -1351,7 +1351,7 @@ async function displayStatusResult(orgName) {
 					fields.logo.value = '';
 
 					if (submitBtn) {
-						submitBtn.textContent = 'Save Partner Changes';
+						submitBtn.textContent = 'Enregistrer les modifications';
 					}
 					if (cancelEditBtn) {
 						cancelEditBtn.style.display = 'inline-block';
@@ -1384,7 +1384,7 @@ async function displayStatusResult(orgName) {
 						'<p><strong>Address:</strong> ' + escapeHtml(partner.address || '-') + '</p>' +
 						'<p><strong>Country:</strong> ' + escapeHtml(partner.country || '-') + '</p>' +
 						'<p><strong>Domain:</strong> ' + escapeHtml(partner.domain || '-') + '</p>' +
-						'<p><strong>Logo File:</strong> ' + escapeHtml(partner.logo_file_name || 'No file uploaded') + '</p>' +
+						'<p><strong>Logo File:</strong> ' + escapeHtml(partner.logo_file_name || 'Aucun fichier televerse') + '</p>' +
 						'<p><strong>Description:</strong> ' + escapeHtml(partner.description || '-') + '</p>';
 
 					detailsBox.style.display = 'block';
@@ -1415,7 +1415,7 @@ async function displayStatusResult(orgName) {
 					});
 
 					if (targetIndex === -1) {
-						showSearchAlert('Partner not found. Please search again.', 'error');
+						showSearchAlert('Partenaire introuvable. Veuillez chercher a nouveau.', 'error');
 						return null;
 					}
 
@@ -1428,12 +1428,12 @@ async function displayStatusResult(orgName) {
 
 					const normalizedKey = enteredKey.trim();
 					if (!normalizedKey) {
-						showSearchAlert('Authentication key is required.', 'error');
+						showSearchAlert('La cle d''authentification est requise.', 'error');
 						return null;
 					}
 
 					if (normalizedKey.length < 6) {
-						showSearchAlert('Authentication key must contain at least 6 characters.', 'error');
+						showSearchAlert('La cle d''authentification doit contenir au moins 6 caracteres.', 'error');
 						return null;
 					}
 
@@ -1441,7 +1441,7 @@ async function displayStatusResult(orgName) {
 
 					if (partner.auth_key_hash) {
 						if (enteredHash !== partner.auth_key_hash) {
-							showSearchAlert('Invalid authentication key.', 'error');
+							showSearchAlert('Cle d''authentification invalide.', 'error');
 							return null;
 						}
 					} else {
@@ -1463,7 +1463,7 @@ async function displayStatusResult(orgName) {
 					if (!trimmedQuery) {
 						resultsWrapper.style.display = 'none';
 						hidePartnerDetails();
-						showSearchAlert('Please enter an organization name before searching.', 'error');
+						showSearchAlert('Veuillez entrer un nom d''organisation avant de rechercher.', 'error');
 						return;
 					}
 
@@ -1559,8 +1559,8 @@ async function displayStatusResult(orgName) {
 							return;
 						}
 
-						if (action === 'view') {
-							const authorizedPartner = await authorizePartnerAction(partnerId, 'view');
+						if (action === 'Voir') {
+							const authorizedPartner = await authorizePartnerAction(partnerId, 'Voir');
 							if (!authorizedPartner) {
 								return;
 							}
@@ -1569,7 +1569,7 @@ async function displayStatusResult(orgName) {
 						}
 
 						if (action === 'edit') {
-							const authorizedPartner = await authorizePartnerAction(partnerId, 'modify');
+							const authorizedPartner = await authorizePartnerAction(partnerId, 'Modifier');
 							if (!authorizedPartner) {
 								return;
 							}
@@ -1577,18 +1577,18 @@ async function displayStatusResult(orgName) {
 							return;
 						}
 
-						if (action === 'delete') {
-							const authorizedPartner = await authorizePartnerAction(partnerId, 'delete');
+						if (action === 'Supprimer') {
+							const authorizedPartner = await authorizePartnerAction(partnerId, 'Supprimer');
 							if (!authorizedPartner) {
 								return;
 							}
 
-							if (!confirm('Do you really want to delete this partner?')) {
+							if (!confirm('Voulez-vous vraiment supprimer ce partenaire ?')) {
 								return;
 							}
 
 							deletePartnerById(partnerId);
-							await syncPartnerToDatabase(authorizedPartner, 'delete');
+							await syncPartnerToDatabase(authorizedPartner, 'Supprimer');
 							if (String(editingPartnerId) === String(partnerId)) {
 								form.reset();
 								Object.values(fields).forEach(function (field) {
@@ -1599,7 +1599,7 @@ async function displayStatusResult(orgName) {
 								resetEditMode();
 							}
 							renderSearchResults(currentSearchQuery);
-							showSearchAlert('Partner deleted successfully.', 'success');
+							showSearchAlert('Partenaire supprime avec succes.', 'success');
 						}
 					});
 				}
@@ -1613,7 +1613,7 @@ async function displayStatusResult(orgName) {
 							}
 						});
 						resetEditMode();
-						showFormAlert('Edit cancelled.', 'success');
+						showFormAlert('Edition annulee.', 'success');
 					});
 				}
 				// Check status button handler
@@ -1621,7 +1621,7 @@ if (checkStatusBtn) {
     checkStatusBtn.addEventListener('click', function () {
         const orgName = checkOrgNameInput ? checkOrgNameInput.value.trim() : '';
         if (!orgName) {
-            showToast('Please enter an organization name', 'warning');
+            showToast('Veuillez entrer un nom d''organisation', 'warning');
             return;
         }
         displayStatusResult(orgName);
@@ -1636,7 +1636,7 @@ if (checkOrgNameInput) {
             if (orgName) {
                 displayStatusResult(orgName);
             } else {
-                showToast('Please enter an organization name', 'warning');
+                showToast('Veuillez entrer un nom d''organisation', 'warning');
             }
         }
     });
@@ -1657,7 +1657,7 @@ if (checkOrgNameInput) {
 							return String(partner.id) === String(editingPartnerId);
 						});
 						if (targetIndex === -1) {
-							showFormAlert('The partner to edit could not be found.', 'error');
+							showFormAlert('Le partenaire a modifier est introuvable.', 'error');
 							return;
 						}
 
@@ -1667,7 +1667,7 @@ if (checkOrgNameInput) {
 							: (existingPartner.auth_key_hash || '');
 
 						if (!isSha256Hash(nextAuthHash)) {
-							showFormAlert('A valid authentication key is required to secure this partner record.', 'error');
+							showFormAlert('Une cle d''authentification valide est requise pour securiser cet enregistrement.', 'error');
 							return;
 						}
 
@@ -1681,12 +1681,12 @@ if (checkOrgNameInput) {
 						delete partners[targetIndex].auth_key_plain;
 						savePartners(partners);
 						await syncPartnerToDatabase(partners[targetIndex], 'upsert');
-						showFormAlert('Partner updated successfully.', 'success');
+						showFormAlert('Partenaire mis a jour avec succes.', 'success');
 						resetEditMode();
 					} else {
 						const authHash = await hashAuthKey(payload.auth_key_plain);
 						if (!isSha256Hash(authHash)) {
-							showFormAlert('A valid authentication key is required before saving.', 'error');
+							showFormAlert('Une cle d''authentification valide est requise avant l''enregistrement.', 'error');
 							return;
 						}
 
@@ -1702,7 +1702,7 @@ if (checkOrgNameInput) {
 						});
 						savePartners(partners);
 						await syncPartnerToDatabase(createdPartner, 'upsert');
-						showFormAlert('Partnership request saved successfully.', 'success');
+						showFormAlert('Demande de partenariat enregistree avec succes.', 'success');
 					}
 
 					form.reset();

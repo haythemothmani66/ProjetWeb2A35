@@ -16,23 +16,24 @@
 
 <div class="row g-2 mb-3">
     <div class="col-md-3">
-        <a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminCategorie/index?status_filter">
+        <a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminCategorie/index">
             <div class="card border-0 bg-light"><div class="card-body py-2"><strong>Total:</strong> <?php echo (int) ($data['stats']['total'] ?? 0); ?></div></div>
         </a>
     </div>
     <div class="col-md-3">
-        <a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminCategorie/index?status_filter=actif">
+        <a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminCategorie/index&status_filter=actif">
             <div class="card border-0 bg-light"><div class="card-body py-2"><strong>Actives:</strong> <?php echo (int) ($data['stats']['actif'] ?? 0); ?></div></div>
         </a>
     </div>
     <div class="col-md-3">
-        <a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>/AdminCategorie/index?status_filter=inactif">
+        <a class="text-decoration-none text-dark" href="<?php echo BASE_URL; ?>AdminCategorie/index&status_filter=inactif">
             <div class="card border-0 bg-light"><div class="card-body py-2"><strong>Inactives:</strong> <?php echo (int) ($data['stats']['inactif'] ?? 0); ?></div></div>
         </a>
     </div>
 </div>
 
-<form method="GET" action="<?php echo BASE_URL; ?>/AdminCategorie/index" class="row g-2 mb-3">
+<form method="GET" action="<?php echo PROJECT_URL; ?>/public/index.php" class="row g-2 mb-3">
+    <input type="hidden" name="url" value="AdminCategorie/index">
     <div class="col-md-6">
         <input type="text" class="form-control" name="search" placeholder="Rechercher par nom, description ou statut" value="<?php echo htmlspecialchars($data['filters']['search'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
     </div>
