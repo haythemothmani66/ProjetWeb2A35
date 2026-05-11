@@ -96,6 +96,32 @@
         <span class="text">Participations</span>
       </a>
     </li>
+
+    <li class="nav-item">
+      <div class="nav-heading">Offres d'emploi</div>
+      <hr class="mx-5 nav-line mb-1" />
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste">
+        <span class="nav-icon"><i class="ti ti-briefcase"></i></span>
+        <span class="text">Liste offres</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=stats">
+        <span class="nav-icon"><i class="ti ti-chart-bar"></i></span>
+        <span class="text">Statistiques</span>
+      </a>
+    </li>
+
+    <li class="nav-item">
+      <a class="nav-link" href="/gestion_users/controller/CandidatureController.php?espace=back&action=liste">
+        <span class="nav-icon"><i class="ti ti-file-text"></i></span>
+        <span class="text">Candidatures</span>
+      </a>
+    </li>
   </ul>
 </div>
 
@@ -119,6 +145,8 @@
       <li class="nav-item"><a class="nav-link" href="/gestion_users/public/index.php?url=AdminEvenement/index"><i class="ti ti-calendar-event me-2"></i><span>Evenements</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/public/index.php?url=AdminCategorie/index"><i class="ti ti-tags me-2"></i><span>Categories</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/public/index.php?url=AdminParticipation/index"><i class="ti ti-users me-2"></i><span>Participations</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="/gestion_users/controller/OffreEmploiController.php?espace=back&action=liste"><i class="ti ti-briefcase me-2"></i><span>Offres d'emploi</span></a></li>
+      <li class="nav-item"><a class="nav-link" href="/gestion_users/controller/CandidatureController.php?espace=back&action=liste"><i class="ti ti-file-text me-2"></i><span>Candidatures</span></a></li>
       <li class="nav-item"><a class="nav-link" href="/gestion_users/view/template/index.php"><i class="ti ti-home me-2"></i><span>FrontOffice</span></a></li>
       <li class="nav-item"><a class="nav-link text-danger" href="/gestion_users/auth/logout"><i class="ti ti-logout me-2"></i><span>Deconnexion</span></a></li>
     </ul>

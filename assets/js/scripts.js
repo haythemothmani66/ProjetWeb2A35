@@ -20,13 +20,7 @@ Version      : 1.0
 			$(".mobile_menu").simpleMobileMenu({			
 				"menuStyle": "slide"
 			});
-			$(window).on('scroll', function(){
-				if ( $(window).scrollTop() > 70 ) {
-					$('.site-navigation, .header-white, .header').addClass('navbar-fixed');
-				} else {
-					$('.site-navigation, .header-white, .header').removeClass('navbar-fixed');
-				}
-			});	
+			// The header now uses a CSS sticky base to avoid scroll-state flicker.
 		/*END MENU JS*/				
 
 		/*START VIDEO JS*/	
