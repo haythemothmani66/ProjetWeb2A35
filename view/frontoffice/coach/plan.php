@@ -159,12 +159,12 @@ $dayColors = [
             font-size: 0.92rem; color: #4b5563;
         }
         .day-actions li::before {
-            content: '\\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
             position: absolute; left: 0; top: 9px;
             color: #10b981; font-size: 0.85rem;
         }
         .day-resources li::before {
-            content: '\\f02d'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            content: '\f02d'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
             position: absolute; left: 0; top: 9px;
             color: #525fe1; font-size: 0.85rem;
         }
@@ -177,7 +177,7 @@ $dayColors = [
             font-size: 0.92rem;
         }
         .motivation::before {
-            content: '\\f10d'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
+            content: '\f10d'; font-family: 'Font Awesome 6 Free'; font-weight: 900;
             color: #f59e0b; margin-right: 8px;
         }
 

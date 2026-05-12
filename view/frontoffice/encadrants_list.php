@@ -141,9 +141,16 @@ $photoPlaceholder = 'data:image/svg+xml;utf8,' . rawurlencode('<svg xmlns="http:
         <?php else: ?>
             <div class="row g-4">
                 <?php foreach ($encadrants as $e):
-                    $photoSrc = !empty($e['photo']) && $e['photo'] !== 'default.png'
-                        ? $baseUrl . '/uploads/photos/' . htmlspecialchars($e['photo'])
-                        : $photoPlaceholder;
+                    // Support URL absolue (https://...) ou fichier local dans uploads/photos/
+                    $photoSrc = $photoPlaceholder;
+                    $rawPhoto = trim((string) ($e['photo'] ?? ''));
+                    if ($rawPhoto !== '' && $rawPhoto !== 'default.png') {
+                        if (preg_match('#^https?://#i', $rawPhoto)) {
+                            $photoSrc = htmlspecialchars($rawPhoto, ENT_QUOTES, 'UTF-8');
+                        } else {
+                            $photoSrc = $baseUrl . '/uploads/photos/' . htmlspecialchars($rawPhoto, ENT_QUOTES, 'UTF-8');
+                        }
+                    }
                     $nomComplet = trim(($e['prenom'] ?? '') . ' ' . ($e['nom'] ?? ''));
                 ?>
                     <div class="col-lg-4 col-md-6">

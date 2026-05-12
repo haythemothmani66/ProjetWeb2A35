@@ -1,9 +1,10 @@
-# Uploads (user photos — ignore all except default.png)
+# Uploads (user photos — ignore all except default.png et avatars demo encadrants)
 uploads/photos/*.jpg
 uploads/photos/*.jpeg
 uploads/photos/*.png
 !uploads/photos/default.png
 !uploads/photos/.gitkeep
+!uploads/photos/encadrant_*.jpg
 
 # Uploads CV candidatures (fichiers utilisateurs, ne pas versionner)
 uploads/cv/*.pdf
