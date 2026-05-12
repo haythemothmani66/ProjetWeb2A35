@@ -671,36 +671,39 @@ if ($userData['role'] === 'etudiant' && !$isStudentVerified) {
       });
     }
 
-    /* ========== Ollama API helper (qwen3-coder:480b-cloud) ========== */
-    var OLLAMA_URL = 'http://localhost:11434/api/generate';
-    var OLLAMA_MODEL = 'qwen3-coder:480b-cloud';
+    /* ========== Groq API helper (via proxy serveur api/groq_profile_assist.php) ==========
+       Remplace l'ancien appel Ollama (qui necessitait une installation locale et la dependance
+       externe ollama.com en panne). Le proxy serveur charge la cle GROQ_API_KEY depuis .env. */
+    var GROQ_PROXY_URL = '/gestion_users/api/groq_profile_assist.php';
 
-    function callOllama(promptText) {
-      return fetch(OLLAMA_URL, {
+    function callGroq(promptText, task) {
+      task = task || 'bio_generate'; // 'ocr_extract' | 'bio_generate'
+      return fetch(GROQ_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: OLLAMA_MODEL,
-          prompt: promptText,
-          stream: false
-        })
+        body: JSON.stringify({ task: task, prompt: promptText })
       })
       .then(function(r) {
         if (!r.ok) {
           return r.text().then(function(txt) {
             var msg;
             try { var obj = JSON.parse(txt); msg = obj.error || txt; } catch(e) { msg = txt; }
-            throw new Error('Erreur Ollama: ' + msg);
+            throw new Error('Erreur IA: ' + msg);
           });
         }
         return r.json();
       })
       .then(function(data) {
-        if (!data || !data.response) {
-          throw new Error('Reponse IA vide. Verifiez que Ollama est lance (ollama serve).');
+        if (!data || !data.success || !data.response) {
+          throw new Error(data && data.error ? data.error : 'Reponse IA vide.');
         }
         return data.response;
       });
+    }
+
+    /* Alias retro-compatible : conserve le nom callOllama pour ne pas casser le reste du code */
+    function callOllama(promptText) {
+      return callGroq(promptText, 'bio_generate');
     }
 
     /* ========== Carte Etudiant: drop zone + preview + file input ========== */
@@ -805,7 +808,7 @@ if ($userData['role'] === 'etudiant' && !$isStudentVerified) {
               "\n- Laisse vide (\"\") les champs non trouvables." +
               "\n- Reponds UNIQUEMENT avec le JSON, rien d'autre.";
 
-            return callOllama(prompt);
+            return callGroq(prompt, 'ocr_extract');
           })
           .then(function(rawText) {
             /* Clean: remove <think> blocks, markdown wrappers */
@@ -896,7 +899,7 @@ if ($userData['role'] === 'etudiant' && !$isStudentVerified) {
           (etablissement ? "\nEtablissement: " + etablissement : "") +
           "\n\nReponds uniquement avec le texte de la bio, sans guillemets, sans markdown.";
 
-        callOllama(prompt)
+        callGroq(prompt, 'bio_generate')
         .then(function(rawText) {
           /* Clean: remove <think> blocks if any */
           var bio = rawText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
