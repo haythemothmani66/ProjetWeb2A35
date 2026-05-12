@@ -112,29 +112,41 @@ class BackofficeCoursesController
 
     public function store(array $data = []): void
     {
-        // Debug: Log what we receive
-        error_log('BackofficeCoursesController::store called');
-        error_log('POST data: ' . print_r($data, true));
-        error_log('FILES data: ' . print_r($_FILES, true));
-
         // Handle image upload if file was provided
         if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
-            error_log('Processing image upload...');
             $imagePath = $this->handleImageUpload($_FILES['image']);
             if ($imagePath) {
                 $data['image'] = $imagePath;
-                error_log('Image uploaded successfully: ' . $imagePath);
-            } else {
-                error_log('Image upload failed - handleImageUpload returned null');
             }
-        } else {
-            error_log('No image file provided or UPLOAD_ERR_NO_FILE');
+        }
+
+        // Auto-image Unsplash si l'admin n'a pas fourni d'image manuellement
+        if (empty($data['image'])) {
+            $data['image'] = $this->autoFetchImage(
+                (string) ($data['title'] ?? ''),
+                (string) ($data['description'] ?? '')
+            );
         }
 
         $id = $this->courses->create($data);
-        error_log('Course created with ID: ' . $id . ', data: ' . print_r($data, true));
         header('Location: ' . backofficeRoute('courses', 'index'));
         exit;
+    }
+
+    /**
+     * Recherche automatique d'une image Unsplash pour un cours via UnsplashImageService.
+     * Fallback silencieux vers une image generique si l'API echoue.
+     */
+    private function autoFetchImage(string $title, string $description = ''): string
+    {
+        try {
+            require_once dirname(__DIR__, 2) . '/api/UnsplashImageService.php';
+            $svc = new UnsplashImageService();
+            return $svc->findImageForCourse($title, $description);
+        } catch (Throwable $e) {
+            error_log('autoFetchImage error: ' . $e->getMessage());
+            return 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=500&fit=crop';
+        }
     }
 
     public function edit(array $params = []): void
@@ -163,14 +175,26 @@ class BackofficeCoursesController
         }
 
         // Handle image upload if file was provided
-        if (!empty($_FILES['image'])) {
+        if (!empty($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
             $imagePath = $this->handleImageUpload($_FILES['image']);
             if ($imagePath) {
-                // Delete old image if exists
-                if (!empty($course['image']) && file_exists(dirname(__DIR__) . '/' . $course['image'])) {
+                // Delete old image LOCAL si elle existe (pas les URLs http://)
+                if (!empty($course['image']) && !preg_match('#^https?://#i', (string) $course['image'])
+                    && file_exists(dirname(__DIR__) . '/' . $course['image'])) {
                     @unlink(dirname(__DIR__) . '/' . $course['image']);
                 }
                 $data['image'] = $imagePath;
+            }
+        } else {
+            // Pas de nouvelle image uploadee : conserve l'image existante du cours
+            // (sauf si elle etait vide, dans ce cas on en cherche une via Unsplash)
+            if (empty($course['image'])) {
+                $data['image'] = $this->autoFetchImage(
+                    (string) ($data['title'] ?? $course['title'] ?? ''),
+                    (string) ($data['description'] ?? $course['description'] ?? '')
+                );
+            } else {
+                $data['image'] = $course['image']; // conserve
             }
         }
 
@@ -295,11 +319,18 @@ class BackofficeCoursesController
             $generator = new AiCourseGenerator();
             $aiData = $generator->generateCourse($topic, $level);
 
-            // Save Course
+            // Auto-image Unsplash basee sur le titre et la description generes par l'IA
+            $autoImage = $this->autoFetchImage(
+                (string) ($aiData['course']['title'] ?? $topic),
+                (string) ($aiData['course']['description'] ?? '')
+            );
+
+            // Save Course (avec image automatique)
             $courseId = $this->courses->create([
                 'title' => $aiData['course']['title'],
                 'description' => $aiData['course']['description'],
                 'level' => $aiData['course']['level'],
+                'image' => $autoImage,
                 'status' => 'draft'
             ]);
 
