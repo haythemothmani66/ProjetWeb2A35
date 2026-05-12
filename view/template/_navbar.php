@@ -99,6 +99,7 @@ if (!empty($_SESSION['user_id'])) {
               <a href="<?= $baseUrl ?>/view/template/profil.php"><i class="fas fa-user"></i> Mon Profil</a>
               <?php $_r = $_SESSION['user_role'] ?? ''; ?>
               <?php if ($_r === 'etudiant' || $_r === 'admin'): ?>
+                <a href="<?= $baseUrl ?>/controller/CoachController.php?action=dashboard" style="background:linear-gradient(135deg,rgba(82,95,225,0.08),rgba(0,212,255,0.08));"><i class="fas fa-robot" style="color:#525fe1;"></i> Mon Coach IA</a>
                 <a href="<?= $baseUrl ?>/view/frontoffice/encadrants_list.php"><i class="fas fa-calendar-plus"></i> Reserver une seance</a>
                 <a href="<?= $baseUrl ?>/view/frontoffice/mes_reservations.php"><i class="fas fa-calendar-check"></i> Mes reservations</a>
               <?php endif; ?>
