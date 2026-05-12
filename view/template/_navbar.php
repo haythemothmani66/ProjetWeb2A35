@@ -68,7 +68,13 @@ if (!empty($_SESSION['user_id'])) {
             <li class="menu-item-has-children">
               <a href="#">EDUFEED</a>
               <ul>
-                <li><a href="<?= $baseUrl ?>/view/frontoffice/submit.php">Soumettre un devoir</a></li>
+                <?php $_navRole = $_SESSION['user_role'] ?? ''; ?>
+                <?php if ($_navRole === 'etudiant' || $_navRole === 'admin'): ?>
+                  <li><a href="<?= $baseUrl ?>/view/frontoffice/submit.php#form-devoir-section">Soumettre un devoir</a></li>
+                <?php endif; ?>
+                <?php if ($_navRole === 'encadrant' || $_navRole === 'admin'): ?>
+                  <li><a href="<?= $baseUrl ?>/view/frontoffice/submit.php#form-correction-section">Corriger un devoir</a></li>
+                <?php endif; ?>
                 <li><a href="<?= $baseUrl ?>/view/frontoffice/feed.php">Feed</a></li>
               </ul>
             </li>
@@ -120,7 +126,13 @@ if (!empty($_SESSION['user_id'])) {
         <li>
           <a href="#">Edufeed</a>
           <ul class="sub-menu">
-            <li><a href="<?= $baseUrl ?>/view/frontoffice/submit.php">Soumettre un devoir</a></li>
+            <?php $_navRoleM = $_SESSION['user_role'] ?? ''; ?>
+            <?php if ($_navRoleM === 'etudiant' || $_navRoleM === 'admin'): ?>
+              <li><a href="<?= $baseUrl ?>/view/frontoffice/submit.php#form-devoir-section">Soumettre un devoir</a></li>
+            <?php endif; ?>
+            <?php if ($_navRoleM === 'encadrant' || $_navRoleM === 'admin'): ?>
+              <li><a href="<?= $baseUrl ?>/view/frontoffice/submit.php#form-correction-section">Corriger un devoir</a></li>
+            <?php endif; ?>
             <li><a href="<?= $baseUrl ?>/view/frontoffice/feed.php">Feed</a></li>
           </ul>
         </li>
@@ -155,3 +167,13 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 </script>
+
+<!-- CHATBOT EduMatch (Assistant IA Groq, repond uniquement aux questions sur EduMatch et l'enseignement) -->
+<!-- Inclus ici dans _navbar.php pour etre present sur TOUTES les pages frontoffice -->
+<?php
+  // Protection anti-doublon : ne charge le widget qu'une seule fois meme si le navbar est inclus plusieurs fois par megarde
+  if (!defined('EDUMATCH_CHATBOT_LOADED')) {
+      define('EDUMATCH_CHATBOT_LOADED', true);
+      include $_SERVER['DOCUMENT_ROOT'] . '/gestion_users/view/frontoffice/chatbot.html';
+  }
+?>

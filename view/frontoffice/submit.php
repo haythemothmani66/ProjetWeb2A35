@@ -32,6 +32,14 @@ if (($_SESSION['user_role'] ?? '') !== 'etudiant' && ($_SESSION['user_role'] ?? 
     exit;
 }
 
+// Flags d'affichage des formulaires selon le role
+//   etudiant -> formulaire 'Soumettre devoir' uniquement
+//   encadrant -> formulaire 'Soumettre correction' uniquement
+//   admin -> les deux formulaires
+$role = $_SESSION['user_role'] ?? '';
+$canSubmitDevoir     = in_array($role, ['etudiant', 'admin'], true);
+$canSubmitCorrection = in_array($role, ['encadrant', 'admin'], true);
+
 $baseUrl = '/gestion_users';
 
 
@@ -720,8 +728,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
 
                     <!-- =========================================== -->
                     <!--        FORMULAIRE 1 : SOUMETTRE UN DEVOIR   -->
+                    <!--        Visible : etudiant + admin           -->
                     <!-- =========================================== -->
-                    <div class="modern-form-container">
+                    <?php if ($canSubmitDevoir): ?>
+                    <div class="modern-form-container" id="form-devoir-section">
                         <h3 class="form-title">
                             <i class="fas fa-file-upload"></i>
                             <?= $isEditDevoir ? 'Modifier un Devoir' : 'Soumettre un Devoir' ?>
@@ -950,11 +960,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
                             </button>
                         </form>
                     </div>
+                    <?php endif; // canSubmitDevoir ?>
 
                     <!-- ============================================ -->
                     <!--      FORMULAIRE 2 : SOUMETTRE UNE CORRECTION -->
+                    <!--      Visible : encadrant + admin             -->
                     <!-- ============================================ -->
-                    <div class="modern-form-container">
+                    <?php if ($canSubmitCorrection): ?>
+                    <div class="modern-form-container" id="form-correction-section">
                         <h3 class="form-title">
                             <i class="fas fa-check-circle"></i>
                             <?= $isEditCorrection ? 'Modifier une Correction' : 'Soumettre une Correction' ?>
@@ -1210,6 +1223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
                             </button>
                         </form>
                     </div>
+                    <?php endif; // canSubmitCorrection ?>
 
                 </div><!-- /col -->
             </div><!-- /row -->
@@ -1602,7 +1616,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
         // ======================================================
         //   SOUMISSION FORMULAIRE DEVOIR
         // ======================================================
-        document.getElementById('form-devoir').addEventListener('submit', async function(e) {
+        const formDevoirEl = document.getElementById('form-devoir');
+        if (formDevoirEl) formDevoirEl.addEventListener('submit', async function(e) {
             const requiredFields = getRequiredFields(this);
             let allValid = true;
 
@@ -1639,7 +1654,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_SERVER['HTTP_X_REQUESTED_WI
         // ======================================================
         //   SOUMISSION FORMULAIRE CORRECTION
         // ======================================================
-        document.getElementById('form-correction').addEventListener('submit', async function(e) {
+        const formCorrectionEl = document.getElementById('form-correction');
+        if (formCorrectionEl) formCorrectionEl.addEventListener('submit', async function(e) {
             const requiredFields = getRequiredFields(this);
             let allValid = true;
 

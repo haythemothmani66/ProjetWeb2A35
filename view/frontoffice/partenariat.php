@@ -1724,21 +1724,7 @@ if (checkOrgNameInput) {
 				hidePartnerDetails();
 			})();
 		</script>
-        <div id="chatbot-placeholder"></div>
-    <script>
-        fetch('chatbot.html')
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('chatbot-placeholder').innerHTML = data;
-                // Re-run scripts in the loaded HTML
-                const scripts = document.getElementById('chatbot-placeholder').querySelectorAll('script');
-                scripts.forEach(oldScript => {
-                    const newScript = document.createElement('script');
-                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                    oldScript.parentNode.replaceChild(newScript, oldScript);
-                });
-            });
-    </script>
+    <!-- Note : le chatbot EduMatch est desormais inclus dans _navbar.php (charge en haut de page).
+         L'ancien fetch('chatbot.html') a ete retire pour eviter le doublon. -->
     </body>
 </html>

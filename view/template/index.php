@@ -1170,6 +1170,8 @@ try {
     </footer>
     <!-- END MODERN FOOTER -->
 
+    <!-- Note : le chatbot EduMatch est desormais inclus dans _navbar.php (toutes pages frontoffice) -->
+
     <!-- Latest jQuery -->
     <script src="../../assets/js/jquery-1.12.4.min.js"></script>
     <script src="../../assets/bootstrap/js/bootstrap.min.js"></script>

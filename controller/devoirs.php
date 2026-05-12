@@ -139,56 +139,7 @@ class Devoirs
     // ============================================================
 // CHATBOT ÉDUCATIF AVEC GROQ
 // ============================================================
-
-
-public function chatbot($message) {
-    if (empty($message)) {
-        return "Bonjour ! Je suis EduBot, votre assistant éducatif. Posez-moi une question !";
-    }
-    
-    $prompt = "Tu es EduBot, un assistant pédagogique intelligent pour la plateforme EduMatch.
-    Tu aides les élèves à comprendre leurs cours, leurs devoirs, et les concepts éducatifs ne me répond que au questions pédagigiques.
-    
-    Règles :
-    - Réponds de manière claire, précise et pédagogique
-    - Si tu ne sais pas, propose des ressources ou conseille de demander au professeur
-    - Sois encourageant et patient
-    - Adapte ton langage au niveau de l'élève (collège/lycée/supérieur)
-    
-    Voici la question de l'élève : " . $message . "
-    
-    Réponds de façon naturelle, en français, sans structure particulière.";
-    
-    $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . GROQ_API_KEY
-    ]);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-        'model' => 'llama-3.3-70b-versatile',
-        'messages' => [
-            ['role' => 'system', 'content' => 'Tu es un assistant pédagogique bienveillant.'],
-            ['role' => 'user', 'content' => $prompt]
-        ],
-        'temperature' => 0.7,
-        'max_tokens' => 500
-    ]));
-    
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode !== 200) {
-        return "Désolé, je rencontre une difficulté technique. Veuillez réessayer ou contacter votre professeur.";
-    }
-    
-    $data = json_decode($response, true);
-    $reply = $data['choices'][0]['message']['content'] ?? "Je n'ai pas compris votre question. Pouvez-vous reformuler ?";
-    
-    return $reply;
-}
+    // [LEGACY chatbot() retire - remplace par api/groq_chatbot.php (Assistant EduMatch unifie)]
 
     // ============================================================
     //   SOUMETTRE UN DEVOIR
@@ -818,9 +769,12 @@ if ($action === 'submit') {
 } elseif ($action === 'listcorrections') {
     $devoir->listCorrections();
 } elseif ($action === 'chat') {
-    $message = $_GET['message'] ?? $_POST['message'] ?? '';
-    $reply = $devoir->chatbot($message);
-    echo json_encode(['reply' => $reply]);
+    // Legacy : action 'chat' redirige vers le nouveau chatbot unifie
+    header('Content-Type: application/json');
+    echo json_encode([
+        'reply' => "Le chatbot a ete deplace. Utilisez l'assistant EduMatch sur la page d'accueil.",
+        'redirect' => '/gestion_users/api/groq_chatbot.php'
+    ]);
 } else {
     header('Content-Type: application/json');
     http_response_code(400);
